@@ -1,0 +1,65 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  html {
+    color-scheme: dark;
+  }
+  body {
+    @apply bg-ink-950 text-gray-200 font-sans antialiased;
+  }
+  ::selection {
+    @apply bg-accent-500/40 text-white;
+  }
+}
+
+@layer components {
+  .glass {
+    @apply bg-ink-900/70 backdrop-blur-xl border border-white/5;
+  }
+  .glass-card {
+    @apply bg-ink-850/60 backdrop-blur-md border border-white/5 rounded-xl;
+  }
+  .nav-item {
+    @apply flex items-center gap-3 px-3.5 py-2.5 rounded-lg text-sm font-medium
+           text-gray-400 hover:text-gray-200 hover:bg-white/5
+           transition-all duration-200 cursor-pointer;
+  }
+  .nav-item-active {
+    @apply text-white bg-accent-500/10 border border-accent-500/30 shadow-glow-sm;
+  }
+  .btn-primary {
+    @apply px-4 py-2 rounded-lg bg-accent-500 hover:bg-accent-400 text-white
+           font-medium text-sm transition-all duration-200 shadow-glow-sm
+           hover:shadow-glow;
+  }
+  .btn-ghost {
+    @apply px-4 py-2 rounded-lg text-gray-400 hover:text-gray-200 hover:bg-white/5
+           font-medium text-sm transition-all duration-200;
+  }
+  .input-dark {
+    @apply bg-ink-800/80 border border-white/5 rounded-lg px-3.5 py-2.5
+           text-sm text-gray-200 placeholder-gray-500
+           focus:outline-none focus:border-accent-500/50 focus:ring-1 focus:ring-accent-500/30
+           transition-all duration-200;
+  }
+  .badge {
+    @apply inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-medium;
+  }
+}
+
+::-webkit-scrollbar {
+  width: 7px;
+  height: 7px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.08);
+  border-radius: 999px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.14);
+}
