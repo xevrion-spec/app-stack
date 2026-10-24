@@ -21,7 +21,7 @@ if cmd == "tools":
          "postiz": ("custom", "Authorization", env.get("POSTIZ_API_KEY")), "langfuse": ("basic", "Authorization", lfb), "steel": ("none", "", "")}
     existing = {p["name"] for p in call("GET", "/workspaces/current/tool-providers?type=api").json()}
     for k, (pre, h, v) in T.items():
-        cred = {"auth_type": "none"} if pre == "none" or not v else {"auth_type": "api_key", "api_key_header": h, "api_key_value": v, "api_key_header_prefix": pre}
+        cred = {"auth_type": "none"} if pre == "none" or not v else {"auth_type": "api_key_header", "api_key_header": h, "api_key_value": v, "api_key_header_prefix": pre}
         body = {"provider": k, "icon": {"content": "🔧", "background": "#FEF7C3"}, "credentials": cred, "schema_type": "openapi",
                 "schema": (ROOT / "dify-tools" / f"{k}.json").read_text(), "privacy_policy": "", "custom_disclaimer": "", "labels": []}
         if k in existing:
@@ -97,3 +97,42 @@ elif cmd == "reinstall":
         st = s.json().get("task", {}).get("status") if s.status_code == 200 else s.status_code
         if st in ("success", "failed"): print("task", st, s.text[:400]); break
     print("providers", [p["provider"] for p in call("GET", "/workspaces/current/model-providers").json().get("data", [])])
+elif cmd == "toolstest":
+    lfb = base64.b64encode(f"{env['LANGFUSE_PUBLIC_KEY']}:{env['LANGFUSE_SECRET_KEY']}".encode()).decode()
+    def cr(pre, h, v): return {"auth_type": "api_key_header", "api_key_header": h, "api_key_value": v, "api_key_header_prefix": pre}
+    bt = cr("bearer", "Authorization", env["BRIDGE_TOKEN"])
+    acct = env.get("CLOUDFLARE_ACCOUNT_ID")
+    tests = [
+     ("github", "listBranches", cr("bearer", "Authorization", env["GITHUB_TOKEN"]), {"owner": "xevrion-spec", "repo": "app-stack"}),
+     ("cloudflare", "listWorkers", cr("bearer", "Authorization", env["CLOUDFLARE_API_TOKEN"]), {"account_id": acct}),
+     ("coolify", "version", cr("bearer", "Authorization", env["COOLIFY_API_TOKEN"]), {}),
+     ("daytona", "listSandboxes", cr("bearer", "Authorization", env["DAYTONA_API_KEY"]), {}),
+     ("steel", "listSessions", {"auth_type": "none"}, {}),
+     ("postiz", "listIntegrations", cr("custom", "Authorization", env.get("POSTIZ_API_KEY", "")), {}),
+     ("loops", "testKey", cr("bearer", "Authorization", env["LOOPS_API_KEY"]), {}),
+     ("kapa", "chat", cr("custom", "X-API-KEY", env["KAPA_API_KEY"]), {"project_id": env.get("KAPA_PROJECT_ID"), "query": "What is this knowledge base about?"}),
+     ("langfuse", "listObservations", cr("basic", "Authorization", lfb), {"limit": 3}),
+     ("langfuse", "listPrompts", cr("basic", "Authorization", lfb), {}),
+     ("stack-admin", "appsStatus", bt, {}),
+     ("stack-admin", "serviceApi", bt, {"service": "github", "method": "GET", "path": "/repos/xevrion-spec/app-stack"}),
+     ("stack-admin", "crawl", bt, {"url": "https://example.com"}),
+     ("stack-admin", "llm", bt, {"prompt": "say pong"}),
+     ("temporal-trigger", "describeWorkflow", bt, {"workflow_id": "SmokeTest-d4318f31"}),
+    ]
+    only = sys.argv[2:] 
+    for prov, tool, cred, params in tests:
+        if only and prov not in only: continue
+        body = {"provider_name": prov, "tool_name": tool, "credentials": cred, "schema_type": "openapi",
+                "schema": (ROOT / "dify-tools" / f"{prov}.json").read_text(), "parameters": params}
+        try:
+            r = call("POST", "/workspaces/current/tool-provider/api/test/pre", body)
+            txt = r.text.replace("\\n", " ")
+            print(f"{prov}.{tool}: {r.status_code} {txt[:230]}")
+        except Exception as e: print(f"{prov}.{tool}: EXC {e}")
+elif cmd == "apikey":
+    aid = (ROOT / ".dify-app-id").read_text().strip()
+    r = call("POST", f"/apps/{aid}/api-keys"); tok = r.json().get("token")
+    if tok:
+        lines = [l for l in (ROOT / ".env").read_text().splitlines() if not l.startswith("DIFY_API_KEY=")] + [f"DIFY_API_KEY={tok}"]
+        (ROOT / ".env").write_text("\n".join(lines) + "\n"); print("api key written, len", len(tok))
+    else: print(r.status_code, r.text[:200])
