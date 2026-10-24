@@ -15,6 +15,8 @@ CREW_PY = os.getenv("CREWAI_PYTHON", CRAWL_PY)
 app = FastAPI(title="app-stack bridge")
 from admin import r as admin_router
 app.include_router(admin_router)
+from dashboard import r as dashboard_router
+app.include_router(dashboard_router)
 
 try:
     from langfuse import Langfuse

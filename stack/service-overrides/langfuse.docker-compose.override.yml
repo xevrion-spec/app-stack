@@ -1,0 +1,10 @@
+# app-stack: accept Dify's legacy /api/public/ingestion traces (dual write) while keeping v4 reads.
+services:
+  langfuse-worker:
+    environment:
+      LANGFUSE_MIGRATION_V4_WRITE_MODE: dual
+      LANGFUSE_MIGRATION_V4_ALLOW_PREVIEW_OPT_IN: "true"
+  langfuse-web:
+    environment:
+      LANGFUSE_MIGRATION_V4_WRITE_MODE: dual
+      LANGFUSE_MIGRATION_V4_ALLOW_PREVIEW_OPT_IN: "true"

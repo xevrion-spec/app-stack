@@ -1,6 +1,15 @@
-param([Parameter(Mandatory)][ValidateSet('dify','langfuse','postiz','temporal','steel','daytona','coolify','bridge','freellmapi')][string]$App,
+param([Parameter(Mandatory)][ValidateSet('dify','langfuse','postiz','temporal','steel','daytona','coolify','bridge','freellmapi','console')][string]$App,
       [Parameter(Mandatory)][ValidateSet('up','stop')][string]$Action)
 $root = Join-Path $PSScriptRoot 'services'
+if ($App -eq 'console') {
+  if ($Action -eq 'stop') { & $PSCommandPath bridge stop; exit }
+  if (-not (Get-NetTCPConnection -LocalPort 8765 -State Listen -EA SilentlyContinue)) { & $PSCommandPath bridge up; Start-Sleep 8 }
+  $otp = -join ((48..57)+(97..122) | Get-Random -Count 32 | % {[char]$_})
+  Set-Content (Join-Path $PSScriptRoot '.console-otp') $otp -NoNewline
+  Start-Process "http://localhost:8765/console/login?t=$otp"
+  Write-Host 'Console opened at http://localhost:8765/console'
+  exit
+}
 if ($App -eq 'freellmapi') {
   if ($Action -eq 'up') { Start-Process -WindowStyle Minimized -WorkingDirectory "$env:USERPROFILE\freellmapi" npm.cmd 'run','dev','-w','server' }
   else { Get-NetTCPConnection -LocalPort 3010 -State Listen -EA SilentlyContinue | % { Stop-Process -Id $_.OwningProcess -Force } }

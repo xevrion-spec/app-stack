@@ -12,3 +12,6 @@ Copy this folder next to `services\` (see C:\Users\henry\app-stack), fill `.env`
 ## Dify console
 - `dify-setup.py tools|model|app|ask` (run with bridge\.venv python after a console login) imports the tool specs with keys from .env, registers FreeLLMAPI (via the bridge passthrough http://host.docker.internal:8765/v1) and builds the 'Xevrion Stack Console' agent app with Langfuse tracing.
 - `stack-admin.json` exposes the bridge's /api/{service} proxy (GitHub, Cloudflare, Coolify, Daytona, Steel, Postiz, Loops, Kapa, Langfuse) and /apps/{app}/{up|stop}. DELETE, email/event sends, public posts and deploys require confirm=true.
+
+## Dashboard
+`.\start.ps1 console up` starts the bridge and opens http://localhost:8765/console (loopback only, one-time login link, HttpOnly session). Sidebar of every app with live status, stats from each app's API, .env config (set/missing only, masked replace), start/stop for local Docker apps, and the Dify console chat embedded. Langfuse needs `service-overrides/langfuse.docker-compose.override.yml` (dual write) to accept Dify traces; Dify's CELERY_BROKER_URL must use REDIS_PASSWORD.

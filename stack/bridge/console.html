@@ -1,0 +1,59 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Xevrion Stack Console</title>
+<style>
+:root{--bg:#0b0f17;--panel:#121826;--line:#1f2937;--text:#e5e7eb;--mute:#8b95a7;--acc:#7c5cff;--ok:#22c55e;--bad:#ef4444;--warn:#f59e0b}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--text);font:14px/1.45 system-ui,Segoe UI,sans-serif;height:100vh;display:grid;grid-template-columns:240px 1fr;grid-template-rows:52px 1fr}
+header{grid-column:1/3;display:flex;align-items:center;gap:14px;padding:0 16px;border-bottom:1px solid var(--line);background:#0d1220}
+header b{font-size:15px}header .sp{flex:1}#mem{color:var(--mute);font-size:12px}#menu{display:none;background:none;border:0;color:var(--text);font-size:20px}
+nav{border-right:1px solid var(--line);overflow:auto;padding:8px}
+nav .grp{color:var(--mute);font-size:11px;text-transform:uppercase;letter-spacing:.08em;margin:12px 8px 4px}
+nav button{width:100%;display:flex;align-items:center;gap:8px;background:none;border:0;color:var(--text);padding:8px 10px;border-radius:8px;cursor:pointer;text-align:left}
+nav button:hover,nav button.on{background:var(--panel)}.dot{width:8px;height:8px;border-radius:50%;background:#374151;flex:none}.dot.ok{background:var(--ok)}.dot.bad{background:var(--bad)}
+main{display:grid;grid-template-columns:1fr 0;transition:.2s;min-height:0}main.open{grid-template-columns:1fr 420px}
+#chat{border:0;width:100%;height:100%;background:#fff}
+#side{border-left:1px solid var(--line);background:var(--panel);overflow:auto;padding:0}
+#side .hd{display:flex;align-items:center;gap:10px;padding:14px 16px;border-bottom:1px solid var(--line);position:sticky;top:0;background:var(--panel)}
+#side .hd h2{margin:0;font-size:16px;flex:1}.x{background:none;border:0;color:var(--mute);font-size:18px;cursor:pointer}
+section{padding:12px 16px;border-bottom:1px solid var(--line)}section h3{margin:0 0 8px;font-size:12px;color:var(--mute);text-transform:uppercase;letter-spacing:.06em}
+.kv{display:grid;grid-template-columns:140px 1fr;gap:4px 10px}.kv div:nth-child(odd){color:var(--mute)}.kv ul{margin:0;padding-left:16px}
+.pill{display:inline-block;padding:2px 8px;border-radius:999px;font-size:12px}.pill.ok{background:#14532d;color:#bbf7d0}.pill.bad{background:#7f1d1d;color:#fecaca}
+.btn{background:var(--acc);color:#fff;border:0;border-radius:8px;padding:6px 12px;cursor:pointer;font-size:13px}.btn.ghost{background:#1f2937}.btn.red{background:#b91c1c}
+.row{display:flex;gap:8px;align-items:center;margin:6px 0;flex-wrap:wrap}.row code{flex:1;min-width:150px;font-size:12px;color:#c4b5fd}
+input{background:#0b0f17;border:1px solid var(--line);color:var(--text);border-radius:6px;padding:5px 8px;flex:1;min-width:120px}
+a{color:#a78bfa}.err{color:#fca5a5}.muted{color:var(--mute)}
+dialog{background:var(--panel);color:var(--text);border:1px solid var(--line);border-radius:12px;max-width:380px}dialog::backdrop{background:#0008}
+@media(max-width:900px){body{grid-template-columns:1fr}nav{position:fixed;top:52px;bottom:0;left:0;width:240px;background:var(--bg);z-index:5;transform:translateX(-100%);transition:.2s}nav.show{transform:none}#menu{display:block}main.open{grid-template-columns:0 1fr}}
+</style></head><body>
+<header><button id="menu" onclick="nav.classList.toggle('show')">☰</button><b>⚙ Xevrion Stack Console</b><span class="sp"></span><span id="mem">Docker: …</span></header>
+<nav id="nav"></nav>
+<main id="main"><iframe id="chat" allow="microphone"></iframe><div id="side"></div></main>
+<dialog id="dlg"><p id="dlgt"></p><div class="row" style="justify-content:flex-end"><button class="btn ghost" onclick="dlg.close('no')">Cancel</button><button class="btn" onclick="dlg.close('yes')">Confirm</button></div></dialog>
+<script>
+const $=s=>document.querySelector(s), esc=s=>String(s??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+let APPS=[], cur=null;
+function confirmBox(t){return new Promise(r=>{dlgt.textContent=t;dlg.returnValue='';dlg.showModal();dlg.onclose=()=>r(dlg.returnValue==='yes')})}
+async function api(p,o={}){const r=await fetch(p,{credentials:'same-origin',headers:{'Content-Type':'application/json'},...o});const j=await r.json().catch(()=>({detail:r.statusText}));if(!r.ok)throw new Error(j.detail||r.status);return j}
+function val(v){if(Array.isArray(v))return v.length?'<ul>'+v.map(x=>'<li>'+esc(x)+'</li>').join('')+'</ul>':'<span class=muted>none</span>';if(v&&typeof v==='object')return esc(JSON.stringify(v));return esc(v)}
+async function load(){const d=await api('/console/api/apps');APPS=d.apps;chat.src=d.chat_url||'about:blank';
+ const groups={local:'Local apps',cloud:'Cloud services',tool:'Agent tools',link:'Links only'};let h='';
+ for(const g in groups){h+=`<div class=grp>${groups[g]}</div>`+APPS.filter(a=>a.kind===g).map(a=>`<button id="n-${a.id}" onclick="openApp('${a.id}')"><span class="dot" id="d-${a.id}"></span>${esc(a.name)}</button>`).join('')}
+ nav.innerHTML=h;APPS.forEach(a=>api('/console/api/app/'+a.id).then(x=>dot(a.id,x.up)).catch(()=>dot(a.id,false)));mem()}
+function dot(id,ok){const e=$('#d-'+id);if(e)e.className='dot '+(ok?'ok':'bad')}
+async function mem(){try{const m=await api('/console/api/docker');$('#mem').textContent=m.error?'Docker: '+m.error:`Docker: ${m.containers} containers · ${m.used_mib} MiB / ${m.limit}`;$('#mem').title=JSON.stringify(m.by_project)}catch(e){$('#mem').textContent='Docker: '+e.message}}
+async function openApp(id){cur=id;document.querySelectorAll('nav button').forEach(b=>b.classList.toggle('on',b.id==='n-'+id));nav.classList.remove('show');
+ main.classList.add('open');side.innerHTML='<section class=muted>Loading…</section>';
+ try{const a=await api('/console/api/app/'+id);dot(id,a.up);render(a)}catch(e){side.innerHTML=`<section class=err>${esc(e.message)}</section>`}}
+function render(a){
+ const stats=Object.entries(a.stats).map(([k,v])=>`<div>${esc(k)}</div><div>${val(v)}</div>`).join('');
+ const ctl=a.docker?`<div class=row><button class=btn onclick="ctl('${a.id}','up')">Start</button><button class="btn red" onclick="ctl('${a.id}','stop')">Stop</button><span class=muted id=ctlout></span></div>`:'';
+ const cfg=a.config.length?a.config.map(c=>`<div class=row><code>${esc(c.key)}</code><span class="pill ${c.set?'ok':'bad'}">${c.set?'set':'missing'}</span></div>
+   <div class=row>${c.secret?`<input type=password id="v-${c.key}" placeholder="new value (replaces key)" autocomplete=off>`:`<input id="v-${c.key}" value="${esc(c.value)}">`}<button class="btn ghost" onclick="save('${c.key}',${c.secret})">Save</button></div>`).join(''):'<span class=muted>No keys – link only.</span>';
+ side.innerHTML=`<div class=hd><span class="pill ${a.up?'ok':'bad'}">${a.up?'up':'down'}</span><h2>${esc(a.name)}</h2><a href="${esc(a.url)}" target=_blank>open ↗</a><button class=x onclick="main.classList.remove('open')">✕</button></div>
+ <section><h3>Status &amp; stats</h3><div class=kv>${stats}</div>${ctl}</section><section><h3>Configuration (.env)</h3>${cfg}</section>`}
+async function ctl(id,action){if(!await confirmBox(`${action==='up'?'Start':'Stop'} ${id}? (keep at most two Docker apps running)`))return;
+ $('#ctlout').textContent='working…';try{const r=await api(`/console/api/app/${id}/${action}`,{method:'POST',body:JSON.stringify({confirm:true})});$('#ctlout').textContent='exit '+r.exit;setTimeout(()=>{openApp(id);mem()},action==='up'?20000:2000)}catch(e){$('#ctlout').textContent=e.message}}
+async function save(k,secret){const v=$('#v-'+CSS.escape(k)).value;if(secret&&!v)return;
+ if(!await confirmBox(`Write ${k} to .env?${secret?' The old key will be replaced.':''} Restart the bridge for running services to pick it up.`))return;
+ try{await api('/console/api/env',{method:'POST',body:JSON.stringify({key:k,value:v,confirm:true})});openApp(cur)}catch(e){alert(e.message)}}
+load();setInterval(mem,30000);
+</script></body></html>
