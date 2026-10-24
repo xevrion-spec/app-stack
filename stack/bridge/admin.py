@@ -80,6 +80,27 @@ async def llm_proxy(path: str, request: Request):
     base = (E("FREELLMAPI_BASE_URL") or "http://127.0.0.1:31415/v1").rstrip("/")
     hdr = {k: v for k, v in request.headers.items() if k.lower() in ("authorization", "content-type", "accept")}
     body = await request.body()
+    # FreeLLMAPI's streaming drops some tokens (e.g. digits), so fetch non-streamed and re-emit as SSE.
+    try:
+        import json as _j
+        pj = _j.loads(body) if body else {}
+    except Exception:
+        pj = {}
+    if path.startswith("chat/completions") and pj.get("stream"):
+        pj["stream"] = False; pj.pop("stream_options", None)
+        async with httpx.AsyncClient(timeout=300) as cl:
+            rr = await cl.post(f"{base}/{path}", json=pj, headers={k: v for k, v in hdr.items() if k.lower() != "content-length"})
+        if rr.status_code != 200:
+            return Response(rr.content, status_code=rr.status_code, media_type="application/json")
+        d = rr.json(); ch = d["choices"][0]; m = ch.get("message", {})
+        delta = {"role": "assistant", "content": m.get("content") or ""}
+        if m.get("tool_calls"):
+            delta["tool_calls"] = [dict(tc, index=i) for i, tc in enumerate(m["tool_calls"])]
+        base_chunk = {"id": d.get("id"), "object": "chat.completion.chunk", "created": d.get("created"), "model": d.get("model")}
+        c1 = dict(base_chunk, choices=[{"index": 0, "delta": delta, "finish_reason": None}])
+        c2 = dict(base_chunk, choices=[{"index": 0, "delta": {}, "finish_reason": ch.get("finish_reason") or "stop"}], usage=d.get("usage"))
+        out = f"data: {_j.dumps(c1)}\n\ndata: {_j.dumps(c2)}\n\ndata: [DONE]\n\n"
+        return Response(out, media_type="text/event-stream")
     client = httpx.AsyncClient(timeout=300)
     req = client.build_request(request.method, f"{base}/{path}", params=request.query_params, content=body, headers=hdr)
     resp = await client.send(req, stream=True)

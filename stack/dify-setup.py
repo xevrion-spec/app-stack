@@ -9,7 +9,7 @@ for l in (ROOT / ".env").read_text().splitlines():
 d = json.loads(S.read_text()); c = httpx.Client(timeout=300); c.cookies.update(d["cookies"]); c.headers["X-CSRF-Token"] = d["csrf"]
 if d.get("bearer"): c.headers["Authorization"] = "Bearer " + d["bearer"]
 def call(m, p, body=None):
-    r = c.request(m, B + p, json=body); S.write_text(json.dumps({"cookies": dict(c.cookies) or d["cookies"], "csrf": d["csrf"], "bearer": d.get("bearer")}))
+    r = c.request(m, B + p, json=body); S.write_text(json.dumps({"cookies": ({x.name: x.value for x in c.cookies.jar}) or d["cookies"], "csrf": d["csrf"], "bearer": d.get("bearer")}))
     return r
 cmd = sys.argv[1]
 if cmd == "tools":
@@ -36,15 +36,15 @@ elif cmd == "model":
     cred = {"api_key": env["FREELLMAPI_KEY"], "endpoint_url": "http://host.docker.internal:8765/v1", "mode": "chat",
             "context_size": "32000", "max_tokens_to_sample": "4096", "function_calling_type": "tool_call",
             "stream_function_calling": "supported", "vision_support": "no_support", "stream_mode_delimiter": "\\n\\n"}
-    for path, body in [(P + "/models/credentials", {"model": "auto", "model_type": "llm", "credentials": cred, "name": "FreeLLMAPI"}),
-                       (P + "/models", {"model": "auto", "model_type": "llm", "credentials": cred})]:
+    for path, body in [(P + "/models/credentials", {"model": os.getenv("DIFY_MODEL","auto"), "model_type": "llm", "credentials": cred, "name": "FreeLLMAPI"}),
+                       (P + "/models", {"model": os.getenv("DIFY_MODEL","auto"), "model_type": "llm", "credentials": cred})]:
         r = call("POST", path, body); print(path, r.status_code, r.text[:400])
         if r.status_code < 300: break
-    r = call("POST", "/workspaces/current/default-model", {"model_settings": [{"model_type": "llm", "provider": "langgenius/openai_api_compatible/openai_api_compatible", "model": "auto"}]})
+    r = call("POST", "/workspaces/current/default-model", {"model_settings": [{"model_type": "llm", "provider": "langgenius/openai_api_compatible/openai_api_compatible", "model": os.getenv("DIFY_MODEL","auto")}]})
     print("default", r.status_code, r.text[:300])
     r = call("GET", "/workspaces/current/default-model?model_type=llm"); print(r.status_code, r.text[:300])
 elif cmd == "app":
-    PROMPT = (ROOT / "dify-tools" / "console-prompt.md").read_text()
+    PROMPT = (ROOT / "dify-tools" / "console-prompt.md").read_text() + f"\n- Cloudflare account_id: {env.get('CLOUDFLARE_ACCOUNT_ID','')}. Kapa project_id: {env.get('KAPA_PROJECT_ID','')}. GitHub owner/repo: xevrion-spec/app-stack.\n- Always call the tool, then answer with the actual values it returned (never reply with function-call JSON or placeholders)."
     apps = call("GET", "/apps?page=1&limit=50").json().get("data", [])
     app = next((a for a in apps if a["name"] == "Xevrion Stack Console"), None)
     if not app:
@@ -58,7 +58,7 @@ elif cmd == "app":
             tools.append({"provider_id": p["id"], "provider_type": "api", "provider_name": p["name"], "tool_name": t["name"], "tool_label": t.get("label", {}).get("en_US", t["name"]), "tool_parameters": {}, "enabled": True})
     print("tools", len(tools))
     cfg = {"pre_prompt": PROMPT, "prompt_type": "simple", "opening_statement": "Xevrion Stack Console ready. What should I check or configure?",
-           "model": {"provider": "langgenius/openai_api_compatible/openai_api_compatible", "name": "auto", "mode": "chat", "completion_params": {"temperature": 0.2}},
+           "model": {"provider": "langgenius/openai_api_compatible/openai_api_compatible", "name": os.getenv("DIFY_MODEL","auto"), "mode": "chat", "completion_params": {"temperature": 0.2}},
            "agent_mode": {"enabled": True, "strategy": "function_call", "max_iteration": 8, "tools": tools},
            "user_input_form": [], "dataset_configs": {"retrieval_model": "multiple", "datasets": {"datasets": []}}, "more_like_this": {"enabled": False},
            "suggested_questions": [], "suggested_questions_after_answer": {"enabled": False}, "speech_to_text": {"enabled": False}, "text_to_speech": {"enabled": False},
@@ -136,3 +136,22 @@ elif cmd == "apikey":
         lines = [l for l in (ROOT / ".env").read_text().splitlines() if not l.startswith("DIFY_API_KEY=")] + [f"DIFY_API_KEY={tok}"]
         (ROOT / ".env").write_text("\n".join(lines) + "\n"); print("api key written, len", len(tok))
     else: print(r.status_code, r.text[:200])
+
+elif cmd == "refresh":
+    r = c.post(B + "/refresh-token", json={}); print("refresh", r.status_code, r.text[:120])
+    if r.status_code == 200:
+        ck = {}; [ck.__setitem__(x.name, x.value) for x in c.cookies.jar]; csrf = next((v for k, v in ck.items() if "csrf" in k), d["csrf"])
+        S.write_text(json.dumps({"cookies": {**d["cookies"], **ck}, "csrf": csrf, "bearer": None}))
+elif cmd == "askapi":
+    r = httpx.post("http://localhost:8080/v1/chat-messages", headers={"Authorization": "Bearer " + env["DIFY_API_KEY"]},
+                   json={"inputs": {}, "query": sys.argv[2], "response_mode": "streaming", "user": "henry"}, timeout=600)
+    ans, tools = "", []
+    for line in r.text.splitlines():
+        if line.startswith("data:"):
+            try: j = json.loads(line[5:])
+            except Exception: continue
+            if j.get("event") in ("agent_message", "message"): ans += j.get("answer", "")
+            if j.get("event") == "agent_thought" and j.get("tool"): tools.append(j["tool"])
+            if j.get("event") == "error": ans += " ERROR: " + j.get("message", "")
+    print(r.status_code, "tools used:", sorted(set(tools)), "\nanswer:", ans[:1500] or r.text[:500])
+
