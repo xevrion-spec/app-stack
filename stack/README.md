@@ -8,3 +8,7 @@ Copy this folder next to `services\` (see C:\Users\henry\app-stack), fill `.env`
 - `dify-tools/*.json`: OpenAPI 3 specs to import as Dify Custom Tools (Steel, Daytona, Coolify, Postiz, Kapa, Loops, Cloudflare, GitHub, Temporal trigger via bridge). Dify runs in Docker, so local services use `host.docker.internal`.
 - Aider: `.aider.conf.yml` points at FreeLLMAPI through `OPENAI_API_BASE`/`OPENAI_API_KEY` in `.env`.
 - Not API-connected: Relume (Figma/Webflow export), Bolt (via this GitHub repo).
+
+## Dify console
+- `dify-setup.py tools|model|app|ask` (run with bridge\.venv python after a console login) imports the tool specs with keys from .env, registers FreeLLMAPI (via the bridge passthrough http://host.docker.internal:8765/v1) and builds the 'Xevrion Stack Console' agent app with Langfuse tracing.
+- `stack-admin.json` exposes the bridge's /api/{service} proxy (GitHub, Cloudflare, Coolify, Daytona, Steel, Postiz, Loops, Kapa, Langfuse) and /apps/{app}/{up|stop}. DELETE, email/event sends, public posts and deploys require confirm=true.

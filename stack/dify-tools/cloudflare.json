@@ -23,17 +23,6 @@
   }
  ],
  "paths": {
-  "/user/tokens/verify": {
-   "get": {
-    "operationId": "verifyToken",
-    "summary": "Verify token",
-    "responses": {
-     "200": {
-      "description": "OK"
-     }
-    }
-   }
-  },
   "/accounts/{account_id}/workers/scripts": {
    "get": {
     "operationId": "listWorkers",
@@ -109,6 +98,48 @@
    "get": {
     "operationId": "listZones",
     "summary": "List zones",
+    "responses": {
+     "200": {
+      "description": "OK"
+     }
+    }
+   }
+  },
+  "/accounts/{account_id}/tokens/verify": {
+   "get": {
+    "operationId": "verifyToken",
+    "summary": "Verify account API token",
+    "parameters": [
+     {
+      "name": "account_id",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "string"
+      }
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "OK"
+     }
+    }
+   }
+  },
+  "/zones/{zone_id}/dns_records": {
+   "get": {
+    "operationId": "listDnsRecords",
+    "summary": "List DNS records",
+    "parameters": [
+     {
+      "name": "zone_id",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "string"
+      }
+     }
+    ],
     "responses": {
      "200": {
       "description": "OK"

@@ -1,0 +1,147 @@
+{
+ "openapi": "3.0.1",
+ "info": {
+  "title": "Langfuse",
+  "version": "1.0.0"
+ },
+ "servers": [
+  {
+   "url": "http://host.docker.internal:3000/api/public"
+  }
+ ],
+ "components": {
+  "securitySchemes": {
+   "auth": {
+    "type": "http",
+    "scheme": "basic"
+   }
+  }
+ },
+ "security": [
+  {
+   "auth": []
+  }
+ ],
+ "paths": {
+  "/health": {
+   "get": {
+    "operationId": "health",
+    "summary": "Health",
+    "responses": {
+     "200": {
+      "description": "OK"
+     }
+    }
+   }
+  },
+  "/v2/prompts": {
+   "get": {
+    "operationId": "listPrompts",
+    "summary": "List prompts",
+    "responses": {
+     "200": {
+      "description": "OK"
+     }
+    }
+   },
+   "post": {
+    "operationId": "createPrompt",
+    "summary": "Create a prompt version (type text|chat)",
+    "requestBody": {
+     "required": true,
+     "content": {
+      "application/json": {
+       "schema": {
+        "type": "object",
+        "properties": {
+         "name": {
+          "type": "string"
+         },
+         "type": {
+          "type": "string"
+         },
+         "prompt": {
+          "type": "string"
+         },
+         "labels": {
+          "type": "array",
+          "items": {
+           "type": "string"
+          }
+         }
+        },
+        "required": [
+         "name",
+         "prompt"
+        ]
+       }
+      }
+     }
+    },
+    "responses": {
+     "200": {
+      "description": "OK"
+     }
+    }
+   }
+  },
+  "/v2/prompts/{promptName}": {
+   "get": {
+    "operationId": "getPrompt",
+    "summary": "Get prompt",
+    "parameters": [
+     {
+      "name": "promptName",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "string"
+      }
+     },
+     {
+      "name": "label",
+      "in": "query",
+      "required": false,
+      "schema": {
+       "type": "string"
+      }
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "OK"
+     }
+    }
+   }
+  },
+  "/v2/observations": {
+   "get": {
+    "operationId": "listObservations",
+    "summary": "List observations (v4)",
+    "parameters": [
+     {
+      "name": "traceId",
+      "in": "query",
+      "required": false,
+      "schema": {
+       "type": "string"
+      }
+     },
+     {
+      "name": "limit",
+      "in": "query",
+      "required": false,
+      "schema": {
+       "type": "integer"
+      }
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "OK"
+     }
+    }
+   }
+  }
+ }
+}

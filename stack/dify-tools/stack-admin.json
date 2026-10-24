@@ -1,0 +1,285 @@
+{
+ "openapi": "3.0.1",
+ "info": {
+  "title": "Xevrion Stack Admin (local bridge)",
+  "version": "1.0.0",
+  "description": "Configure every app in the stack through the local bridge, which holds the API keys."
+ },
+ "servers": [
+  {
+   "url": "http://host.docker.internal:8765"
+  }
+ ],
+ "components": {
+  "securitySchemes": {
+   "auth": {
+    "type": "http",
+    "scheme": "bearer"
+   }
+  }
+ },
+ "security": [
+  {
+   "auth": []
+  }
+ ],
+ "paths": {
+  "/api/{service}": {
+   "post": {
+    "operationId": "serviceApi",
+    "summary": "Call a documented REST endpoint of a stack service. service: github|cloudflare|coolify|daytona|steel|postiz|loops|kapa|langfuse. DELETE, sending email/events (loops), creating non-draft posts (postiz), deploys and app/zone/repo writes need confirm=true, only after the user explicitly approves.",
+    "parameters": [
+     {
+      "name": "service",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "string"
+      }
+     }
+    ],
+    "requestBody": {
+     "required": true,
+     "content": {
+      "application/json": {
+       "schema": {
+        "type": "object",
+        "properties": {
+         "method": {
+          "type": "string",
+          "description": "GET|POST|PUT|PATCH|DELETE"
+         },
+         "path": {
+          "type": "string",
+          "description": "Path relative to the service base URL, e.g. /repos/xevrion-spec/app-stack/branches"
+         },
+         "query": {
+          "type": "object"
+         },
+         "json": {
+          "type": "object"
+         },
+         "confirm": {
+          "type": "boolean"
+         }
+        },
+        "required": [
+         "method",
+         "path"
+        ]
+       }
+      }
+     }
+    },
+    "responses": {
+     "200": {
+      "description": "OK"
+     }
+    }
+   }
+  },
+  "/apps/status": {
+   "get": {
+    "operationId": "appsStatus",
+    "summary": "List running local containers",
+    "responses": {
+     "200": {
+      "description": "OK"
+     }
+    }
+   }
+  },
+  "/apps/{app}/{action}": {
+   "post": {
+    "operationId": "appControl",
+    "summary": "Start or stop a local app (dify|langfuse|postiz|temporal|steel|daytona|freellmapi), action up|stop. Run at most two Docker apps at once. Stopping dify needs confirm=true.",
+    "parameters": [
+     {
+      "name": "app",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "string"
+      }
+     },
+     {
+      "name": "action",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "string"
+      }
+     },
+     {
+      "name": "confirm",
+      "in": "query",
+      "required": false,
+      "schema": {
+       "type": "boolean"
+      }
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "OK"
+     }
+    }
+   }
+  },
+  "/llm": {
+   "post": {
+    "operationId": "llm",
+    "summary": "One-shot completion via FreeLLMAPI",
+    "requestBody": {
+     "required": true,
+     "content": {
+      "application/json": {
+       "schema": {
+        "type": "object",
+        "properties": {
+         "prompt": {
+          "type": "string"
+         },
+         "model": {
+          "type": "string"
+         }
+        },
+        "required": [
+         "prompt"
+        ]
+       }
+      }
+     }
+    },
+    "responses": {
+     "200": {
+      "description": "OK"
+     }
+    }
+   }
+  },
+  "/crawl": {
+   "post": {
+    "operationId": "crawl",
+    "summary": "Crawl a URL with Crawl4AI, returns markdown",
+    "requestBody": {
+     "required": true,
+     "content": {
+      "application/json": {
+       "schema": {
+        "type": "object",
+        "properties": {
+         "url": {
+          "type": "string"
+         }
+        },
+        "required": [
+         "url"
+        ]
+       }
+      }
+     }
+    },
+    "responses": {
+     "200": {
+      "description": "OK"
+     }
+    }
+   }
+  },
+  "/crew/run": {
+   "post": {
+    "operationId": "runCrew",
+    "summary": "Run a CrewAI research crew on FreeLLMAPI",
+    "requestBody": {
+     "required": true,
+     "content": {
+      "application/json": {
+       "schema": {
+        "type": "object",
+        "properties": {
+         "topic": {
+          "type": "string"
+         },
+         "goal": {
+          "type": "string"
+         }
+        },
+        "required": [
+         "topic"
+        ]
+       }
+      }
+     }
+    },
+    "responses": {
+     "200": {
+      "description": "OK"
+     }
+    }
+   }
+  },
+  "/temporal/start": {
+   "post": {
+    "operationId": "startWorkflow",
+    "summary": "Start a Temporal workflow",
+    "requestBody": {
+     "required": true,
+     "content": {
+      "application/json": {
+       "schema": {
+        "type": "object",
+        "properties": {
+         "workflow": {
+          "type": "string"
+         },
+         "task_queue": {
+          "type": "string"
+         },
+         "args": {
+          "type": "array",
+          "items": {
+           "type": "string"
+          }
+         },
+         "workflow_id": {
+          "type": "string"
+         }
+        },
+        "required": [
+         "workflow"
+        ]
+       }
+      }
+     }
+    },
+    "responses": {
+     "200": {
+      "description": "OK"
+     }
+    }
+   }
+  },
+  "/temporal/describe/{workflow_id}": {
+   "get": {
+    "operationId": "describeWorkflow",
+    "summary": "Describe a Temporal workflow",
+    "parameters": [
+     {
+      "name": "workflow_id",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "string"
+      }
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "OK"
+     }
+    }
+   }
+  }
+ }
+}

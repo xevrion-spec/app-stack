@@ -13,6 +13,8 @@ LLM_MODEL = os.getenv("FREELLMAPI_MODEL", "auto")
 CRAWL_PY = os.getenv("CRAWL4AI_PYTHON", r"C:\Users\henry\crawl_env\Scripts\python.exe")
 CREW_PY = os.getenv("CREWAI_PYTHON", CRAWL_PY)
 app = FastAPI(title="app-stack bridge")
+from admin import r as admin_router
+app.include_router(admin_router)
 
 try:
     from langfuse import Langfuse
