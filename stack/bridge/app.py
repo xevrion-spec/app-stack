@@ -7,7 +7,7 @@ from fastapi import FastAPI, Header, HTTPException
 from pydantic import BaseModel
 
 TOKEN = os.getenv("BRIDGE_TOKEN", "")
-LLM_BASE = os.getenv("FREELLMAPI_BASE_URL", "http://localhost:3010/v1")
+LLM_BASE = os.getenv("FREELLMAPI_BASE_URL", "http://127.0.0.1:31415/v1")
 LLM_KEY = os.getenv("FREELLMAPI_KEY", "")
 LLM_MODEL = os.getenv("FREELLMAPI_MODEL", "auto")
 CRAWL_PY = os.getenv("CRAWL4AI_PYTHON", r"C:\Users\henry\crawl_env\Scripts\python.exe")
