@@ -9,7 +9,7 @@ if ($App -eq 'freellmapi') {
 if ($App -eq 'bridge') {
   $py = Join-Path $PSScriptRoot 'bridge\.venv\Scripts\python.exe'
   if ($Action -eq 'up') {
-    if (-not (Test-Path $py)) { python -m venv (Join-Path $PSScriptRoot 'bridge\.venv'); & $py -m pip install -q -r (Join-Path $PSScriptRoot 'bridge\requirements.txt') }
+    if (-not (Test-Path $py)) { uv venv --python 3.12 (Join-Path $PSScriptRoot 'bridge\.venv'); uv pip install --python $py -q -r (Join-Path $PSScriptRoot 'bridge\requirements.txt') }
     Start-Process -WindowStyle Minimized -WorkingDirectory (Join-Path $PSScriptRoot 'bridge') $py '-m','uvicorn','app:app','--host','0.0.0.0','--port','8765'
     Write-Host 'bridge on http://localhost:8765 (Dify: http://host.docker.internal:8765)'
   } else { Get-NetTCPConnection -LocalPort 8765 -State Listen -EA SilentlyContinue | % { Stop-Process -Id $_.OwningProcess -Force } }

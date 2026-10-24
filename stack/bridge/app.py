@@ -27,7 +27,7 @@ def auth(a):
 def trace(name, inp, out):
     if not lf: return None
     try:
-        with lf.start_as_current_span(name=name, input=inp) as s:
+        with lf.start_as_current_observation(name=name, as_type="span", input=inp) as s:
             s.update(output=out)
             tid = s.trace_id
         lf.flush(); return tid

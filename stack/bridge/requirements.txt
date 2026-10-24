@@ -5,3 +5,4 @@ temporalio
 langfuse
 openai
 crewai
+crawl4ai==0.9.5
