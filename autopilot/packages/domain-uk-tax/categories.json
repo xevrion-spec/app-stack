@@ -1,0 +1,100 @@
+{
+  "_notice": "Starter chart of accounts for sole traders. Keyword rules are heuristics, verify with an accountant.",
+  "accounts": [
+    {
+      "code": "4000",
+      "name": "Sales",
+      "kw": [
+        "invoice",
+        "stripe payout",
+        "sumup"
+      ]
+    },
+    {
+      "code": "5000",
+      "name": "Cost of goods",
+      "kw": [
+        "wholesale",
+        "supplier",
+        "stock"
+      ]
+    },
+    {
+      "code": "6100",
+      "name": "Travel",
+      "kw": [
+        "trainline",
+        "uber",
+        "tfl",
+        "fuel",
+        "shell",
+        "bp"
+      ]
+    },
+    {
+      "code": "6200",
+      "name": "Office & admin",
+      "kw": [
+        "staples",
+        "amazon",
+        "ryman",
+        "stationery"
+      ]
+    },
+    {
+      "code": "6300",
+      "name": "Phone & internet",
+      "kw": [
+        "vodafone",
+        "ee ",
+        "bt ",
+        "o2",
+        "three"
+      ]
+    },
+    {
+      "code": "6400",
+      "name": "Software & subscriptions",
+      "kw": [
+        "google",
+        "microsoft",
+        "adobe",
+        "notion",
+        "github",
+        "cloudflare"
+      ]
+    },
+    {
+      "code": "6500",
+      "name": "Advertising",
+      "kw": [
+        "meta ads",
+        "facebook",
+        "google ads"
+      ]
+    },
+    {
+      "code": "6600",
+      "name": "Professional fees",
+      "kw": [
+        "accountant",
+        "solicitor",
+        "legal"
+      ]
+    },
+    {
+      "code": "6700",
+      "name": "Bank charges",
+      "kw": [
+        "fee",
+        "charge",
+        "interest"
+      ]
+    },
+    {
+      "code": "9999",
+      "name": "Suspense / needs review",
+      "kw": []
+    }
+  ]
+}

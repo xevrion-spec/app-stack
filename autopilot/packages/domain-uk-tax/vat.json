@@ -1,0 +1,63 @@
+{
+  "_notice": "UNVERIFIED. Confirm every rate, threshold and box definition on gov.uk before use.",
+  "rate_codes": [
+    {
+      "code": "STD",
+      "label": "Standard rate",
+      "rate_placeholder": 0.2,
+      "verified": false,
+      "source_to_check": "https://www.gov.uk/vat-rates"
+    },
+    {
+      "code": "RED",
+      "label": "Reduced rate",
+      "rate_placeholder": 0.05,
+      "verified": false,
+      "source_to_check": "https://www.gov.uk/vat-rates"
+    },
+    {
+      "code": "ZERO",
+      "label": "Zero rate",
+      "rate_placeholder": 0.0,
+      "verified": false,
+      "source_to_check": "https://www.gov.uk/vat-rates"
+    },
+    {
+      "code": "EXEMPT",
+      "label": "Exempt",
+      "rate_placeholder": null,
+      "verified": false,
+      "source_to_check": "https://www.gov.uk/vat-rates"
+    },
+    {
+      "code": "OUTSIDE",
+      "label": "Outside the scope",
+      "rate_placeholder": null,
+      "verified": false,
+      "source_to_check": "HMRC VAT Notice 700"
+    }
+  ],
+  "return_boxes": {
+    "_todo": "Verify the 9-box definitions against HMRC VAT Notice 700/12 and the MTD VAT API spec",
+    "box1": "VAT due on sales",
+    "box2": "VAT due on acquisitions (legacy/NI)",
+    "box3": "Total VAT due (1+2)",
+    "box4": "VAT reclaimed on purchases",
+    "box5": "Net VAT (3-4)",
+    "box6": "Total sales ex VAT",
+    "box7": "Total purchases ex VAT",
+    "box8": "Goods supplied to EU (NI)",
+    "box9": "Goods acquired from EU (NI)"
+  },
+  "schemes_todo": [
+    "standard accrual",
+    "cash accounting",
+    "flat rate",
+    "annual accounting"
+  ],
+  "registration_threshold": {
+    "value_placeholder": null,
+    "verified": false,
+    "source_to_check": "https://www.gov.uk/vat-registration"
+  }
+}

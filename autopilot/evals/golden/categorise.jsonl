@@ -1,0 +1,12 @@
+{"desc": "TRAINLINE LONDON", "pence": -4560, "expect": "6100"}
+{"desc": "STAPLES OFFICE SUPPLIES", "pence": -2399, "expect": "6200"}
+{"desc": "VODAFONE UK DD", "pence": -3000, "expect": "6300"}
+{"desc": "GITHUB INC", "pence": -320, "expect": "6400"}
+{"desc": "STRIPE PAYOUT REF 8821", "pence": 120000, "expect": "4000"}
+{"desc": "ACCOUNTANT FEES Q2 SMITH & CO", "pence": -24000, "expect": "6600"}
+{"desc": "META ADS CAMPAIGN", "pence": -5000, "expect": "6500"}
+{"desc": "MONTHLY ACCOUNT FEE", "pence": -500, "expect": "6700"}
+{"desc": "FIVERR LOGO FREELANCER", "pence": -8000, "expect": ["6600", "6500", "9999"]}
+{"desc": "CO-WORKING HOT DESK SHOREDITCH", "pence": -15000, "expect": ["6200", "9999"]}
+{"desc": "TRANSFER TO SAVINGS", "pence": -50000, "expect": "9999"}
+{"desc": "WHOLESALE SUPPLIER LTD STOCK", "pence": -40000, "expect": "5000"}

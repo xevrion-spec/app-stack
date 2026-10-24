@@ -56,4 +56,5 @@ async function save(k,secret){const v=$('#v-'+CSS.escape(k)).value;if(secret&&!v
  if(!await confirmBox(`Write ${k} to .env?${secret?' The old key will be replaced.':''} Restart the bridge for running services to pick it up.`))return;
  try{await api('/console/api/env',{method:'POST',body:JSON.stringify({key:k,value:v,confirm:true})});openApp(cur)}catch(e){alert(e.message)}}
 load();setInterval(mem,30000);
-</script></body></html>
+</script><a href="/console/foundations" style="position:fixed;right:16px;bottom:16px;background:#2b6;color:#fff;padding:8px 14px;border-radius:8px;text-decoration:none;font-family:system-ui;z-index:99">Foundations</a>
+</body></html>

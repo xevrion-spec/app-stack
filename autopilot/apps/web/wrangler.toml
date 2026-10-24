@@ -1,0 +1,11 @@
+name = "autopilot-web"
+compatibility_date = "2026-10-01"
+workers_dev = false
+routes = [
+  { pattern = "app.xevrion.co.uk", custom_domain = true },
+  { pattern = "docs.xevrion.co.uk", custom_domain = true },
+  { pattern = "status.xevrion.co.uk", custom_domain = true },
+]
+[assets]
+directory = "./public"
+not_found_handling = "404-page"

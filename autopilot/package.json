@@ -1,0 +1,13 @@
+{
+  "name": "xevrion-autopilot",
+  "private": true,
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "scripts": {
+    "lint": "npm run -ws --if-present lint",
+    "test": "npm run -ws --if-present test",
+    "typecheck": "npm run -ws --if-present typecheck"
+  }
+}

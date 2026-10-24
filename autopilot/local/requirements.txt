@@ -1,0 +1,5 @@
+httpx
+python-dotenv
+temporalio>=1.7
+langfuse>=2.50,<3
+daytona

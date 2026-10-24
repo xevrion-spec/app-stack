@@ -1,0 +1,24 @@
+name: autopilot-ci
+on:
+  push: { paths: ["autopilot/**", ".github/workflows/autopilot-*.yml"] }
+  pull_request: { paths: ["autopilot/**"] }
+jobs:
+  lint-test:
+    runs-on: ubuntu-latest
+    defaults: { run: { working-directory: autopilot } }
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: 22 }
+      - run: npm install
+      - run: npm run typecheck
+      - run: npm test
+  evals-gate:
+    runs-on: ubuntu-latest
+    defaults: { run: { working-directory: autopilot } }
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: { python-version: "3.12" }
+      - run: pip install -r local/requirements.txt
+      - run: python evals/run_evals.py --offline --threshold 0.6

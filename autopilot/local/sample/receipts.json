@@ -1,0 +1,37 @@
+[
+  {
+    "id": "r1",
+    "date": "2026-07-03",
+    "merchant": "Trainline",
+    "total_pence": 4560,
+    "vat_pence": 0
+  },
+  {
+    "id": "r2",
+    "date": "2026-07-05",
+    "merchant": "Staples",
+    "total_pence": 2399,
+    "vat_pence": 400
+  },
+  {
+    "id": "r3",
+    "date": "2026-07-08",
+    "merchant": "Vodafone",
+    "total_pence": 3000,
+    "vat_pence": 500
+  },
+  {
+    "id": "r4",
+    "date": "2026-07-18",
+    "merchant": "Shell",
+    "total_pence": 6210,
+    "vat_pence": 1035
+  },
+  {
+    "id": "r5",
+    "date": "2026-07-24",
+    "merchant": "Hot desk co",
+    "total_pence": 15000,
+    "vat_pence": 2500
+  }
+]

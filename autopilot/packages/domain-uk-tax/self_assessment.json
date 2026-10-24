@@ -1,0 +1,28 @@
+{
+  "_notice": "UNVERIFIED concept map only; no rates or allowances are encoded. Verify on gov.uk each tax year.",
+  "concepts": [
+    "trading income",
+    "allowable expenses (SA103 categories)",
+    "trading allowance",
+    "simplified expenses",
+    "capital allowances",
+    "payments on account",
+    "Class 2/Class 4 NIC",
+    "filing and payment deadlines"
+  ],
+  "sa103_expense_categories_to_verify": [
+    "cost of goods",
+    "staff costs",
+    "travel",
+    "premises",
+    "repairs",
+    "admin/office",
+    "advertising",
+    "interest",
+    "bank charges",
+    "phone/internet",
+    "professional fees",
+    "other"
+  ],
+  "source_to_check": "https://www.gov.uk/self-assessment-tax-returns"
+}

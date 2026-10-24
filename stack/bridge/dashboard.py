@@ -11,7 +11,8 @@ ENV = ROOT / ".env"
 OTP = ROOT / ".console-otp"
 SESSIONS: set[str] = set()
 r = APIRouter()
-E = lambda k, d="": os.getenv(k, d) or d
+from dotenv import dotenv_values
+E = lambda k, d="": (dotenv_values(ENV).get(k) or os.getenv(k, d) or d)  # re-read .env so key changes apply without restart
 LOOP = {"127.0.0.1", "::1", "localhost"}
 
 def guard(req: Request):
@@ -118,7 +119,7 @@ async def st_loops():
 async def st_kapa():
     x = await get(f"https://api.kapa.ai/query/v1/projects/{E('KAPA_PROJECT_ID')}/integrations/", headers={"X-API-KEY": E("KAPA_API_KEY")})
     if x.status_code != 200: return False, {"Error": f"HTTP {x.status_code} – check KAPA_PROJECT_ID (must be the project UUID)"}
-    return True, {"Integrations": [i.get("name") or i.get("id") for i in x.json().get("results", x.json() if isinstance(x.json(), list) else [])]}
+    return True, {"Integrations": [i.get("name") or i.get("id") for i in (x.json() if isinstance(x.json(), list) else x.json().get("results", []))]}
 async def st_langfuse():
     host = E("LANGFUSE_HOST", "http://localhost:3000")
     if not await up(host + "/api/public/health"): return False, {"Status": "stopped – start it below"}
@@ -227,3 +228,57 @@ def docker(request: Request):
     groups = {}
     for n, m in rows: g = n.split("-")[0]; groups[g] = groups.get(g, 0) + mib(m.split("/")[0])
     return {"containers": len(rows), "used_mib": round(used), "limit": limit, "by_project": {k: round(v) for k, v in sorted(groups.items(), key=lambda x: -x[1])}}
+
+
+# ---------- Foundations panel (Autopilot back office on xevrion.co.uk) ----------
+FOUND_HOSTS = ["api.xevrion.co.uk", "app.xevrion.co.uk", "docs.xevrion.co.uk", "status.xevrion.co.uk"]
+FOUND_RES = {"d1": "autopilot-db", "r2": "autopilot-documents", "queues": ["autopilot-pipeline", "autopilot-pipeline-dlq"],
+             "kv": "autopilot-config", "workers": ["autopilot-api", "autopilot-web"]}
+
+@r.get("/console/api/foundations")
+async def foundations(request: Request):
+    guard(request)
+    a = E("CLOUDFLARE_ACCOUNT_ID"); H = {"Authorization": "Bearer " + E("CLOUDFLARE_API_TOKEN")}; B = "https://api.cloudflare.com/client/v4"
+    out = {"domain": "xevrion.co.uk", "hosts": [], "resources": {}, "ci": None, "todos": []}
+    async with httpx.AsyncClient(timeout=20) as c:
+        async def cf(p):
+            try: return (await c.get(B + p, headers=H)).json().get("result")
+            except Exception as e: return {"error": str(e)}
+        doms = await cf(f"/accounts/{a}/workers/domains") or []
+        for h in FOUND_HOSTS:
+            svc = next((d.get("service") for d in doms if isinstance(d, dict) and d.get("hostname") == h), None)
+            try: code = (await c.get(f"https://{h}/", follow_redirects=False)).status_code
+            except Exception as e: code = type(e).__name__
+            out["hosts"].append({"host": h, "worker": svc, "http": code})
+        scripts = [s["id"] for s in (await cf(f"/accounts/{a}/workers/scripts") or []) if isinstance(s, dict)]
+        d1 = [x["name"] for x in (await cf(f"/accounts/{a}/d1/database") or []) if isinstance(x, dict)]
+        r2 = [x["name"] for x in ((await cf(f"/accounts/{a}/r2/buckets")) or {}).get("buckets", [])]
+        qs = [x["queue_name"] for x in (await cf(f"/accounts/{a}/queues") or []) if isinstance(x, dict)]
+        kv = [x["title"] for x in (await cf(f"/accounts/{a}/storage/kv/namespaces") or []) if isinstance(x, dict)]
+        out["resources"] = {"workers": {w: w in scripts for w in FOUND_RES["workers"]}, "d1": {FOUND_RES["d1"]: FOUND_RES["d1"] in d1},
+                            "r2": {FOUND_RES["r2"]: FOUND_RES["r2"] in r2}, "queues": {q: q in qs for q in FOUND_RES["queues"]},
+                            "kv": {FOUND_RES["kv"]: FOUND_RES["kv"] in kv}}
+        try:
+            g = (await c.get("https://api.github.com/repos/xevrion-spec/app-stack/actions/runs", params={"branch": "foundation/autopilot-backoffice", "per_page": 3},
+                             headers={"Authorization": "Bearer " + E("GITHUB_TOKEN"), "Accept": "application/vnd.github+json"})).json()
+            out["ci"] = [{"name": x["name"], "status": x["status"], "conclusion": x["conclusion"], "url": x["html_url"]} for x in g.get("workflow_runs", [])]
+        except Exception as e: out["ci"] = {"error": str(e)}
+    f = ROOT / "FOUNDATIONS.md"
+    if f.exists(): out["todos"] = [l.strip()[5:].strip() for l in f.read_text(encoding="utf-8").splitlines() if l.strip().startswith("- [ ]")]
+    ev = ROOT / "repo" / "autopilot" / "evals" / "results" / "latest.json"
+    if ev.exists(): out["last_eval"] = {k: v for k, v in json.loads(ev.read_text()).items() if k in ("accuracy", "threshold")}
+    return out
+
+@r.get("/console/foundations", response_class=HTMLResponse)
+def foundations_page(request: Request):
+    guard(request)
+    return HTMLResponse("""<!doctype html><meta charset=utf-8><title>Foundations</title>
+<style>body{background:#0b0f17;color:#dde;font-family:system-ui;padding:24px;max-width:980px;margin:auto}table{border-collapse:collapse;width:100%;margin:8px 0 20px}
+td,th{border-bottom:1px solid #223;padding:6px;text-align:left}.ok{color:#5d5}.bad{color:#e66}a{color:#8af}h2{margin-top:28px}</style>
+<a href="/console">&larr; Console</a><h1>Foundations &middot; Xevrion Autopilot</h1><div id=o>Loading&hellip;</div>
+<script>const y=v=>v?'<span class=ok>yes</span>':'<span class=bad>no</span>';
+fetch('/console/api/foundations').then(r=>r.json()).then(d=>{let h=`<p>Domain: <b>${d.domain}</b>${d.last_eval?` &middot; last eval accuracy <b>${d.last_eval.accuracy}</b> (gate ${d.last_eval.threshold})`:''}</p>`;
+h+='<h2>Hostnames</h2><table><tr><th>Host</th><th>Worker</th><th>HTTP</th></tr>'+d.hosts.map(x=>`<tr><td><a href="https://${x.host}" target=_blank>${x.host}</a></td><td>${x.worker||'-'}</td><td>${x.http}</td></tr>`).join('')+'</table>';
+h+='<h2>Cloudflare resources</h2><table>'+Object.entries(d.resources).map(([k,v])=>Object.entries(v).map(([n,ok])=>`<tr><td>${k}</td><td>${n}</td><td>${y(ok)}</td></tr>`).join('')).join('')+'</table>';
+h+='<h2>CI (foundation/autopilot-backoffice)</h2><table>'+(Array.isArray(d.ci)&&d.ci.length?d.ci.map(x=>`<tr><td>${x.name}</td><td>${x.status}</td><td>${x.conclusion||''}</td><td><a href="${x.url}" target=_blank>run</a></td></tr>`).join(''):'<tr><td>No runs yet</td></tr>')+'</table>';
+h+='<h2>Open TODOs (FOUNDATIONS.md)</h2><ul>'+d.todos.map(t=>`<li>${t.replace(/</g,'&lt;')}</li>`).join('')+'</ul>';o.innerHTML=h}).catch(e=>o.textContent='Error: '+e)</script>""")

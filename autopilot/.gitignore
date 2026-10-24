@@ -1,0 +1,8 @@
+node_modules/
+.wrangler/
+.dev.vars
+*.log
+__pycache__/
+evals/results/
+local/out/
+.venv/
