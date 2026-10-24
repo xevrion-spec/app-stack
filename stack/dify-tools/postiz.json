@@ -1,0 +1,125 @@
+{
+ "openapi": "3.0.1",
+ "info": {
+  "title": "Postiz",
+  "version": "1.0.0"
+ },
+ "servers": [
+  {
+   "url": "https://api.postiz.com/public/v1"
+  }
+ ],
+ "components": {
+  "securitySchemes": {
+   "auth": {
+    "type": "apiKey",
+    "in": "header",
+    "name": "Authorization"
+   }
+  }
+ },
+ "security": [
+  {
+   "auth": []
+  }
+ ],
+ "paths": {
+  "/integrations": {
+   "get": {
+    "operationId": "listIntegrations",
+    "summary": "List connected social channels",
+    "responses": {
+     "200": {
+      "description": "OK"
+     }
+    }
+   }
+  },
+  "/posts": {
+   "get": {
+    "operationId": "listPosts",
+    "summary": "List posts",
+    "responses": {
+     "200": {
+      "description": "OK"
+     }
+    },
+    "parameters": [
+     {
+      "name": "startDate",
+      "in": "query",
+      "required": true,
+      "schema": {
+       "type": "string"
+      }
+     },
+     {
+      "name": "endDate",
+      "in": "query",
+      "required": true,
+      "schema": {
+       "type": "string"
+      }
+     }
+    ]
+   },
+   "post": {
+    "operationId": "createPost",
+    "summary": "Create/schedule post (type: draft|schedule|now; posts: array of {integration:{id},value:[{content}]})",
+    "responses": {
+     "200": {
+      "description": "OK"
+     }
+    },
+    "requestBody": {
+     "required": true,
+     "content": {
+      "application/json": {
+       "schema": {
+        "type": "object",
+        "properties": {
+         "type": {
+          "type": "string"
+         },
+         "date": {
+          "type": "string"
+         },
+         "shortLink": {
+          "type": "boolean"
+         },
+         "tags": {
+          "type": "array"
+         },
+         "posts": {
+          "type": "array"
+         }
+        }
+       }
+      }
+     }
+    }
+   }
+  },
+  "/posts/{id}": {
+   "delete": {
+    "operationId": "deletePost",
+    "summary": "Delete post",
+    "responses": {
+     "200": {
+      "description": "OK"
+     }
+    },
+    "parameters": [
+     {
+      "name": "id",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "string"
+      }
+     }
+    ]
+   }
+  }
+ }
+}

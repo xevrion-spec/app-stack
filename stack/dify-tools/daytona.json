@@ -1,0 +1,168 @@
+{
+ "openapi": "3.0.1",
+ "info": {
+  "title": "Daytona",
+  "version": "1.0.0"
+ },
+ "servers": [
+  {
+   "url": "https://app.daytona.io/api"
+  }
+ ],
+ "components": {
+  "securitySchemes": {
+   "auth": {
+    "type": "http",
+    "scheme": "bearer"
+   }
+  }
+ },
+ "security": [
+  {
+   "auth": []
+  }
+ ],
+ "paths": {
+  "/sandbox": {
+   "get": {
+    "operationId": "listSandboxes",
+    "summary": "List sandboxes",
+    "responses": {
+     "200": {
+      "description": "OK"
+     }
+    }
+   },
+   "post": {
+    "operationId": "createSandbox",
+    "summary": "Create a sandbox",
+    "responses": {
+     "200": {
+      "description": "OK"
+     }
+    },
+    "requestBody": {
+     "required": true,
+     "content": {
+      "application/json": {
+       "schema": {
+        "type": "object",
+        "properties": {
+         "snapshot": {
+          "type": "string"
+         },
+         "language": {
+          "type": "string"
+         },
+         "name": {
+          "type": "string"
+         }
+        }
+       }
+      }
+     }
+    }
+   }
+  },
+  "/sandbox/{sandboxIdOrName}": {
+   "get": {
+    "operationId": "getSandbox",
+    "summary": "Get sandbox",
+    "responses": {
+     "200": {
+      "description": "OK"
+     }
+    },
+    "parameters": [
+     {
+      "name": "sandboxIdOrName",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "string"
+      }
+     }
+    ]
+   },
+   "delete": {
+    "operationId": "deleteSandbox",
+    "summary": "Delete sandbox",
+    "responses": {
+     "200": {
+      "description": "OK"
+     }
+    },
+    "parameters": [
+     {
+      "name": "sandboxIdOrName",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "string"
+      }
+     }
+    ]
+   }
+  },
+  "/sandbox/{sandboxIdOrName}/start": {
+   "post": {
+    "operationId": "startSandbox",
+    "summary": "Start",
+    "responses": {
+     "200": {
+      "description": "OK"
+     }
+    },
+    "parameters": [
+     {
+      "name": "sandboxIdOrName",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "string"
+      }
+     }
+    ],
+    "requestBody": {
+     "content": {
+      "application/json": {
+       "schema": {
+        "type": "object"
+       }
+      }
+     }
+    }
+   }
+  },
+  "/sandbox/{sandboxIdOrName}/stop": {
+   "post": {
+    "operationId": "stopSandbox",
+    "summary": "Stop",
+    "responses": {
+     "200": {
+      "description": "OK"
+     }
+    },
+    "parameters": [
+     {
+      "name": "sandboxIdOrName",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "string"
+      }
+     }
+    ],
+    "requestBody": {
+     "content": {
+      "application/json": {
+       "schema": {
+        "type": "object"
+       }
+      }
+     }
+    }
+   }
+  }
+ }
+}

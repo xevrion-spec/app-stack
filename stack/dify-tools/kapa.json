@@ -1,0 +1,67 @@
+{
+ "openapi": "3.0.1",
+ "info": {
+  "title": "Kapa",
+  "version": "1.0.0"
+ },
+ "servers": [
+  {
+   "url": "https://api.kapa.ai"
+  }
+ ],
+ "components": {
+  "securitySchemes": {
+   "auth": {
+    "type": "apiKey",
+    "in": "header",
+    "name": "X-API-KEY"
+   }
+  }
+ },
+ "security": [
+  {
+   "auth": []
+  }
+ ],
+ "paths": {
+  "/query/v1/projects/{project_id}/chat/": {
+   "post": {
+    "operationId": "chat",
+    "summary": "Ask the Kapa knowledge base",
+    "responses": {
+     "200": {
+      "description": "OK"
+     }
+    },
+    "parameters": [
+     {
+      "name": "project_id",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "string"
+      }
+     }
+    ],
+    "requestBody": {
+     "required": true,
+     "content": {
+      "application/json": {
+       "schema": {
+        "type": "object",
+        "properties": {
+         "query": {
+          "type": "string"
+         },
+         "integration_id": {
+          "type": "string"
+         }
+        }
+       }
+      }
+     }
+    }
+   }
+  }
+ }
+}

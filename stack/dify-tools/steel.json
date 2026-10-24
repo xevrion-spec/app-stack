@@ -1,0 +1,204 @@
+{
+ "openapi": "3.0.1",
+ "info": {
+  "title": "Steel Browser",
+  "version": "1.0.0"
+ },
+ "servers": [
+  {
+   "url": "http://host.docker.internal:3001"
+  }
+ ],
+ "components": {
+  "securitySchemes": {
+   "auth": {
+    "type": "apiKey",
+    "in": "header",
+    "name": "steel-api-key"
+   }
+  }
+ },
+ "security": [
+  {
+   "auth": []
+  }
+ ],
+ "paths": {
+  "/v1/sessions": {
+   "post": {
+    "operationId": "createSession",
+    "summary": "Create a browser session",
+    "responses": {
+     "200": {
+      "description": "OK"
+     }
+    },
+    "requestBody": {
+     "required": true,
+     "content": {
+      "application/json": {
+       "schema": {
+        "type": "object",
+        "properties": {
+         "useProxy": {
+          "type": "boolean"
+         },
+         "solveCaptcha": {
+          "type": "boolean"
+         },
+         "timeout": {
+          "type": "integer"
+         }
+        }
+       }
+      }
+     }
+    }
+   },
+   "get": {
+    "operationId": "listSessions",
+    "summary": "List sessions",
+    "responses": {
+     "200": {
+      "description": "OK"
+     }
+    }
+   }
+  },
+  "/v1/sessions/{id}": {
+   "get": {
+    "operationId": "getSession",
+    "summary": "Get a session",
+    "responses": {
+     "200": {
+      "description": "OK"
+     }
+    },
+    "parameters": [
+     {
+      "name": "id",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "string"
+      }
+     }
+    ]
+   }
+  },
+  "/v1/sessions/{id}/release": {
+   "post": {
+    "operationId": "releaseSession",
+    "summary": "Release a session",
+    "responses": {
+     "200": {
+      "description": "OK"
+     }
+    },
+    "parameters": [
+     {
+      "name": "id",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "string"
+      }
+     }
+    ],
+    "requestBody": {
+     "content": {
+      "application/json": {
+       "schema": {
+        "type": "object"
+       }
+      }
+     }
+    }
+   }
+  },
+  "/v1/scrape": {
+   "post": {
+    "operationId": "scrape",
+    "summary": "Scrape a URL",
+    "responses": {
+     "200": {
+      "description": "OK"
+     }
+    },
+    "requestBody": {
+     "required": true,
+     "content": {
+      "application/json": {
+       "schema": {
+        "type": "object",
+        "properties": {
+         "url": {
+          "type": "string"
+         },
+         "format": {
+          "type": "array"
+         }
+        }
+       }
+      }
+     }
+    }
+   }
+  },
+  "/v1/screenshot": {
+   "post": {
+    "operationId": "screenshot",
+    "summary": "Screenshot a URL",
+    "responses": {
+     "200": {
+      "description": "OK"
+     }
+    },
+    "requestBody": {
+     "required": true,
+     "content": {
+      "application/json": {
+       "schema": {
+        "type": "object",
+        "properties": {
+         "url": {
+          "type": "string"
+         },
+         "fullPage": {
+          "type": "boolean"
+         }
+        }
+       }
+      }
+     }
+    }
+   }
+  },
+  "/v1/pdf": {
+   "post": {
+    "operationId": "pdf",
+    "summary": "PDF of a URL",
+    "responses": {
+     "200": {
+      "description": "OK"
+     }
+    },
+    "requestBody": {
+     "required": true,
+     "content": {
+      "application/json": {
+       "schema": {
+        "type": "object",
+        "properties": {
+         "url": {
+          "type": "string"
+         }
+        }
+       }
+      }
+     }
+    }
+   }
+  }
+ }
+}

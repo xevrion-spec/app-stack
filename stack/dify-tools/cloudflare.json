@@ -1,0 +1,120 @@
+{
+ "openapi": "3.0.1",
+ "info": {
+  "title": "Cloudflare",
+  "version": "1.0.0"
+ },
+ "servers": [
+  {
+   "url": "https://api.cloudflare.com/client/v4"
+  }
+ ],
+ "components": {
+  "securitySchemes": {
+   "auth": {
+    "type": "http",
+    "scheme": "bearer"
+   }
+  }
+ },
+ "security": [
+  {
+   "auth": []
+  }
+ ],
+ "paths": {
+  "/user/tokens/verify": {
+   "get": {
+    "operationId": "verifyToken",
+    "summary": "Verify token",
+    "responses": {
+     "200": {
+      "description": "OK"
+     }
+    }
+   }
+  },
+  "/accounts/{account_id}/workers/scripts": {
+   "get": {
+    "operationId": "listWorkers",
+    "summary": "List Workers scripts",
+    "responses": {
+     "200": {
+      "description": "OK"
+     }
+    },
+    "parameters": [
+     {
+      "name": "account_id",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "string"
+      }
+     }
+    ]
+   }
+  },
+  "/accounts/{account_id}/pages/projects": {
+   "get": {
+    "operationId": "listPagesProjects",
+    "summary": "List Pages projects",
+    "responses": {
+     "200": {
+      "description": "OK"
+     }
+    },
+    "parameters": [
+     {
+      "name": "account_id",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "string"
+      }
+     }
+    ]
+   }
+  },
+  "/accounts/{account_id}/pages/projects/{project_name}/deployments": {
+   "get": {
+    "operationId": "listPagesDeployments",
+    "summary": "List Pages deployments",
+    "responses": {
+     "200": {
+      "description": "OK"
+     }
+    },
+    "parameters": [
+     {
+      "name": "account_id",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "string"
+      }
+     },
+     {
+      "name": "project_name",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "string"
+      }
+     }
+    ]
+   }
+  },
+  "/zones": {
+   "get": {
+    "operationId": "listZones",
+    "summary": "List zones",
+    "responses": {
+     "200": {
+      "description": "OK"
+     }
+    }
+   }
+  }
+ }
+}

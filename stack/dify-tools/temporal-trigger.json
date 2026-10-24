@@ -1,0 +1,138 @@
+{
+ "openapi": "3.0.1",
+ "info": {
+  "title": "Temporal trigger (via local bridge)",
+  "version": "1.0.0"
+ },
+ "servers": [
+  {
+   "url": "http://host.docker.internal:8765"
+  }
+ ],
+ "components": {
+  "securitySchemes": {
+   "auth": {
+    "type": "http",
+    "scheme": "bearer"
+   }
+  }
+ },
+ "security": [
+  {
+   "auth": []
+  }
+ ],
+ "paths": {
+  "/temporal/start": {
+   "post": {
+    "operationId": "startWorkflow",
+    "summary": "Start a Temporal workflow",
+    "responses": {
+     "200": {
+      "description": "OK"
+     }
+    },
+    "requestBody": {
+     "required": true,
+     "content": {
+      "application/json": {
+       "schema": {
+        "type": "object",
+        "properties": {
+         "workflow": {
+          "type": "string"
+         },
+         "task_queue": {
+          "type": "string"
+         },
+         "args": {
+          "type": "array"
+         },
+         "workflow_id": {
+          "type": "string"
+         }
+        }
+       }
+      }
+     }
+    }
+   }
+  },
+  "/temporal/describe/{workflow_id}": {
+   "get": {
+    "operationId": "describeWorkflow",
+    "summary": "Describe workflow",
+    "responses": {
+     "200": {
+      "description": "OK"
+     }
+    },
+    "parameters": [
+     {
+      "name": "workflow_id",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "string"
+      }
+     }
+    ]
+   }
+  },
+  "/crew/run": {
+   "post": {
+    "operationId": "runCrew",
+    "summary": "Run a CrewAI crew on FreeLLMAPI",
+    "responses": {
+     "200": {
+      "description": "OK"
+     }
+    },
+    "requestBody": {
+     "required": true,
+     "content": {
+      "application/json": {
+       "schema": {
+        "type": "object",
+        "properties": {
+         "topic": {
+          "type": "string"
+         },
+         "goal": {
+          "type": "string"
+         }
+        }
+       }
+      }
+     }
+    }
+   }
+  },
+  "/crawl": {
+   "post": {
+    "operationId": "crawl",
+    "summary": "Crawl a URL with Crawl4AI to markdown",
+    "responses": {
+     "200": {
+      "description": "OK"
+     }
+    },
+    "requestBody": {
+     "required": true,
+     "content": {
+      "application/json": {
+       "schema": {
+        "type": "object",
+        "properties": {
+         "url": {
+          "type": "string"
+         }
+        }
+       }
+      }
+     }
+    }
+   }
+  }
+ }
+}

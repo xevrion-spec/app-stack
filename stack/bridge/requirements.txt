@@ -1,0 +1,7 @@
+fastapi
+uvicorn
+python-dotenv
+temporalio
+langfuse
+openai
+crewai

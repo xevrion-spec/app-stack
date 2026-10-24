@@ -1,0 +1,201 @@
+{
+ "openapi": "3.0.1",
+ "info": {
+  "title": "Loops",
+  "version": "1.0.0"
+ },
+ "servers": [
+  {
+   "url": "https://app.loops.so/api/v1"
+  }
+ ],
+ "components": {
+  "securitySchemes": {
+   "auth": {
+    "type": "http",
+    "scheme": "bearer"
+   }
+  }
+ },
+ "security": [
+  {
+   "auth": []
+  }
+ ],
+ "paths": {
+  "/api-key": {
+   "get": {
+    "operationId": "testKey",
+    "summary": "Test API key",
+    "responses": {
+     "200": {
+      "description": "OK"
+     }
+    }
+   }
+  },
+  "/contacts/create": {
+   "post": {
+    "operationId": "createContact",
+    "summary": "Create contact",
+    "responses": {
+     "200": {
+      "description": "OK"
+     }
+    },
+    "requestBody": {
+     "required": true,
+     "content": {
+      "application/json": {
+       "schema": {
+        "type": "object",
+        "properties": {
+         "email": {
+          "type": "string"
+         },
+         "firstName": {
+          "type": "string"
+         },
+         "lastName": {
+          "type": "string"
+         },
+         "userGroup": {
+          "type": "string"
+         },
+         "source": {
+          "type": "string"
+         }
+        }
+       }
+      }
+     }
+    }
+   }
+  },
+  "/contacts/update": {
+   "put": {
+    "operationId": "updateContact",
+    "summary": "Update contact",
+    "responses": {
+     "200": {
+      "description": "OK"
+     }
+    },
+    "requestBody": {
+     "required": true,
+     "content": {
+      "application/json": {
+       "schema": {
+        "type": "object",
+        "properties": {
+         "email": {
+          "type": "string"
+         },
+         "firstName": {
+          "type": "string"
+         },
+         "lastName": {
+          "type": "string"
+         }
+        }
+       }
+      }
+     }
+    }
+   }
+  },
+  "/contacts/find": {
+   "get": {
+    "operationId": "findContact",
+    "summary": "Find contact",
+    "responses": {
+     "200": {
+      "description": "OK"
+     }
+    },
+    "parameters": [
+     {
+      "name": "email",
+      "in": "query",
+      "required": false,
+      "schema": {
+       "type": "string"
+      }
+     },
+     {
+      "name": "userId",
+      "in": "query",
+      "required": false,
+      "schema": {
+       "type": "string"
+      }
+     }
+    ]
+   }
+  },
+  "/events/send": {
+   "post": {
+    "operationId": "sendEvent",
+    "summary": "Send event",
+    "responses": {
+     "200": {
+      "description": "OK"
+     }
+    },
+    "requestBody": {
+     "required": true,
+     "content": {
+      "application/json": {
+       "schema": {
+        "type": "object",
+        "properties": {
+         "email": {
+          "type": "string"
+         },
+         "eventName": {
+          "type": "string"
+         },
+         "eventProperties": {
+          "type": "object"
+         }
+        }
+       }
+      }
+     }
+    }
+   }
+  },
+  "/transactional": {
+   "post": {
+    "operationId": "sendTransactional",
+    "summary": "Send transactional email",
+    "responses": {
+     "200": {
+      "description": "OK"
+     }
+    },
+    "requestBody": {
+     "required": true,
+     "content": {
+      "application/json": {
+       "schema": {
+        "type": "object",
+        "properties": {
+         "transactionalId": {
+          "type": "string"
+         },
+         "email": {
+          "type": "string"
+         },
+         "dataVariables": {
+          "type": "object"
+         }
+        }
+       }
+      }
+     }
+    }
+   }
+  }
+ }
+}

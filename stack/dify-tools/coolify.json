@@ -1,0 +1,140 @@
+{
+ "openapi": "3.0.1",
+ "info": {
+  "title": "Coolify",
+  "version": "1.0.0"
+ },
+ "servers": [
+  {
+   "url": "https://app.coolify.io/api/v1"
+  }
+ ],
+ "components": {
+  "securitySchemes": {
+   "auth": {
+    "type": "http",
+    "scheme": "bearer"
+   }
+  }
+ },
+ "security": [
+  {
+   "auth": []
+  }
+ ],
+ "paths": {
+  "/version": {
+   "get": {
+    "operationId": "version",
+    "summary": "Coolify version",
+    "responses": {
+     "200": {
+      "description": "OK"
+     }
+    }
+   }
+  },
+  "/servers": {
+   "get": {
+    "operationId": "listServers",
+    "summary": "List servers",
+    "responses": {
+     "200": {
+      "description": "OK"
+     }
+    }
+   }
+  },
+  "/projects": {
+   "get": {
+    "operationId": "listProjects",
+    "summary": "List projects",
+    "responses": {
+     "200": {
+      "description": "OK"
+     }
+    }
+   }
+  },
+  "/applications": {
+   "get": {
+    "operationId": "listApplications",
+    "summary": "List applications",
+    "responses": {
+     "200": {
+      "description": "OK"
+     }
+    }
+   }
+  },
+  "/applications/{uuid}": {
+   "get": {
+    "operationId": "getApplication",
+    "summary": "Get application",
+    "responses": {
+     "200": {
+      "description": "OK"
+     }
+    },
+    "parameters": [
+     {
+      "name": "uuid",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "string"
+      }
+     }
+    ]
+   }
+  },
+  "/deploy": {
+   "get": {
+    "operationId": "deploy",
+    "summary": "Deploy by uuid or tag",
+    "responses": {
+     "200": {
+      "description": "OK"
+     }
+    },
+    "parameters": [
+     {
+      "name": "uuid",
+      "in": "query",
+      "required": false,
+      "schema": {
+       "type": "string"
+      }
+     },
+     {
+      "name": "tag",
+      "in": "query",
+      "required": false,
+      "schema": {
+       "type": "string"
+      }
+     },
+     {
+      "name": "force",
+      "in": "query",
+      "required": false,
+      "schema": {
+       "type": "string"
+      }
+     }
+    ]
+   }
+  },
+  "/deployments": {
+   "get": {
+    "operationId": "listDeployments",
+    "summary": "Running deployments",
+    "responses": {
+     "200": {
+      "description": "OK"
+     }
+    }
+   }
+  }
+ }
+}

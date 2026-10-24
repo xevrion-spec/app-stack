@@ -1,0 +1,6 @@
+# Aider -> FreeLLMAPI (OpenAI-compatible). Key/base come from .env (OPENAI_API_KEY/OPENAI_API_BASE set by start.ps1 aider or set manually).
+model: openai/auto
+weak-model: openai/auto
+env-file: .env
+auto-commits: false
+show-model-warnings: false
