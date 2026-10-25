@@ -1,0 +1,83 @@
+{
+  "generated": "2026-10-25 01:23",
+  "branch": "feature/mvp-core",
+  "unit_integration": {
+    "passed": 69,
+    "total": 69,
+    "suites": 22
+  },
+  "e2e": {
+    "passed": 10,
+    "failed": 0,
+    "flaky": 0
+  },
+  "coverage": {
+    "lines": 91.0,
+    "branches": 83.1,
+    "functions": 93.3,
+    "statements": 91.0
+  },
+  "evals": {
+    "accuracy": 1,
+    "cases": 75,
+    "threshold": 0.9,
+    "by_tag": {
+      "routine": {
+        "pass": 33,
+        "total": 33
+      },
+      "wholesale_vs_sale": {
+        "pass": 3,
+        "total": 3
+      },
+      "token_boundary": {
+        "pass": 5,
+        "total": 5
+      },
+      "refund": {
+        "pass": 6,
+        "total": 6
+      },
+      "sign": {
+        "pass": 2,
+        "total": 2
+      },
+      "transfer": {
+        "pass": 5,
+        "total": 5
+      },
+      "split": {
+        "pass": 4,
+        "total": 4
+      },
+      "fx": {
+        "pass": 4,
+        "total": 4
+      },
+      "unknown": {
+        "pass": 8,
+        "total": 8
+      },
+      "reconcile": {
+        "pass": 5,
+        "total": 5
+      },
+      "vat": {
+        "pass": 2,
+        "total": 2
+      }
+    }
+  },
+  "api_paths": 25,
+  "migrations": [
+    "0001_init.sql",
+    "0002_mvp_core.sql"
+  ],
+  "live": {
+    "d1_migrations_applied": [
+      "0001",
+      "0002"
+    ],
+    "workers_deployed_with_mvp_code": false
+  }
+}

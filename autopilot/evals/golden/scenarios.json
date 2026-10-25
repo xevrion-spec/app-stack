@@ -1,0 +1,33 @@
+[
+  { "id": "recon-invoice-late-quoted-number", "tags": ["reconcile"], "kind": "reconcile",
+    "lines": [{ "id": "l1", "date": "2026-08-20", "description": "ACME LTD INV-0042", "amountPence": 60000 }],
+    "invoices": [{ "id": "i1", "number": "INV-0042", "customerName": "Acme Ltd", "grossPence": 60000, "issueDate": "2026-07-01", "dueDate": "2026-07-31" }],
+    "receipts": [], "expect": [["l1", "i1"]] },
+  { "id": "recon-receipt-same-week", "tags": ["reconcile"], "kind": "reconcile",
+    "lines": [{ "id": "l1", "date": "2026-07-05", "description": "STAPLES OFFICE", "amountPence": -2399 }],
+    "receipts": [{ "id": "r1", "date": "2026-07-04", "merchant": "Staples", "totalPence": 2399, "vatPence": 400 }],
+    "invoices": [], "expect": [["l1", "r1"]] },
+  { "id": "recon-amount-mismatch-no-match", "tags": ["reconcile"], "kind": "reconcile",
+    "lines": [{ "id": "l1", "date": "2026-07-05", "description": "STAPLES OFFICE", "amountPence": -2500 }],
+    "receipts": [{ "id": "r1", "date": "2026-07-04", "merchant": "Staples", "totalPence": 2399, "vatPence": 400 }],
+    "invoices": [], "expect": [] },
+  { "id": "recon-two-identical-receipts-one-to-one", "tags": ["reconcile"], "kind": "reconcile",
+    "lines": [{ "id": "l1", "date": "2026-07-05", "description": "TFL", "amountPence": -280 }, { "id": "l2", "date": "2026-07-06", "description": "TFL", "amountPence": -280 }],
+    "receipts": [{ "id": "r1", "date": "2026-07-05", "merchant": "TFL", "totalPence": 280, "vatPence": 0 }, { "id": "r2", "date": "2026-07-06", "merchant": "TFL", "totalPence": 280, "vatPence": 0 }],
+    "invoices": [], "expect": [["l1", "r1"], ["l2", "r2"]] },
+  { "id": "recon-split-payment-two-receipts", "tags": ["reconcile", "split"], "kind": "reconcile",
+    "lines": [{ "id": "l1", "date": "2026-07-10", "description": "AMAZON MARKETPLACE", "amountPence": -3500 }],
+    "receipts": [{ "id": "r1", "date": "2026-07-09", "merchant": "Amazon", "totalPence": 2000, "vatPence": 333 }, { "id": "r2", "date": "2026-07-09", "merchant": "Amazon", "totalPence": 1500, "vatPence": 250 }],
+    "invoices": [], "expect": [["l1", "r1"], ["l1", "r2"]] },
+  { "id": "vat-standard-invariants-and-refund", "tags": ["vat", "refund"], "kind": "vat", "scheme": "standard",
+    "lines": [
+      { "id": "s1", "date": "2026-07-01", "grossPence": 120000, "kind": "income", "vatRateCode": "STD" },
+      { "id": "p1", "date": "2026-07-03", "grossPence": -2400, "kind": "expense", "vatRateCode": "STD", "evidencedVatPence": 400 },
+      { "id": "p1r", "date": "2026-07-09", "grossPence": 2400, "kind": "expense", "vatRateCode": "STD", "evidencedVatPence": 400 },
+      { "id": "t1", "date": "2026-07-04", "grossPence": -50000, "kind": "transfer", "vatRateCode": null }
+    ],
+    "expect": { "box1": 20000, "box4": 0, "box6": 100000, "box7": 0 } },
+  { "id": "vat-flat-rate-12.5", "tags": ["vat"], "kind": "vat", "scheme": "flat_rate", "flatRatePercent": 12.5,
+    "lines": [{ "id": "s1", "date": "2026-07-01", "grossPence": 120000, "kind": "income", "vatRateCode": "STD" }],
+    "expect": { "box1": 15000, "box6": 120000 } }
+]

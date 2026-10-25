@@ -13,6 +13,10 @@ export interface Env {
   LLM_BASE_URL?: string;
   LLM_API_KEY?: string;
   LLM_MODEL?: string;
+  /** Optional Langfuse (self-hosted) tracing; pipeline traces carry summaries only. */
+  LANGFUSE_HOST?: string;
+  LANGFUSE_PUBLIC_KEY?: string;
+  LANGFUSE_SECRET_KEY?: string;
 }
 
 export interface PipelineMessage {

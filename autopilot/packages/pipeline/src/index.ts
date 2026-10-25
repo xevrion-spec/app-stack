@@ -7,3 +7,5 @@ export * from "./qa.js";
 export * from "./vat.js";
 export * from "./ledger.js";
 export * from "./sa.js";
+export * from "./llm.js";
+export * from "./tracing.js";

@@ -20,8 +20,12 @@
 | Dify categorise step | LOCAL, working (Agent app, streaming) | |
 | Crawl4AI research hook (gov.uk) | LOCAL, working | `local/research.py` |
 | Daytona sandboxed parsing | **DONE**: guarded client `packages/sandbox` (concurrency 1, 20/day cap, no network, ephemeral, auto-delete, janitor); mocked tests in CI; live smoke + demo passed; 0 sandboxes left | `docs/sandbox.md` |
-| Evals gate | LOCAL accuracy 1.000 (gate 0.8); CI runs offline at gate 0.6 | `evals/run_evals.py` |
-| CI (lint/typecheck/test/evals) | Workflow pushed; deploy workflow is manual only and needs GitHub secrets | `.github/workflows/autopilot-*.yml` |
+| Evals gate | TS pipeline gate `npm run evals`: 75 golden cases/scenarios, offline accuracy 1.000 (gate 0.90, in CI). Cases were written alongside the rules, so this is not real-data accuracy. Legacy Python gate kept | `scripts/evals.ts`, `evals/` |
+| MVP backend (feature/mvp-core) | Built + tested, NOT deployed: 25 OpenAPI paths, Access auth, tenant guard, ledger, invoices + PDF, VAT/SA drafts, review queue, queue + DLQ. D1 migration 0002 applied remotely (additive) | `apps/api`, `docs/mvp.md` |
+| MVP web app | Built + tested (Playwright 10/10 desktop + mobile, axe a11y), NOT deployed | `apps/web` |
+| Tests / coverage | 69 Vitest (unit, property, integration on SQLite, Temporal time-skipping) · coverage 91.0% lines / 83.1% branches (gate 80/75) | `mvp-status.json` |
+| Temporal monthly close (TS) | Built + tested (signal / timeout paths); worker `--demo` runs without Docker | `packages/workflows` |
+| CI (lint/typecheck/test/evals) | Gates: strict tsc, ESLint + Prettier, coverage thresholds, OpenAPI/SDK drift, TS evals, Playwright e2e; deploy workflow is manual only and needs GitHub secrets | `.github/workflows/autopilot-*.yml` |
 | Loops | Template specs only, nothing sent | `local/loops_templates/README.md` |
 | Postiz | Untouched, nothing posted | |
 | Coolify | Not used yet; the Temporal worker will move there when there's a host | |

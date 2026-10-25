@@ -1,0 +1,68 @@
+{"desc": "TRAINLINE LONDON", "pence": -4560, "expect": "6100", "tags": ["routine"]}
+{"desc": "UBER *TRIP HELP.UBER.COM", "pence": -1820, "expect": "6100", "tags": ["routine"]}
+{"desc": "TFL TRAVEL CH", "pence": -280, "expect": "6100", "tags": ["routine"]}
+{"desc": "SHELL FUEL A40", "pence": -6210, "expect": "6100", "tags": ["routine"]}
+{"desc": "BP PETROL BICESTER", "pence": -5400, "expect": "6100", "tags": ["routine"]}
+{"desc": "STAPLES OFFICE SUPPLIES", "pence": -2399, "expect": "6200", "tags": ["routine"]}
+{"desc": "RYMAN STATIONERY OXFORD", "pence": -1299, "expect": "6200", "tags": ["routine"]}
+{"desc": "AMAZON MARKETPLACE", "pence": -6450, "expect": "6200", "tags": ["routine"]}
+{"desc": "VODAFONE UK DD", "pence": -3000, "expect": "6300", "tags": ["routine"]}
+{"desc": "EE LIMITED DD", "pence": -2500, "expect": "6300", "tags": ["routine"]}
+{"desc": "BT GROUP PLC DD", "pence": -4200, "expect": "6300", "tags": ["routine"]}
+{"desc": "O2 UK MOBILE", "pence": -1500, "expect": "6300", "tags": ["routine"]}
+{"desc": "THREE MOBILE DD", "pence": -1200, "expect": "6300", "tags": ["routine"]}
+{"desc": "GITHUB INC", "pence": -320, "expect": "6400", "tags": ["routine"]}
+{"desc": "GOOGLE WORKSPACE", "pence": -1080, "expect": "6400", "tags": ["routine"]}
+{"desc": "MICROSOFT 365", "pence": -999, "expect": "6400", "tags": ["routine"]}
+{"desc": "ADOBE CREATIVE CLD", "pence": -5998, "expect": "6400", "tags": ["routine"]}
+{"desc": "NOTION LABS INC", "pence": -800, "expect": "6400", "tags": ["routine"]}
+{"desc": "CLOUDFLARE INC", "pence": -500, "expect": "6400", "tags": ["routine"]}
+{"desc": "META ADS CAMPAIGN", "pence": -5000, "expect": "6500", "tags": ["routine"]}
+{"desc": "FACEBK ADS FACEBOOK", "pence": -2500, "expect": "6500", "tags": ["routine"]}
+{"desc": "GOOGLE ADS 1234", "pence": -3000, "expect": ["6500"], "tags": ["routine"]}
+{"desc": "ACCOUNTANT FEES Q2 SMITH & CO", "pence": -24000, "expect": "6600", "tags": ["routine"]}
+{"desc": "SOLICITOR CONVEYANCE", "pence": -60000, "expect": "6600", "tags": ["routine"]}
+{"desc": "LEGAL ADVICE LTD", "pence": -15000, "expect": "6600", "tags": ["routine"]}
+{"desc": "MONTHLY ACCOUNT FEE", "pence": -500, "expect": "6700", "tags": ["routine"]}
+{"desc": "OVERDRAFT INTEREST", "pence": -312, "expect": "6700", "tags": ["routine"]}
+{"desc": "NON-STERLING TRANSACTION CHARGE", "pence": -275, "expect": "6700", "tags": ["routine"]}
+{"desc": "STRIPE PAYOUT REF 8821", "pence": 120000, "expect": "4000", "tags": ["routine"]}
+{"desc": "SUMUP PAYOUT 22JUL", "pence": 45600, "expect": "4000", "tags": ["routine"]}
+{"desc": "INVOICE 1043 ACME DESIGN LTD", "pence": 85000, "expect": "4000", "tags": ["routine"]}
+{"desc": "WHOLESALE SUPPLIER LTD STOCK", "pence": -40000, "expect": "5000", "tags": ["routine"]}
+{"desc": "STOCK PURCHASE BOOKER", "pence": -23000, "expect": "5000", "tags": ["routine"]}
+{"desc": "WHOLESALE FLOWERS MARKET", "pence": -18000, "expect": "5000", "tags": ["wholesale_vs_sale"]}
+{"desc": "CAR BOOT SALE PROCEEDS", "pence": 4000, "expect": ["4000", "9999"], "tags": ["wholesale_vs_sale"], "review": true}
+{"desc": "SALESFORCE SUBSCRIPTION", "pence": -2500, "expect": ["6400", "9999"], "tags": ["wholesale_vs_sale"], "review": true}
+{"desc": "FEEFO REVIEWS", "pence": -2000, "expect": ["6500", "9999"], "tags": ["token_boundary"], "review": true}
+{"desc": "COFFEE SHOP", "pence": -450, "expect": ["9999"], "tags": ["token_boundary"], "review": true}
+{"desc": "SHELLFISH RESTAURANT", "pence": -6000, "expect": ["9999"], "tags": ["token_boundary"], "review": true}
+{"desc": "THREEFOLD DESIGN LTD", "pence": -9000, "expect": ["9999"], "tags": ["token_boundary"], "review": true}
+{"desc": "BPM RECORDS", "pence": -1500, "expect": ["9999"], "tags": ["token_boundary"], "review": true}
+{"desc": "REFUND STAPLES OFFICE SUPPLIES", "pence": 2399, "expect": "6200", "tags": ["refund"]}
+{"desc": "AMAZON MARKETPLACE REFUND", "pence": 1299, "expect": "6200", "tags": ["refund"]}
+{"desc": "TRAINLINE REFUND", "pence": 4560, "expect": "6100", "tags": ["refund"]}
+{"desc": "REFUND FROM UNKNOWN MERCHANT", "pence": 3000, "expect": ["9999"], "tags": ["refund"], "review": true}
+{"desc": "STRIPE REFUND TO CUSTOMER", "pence": -5000, "expect": ["4000", "9999"], "tags": ["refund"], "review": true}
+{"desc": "INVOICE PAYMENT TO PRINTER LTD", "pence": -12000, "expect": ["5000", "6200", "9999"], "tags": ["sign"], "review": true}
+{"desc": "STRIPE FEE", "pence": -145, "expect": ["6700"], "tags": ["sign"]}
+{"desc": "TRANSFER TO SAVINGS", "pence": -50000, "expect": "8000", "tags": ["transfer"]}
+{"desc": "TFR FROM SAVINGS", "pence": 30000, "expect": "8000", "tags": ["transfer"]}
+{"desc": "MONZO POT WITHDRAWAL", "pence": 10000, "expect": "8000", "tags": ["transfer"]}
+{"desc": "OWN ACCOUNT TRANSFER BARCLAYS", "pence": -20000, "expect": "8000", "tags": ["transfer"]}
+{"desc": "FASTER PAYMENT J SMITH", "pence": -20000, "expect": ["9999"], "tags": ["transfer"], "review": true}
+{"desc": "AMAZON MKTPLACE ORDER 3 ITEMS", "pence": -8997, "expect": ["6200", "9999"], "tags": ["split"]}
+{"desc": "PAYPAL *MULTIPLE", "pence": -4500, "expect": ["9999"], "tags": ["split"], "review": true}
+{"desc": "TESCO STORES 3021", "pence": -6420, "expect": ["9999"], "tags": ["split"], "review": true}
+{"desc": "ADOBE SYSTEMS USD 59.99", "pence": -4790, "expect": "6400", "tags": ["fx"], "currency": "USD", "review": true}
+{"desc": "UBER BV EUR 23.10", "pence": -1985, "expect": "6100", "tags": ["fx"], "currency": "EUR", "review": true}
+{"desc": "STRIPE PAYOUT USD", "pence": 80000, "expect": "4000", "tags": ["fx"], "currency": "USD", "review": true}
+{"desc": "GITHUB INC USD", "pence": -800, "expect": "6400", "tags": ["fx"], "currency": "USD", "review": true}
+{"desc": "MYSTERY PAYEE 99", "pence": -8000, "expect": ["9999"], "tags": ["unknown"], "review": true}
+{"desc": "HMRC SELF ASSESSMENT", "pence": -150000, "expect": ["9999"], "tags": ["unknown"], "review": true}
+{"desc": "HMRC VAT", "pence": -90000, "expect": ["9999"], "tags": ["unknown"], "review": true}
+{"desc": "ATM CASH WITHDRAWAL", "pence": -10000, "expect": ["9999"], "tags": ["unknown"], "review": true}
+{"desc": "NETFLIX.COM", "pence": -1099, "expect": ["9999"], "tags": ["unknown"], "review": true}
+{"desc": "GYM MEMBERSHIP PUREGYM", "pence": -2499, "expect": ["9999"], "tags": ["unknown"], "review": true}
+{"desc": "DELIVEROO", "pence": -2350, "expect": ["9999"], "tags": ["unknown"], "review": true}
+{"desc": "CHQ DEPOSIT 100023", "pence": 25000, "expect": ["9999"], "tags": ["unknown"], "review": true}

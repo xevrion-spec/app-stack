@@ -5,6 +5,8 @@ export interface Match {
   kind: "receipt" | "invoice";
   refId: string;
   score: number; // 0..1
+  /** Part of a split payment (several receipts for one bank line). */
+  split?: boolean;
 }
 
 const daysBetween = (a: string, b: string) => Math.abs(Date.parse(a) - Date.parse(b)) / 86_400_000;
@@ -78,6 +80,30 @@ export function reconcile(lines: BankLine[], receipts: Receipt[], invoices: Invo
     usedL.add(c.lineId);
     usedR.add(c.kind + c.refId);
     out.push(c);
+  }
+  // Split payments: one card payment covering 2-3 receipts from the same merchant (e.g. a basket split into orders).
+  // Bounded search (max 10 nearby candidates -> at most 165 combinations per line) keeps this cheap.
+  for (const l of lines) {
+    if (usedL.has(l.id) || l.amountPence >= 0) continue;
+    const near = receipts
+      .filter((r) => !usedR.has("receipt" + r.id) && daysBetween(l.date, r.date) <= opt.dateWindowDays && similarity(l.description, r.merchant) > 0)
+      .slice(0, 10);
+    const target = -l.amountPence;
+    let best: Receipt[] | null = null;
+    const pick = (start: number, chosen: Receipt[], sum: number) => {
+      if (best) return;
+      if (chosen.length >= 2 && Math.abs(sum - target) <= opt.amountTolerancePence) best = [...chosen];
+      if (chosen.length === 3) return;
+      for (let i = start; i < near.length; i++) pick(i + 1, [...chosen, near[i]!], sum + near[i]!.totalPence);
+    };
+    pick(0, [], 0);
+    if (best) {
+      usedL.add(l.id);
+      for (const r of best as Receipt[]) {
+        usedR.add("receipt" + r.id);
+        out.push({ lineId: l.id, kind: "receipt", refId: r.id, score: 0.7, split: true });
+      }
+    }
   }
   return out;
 }

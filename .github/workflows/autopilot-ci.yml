@@ -20,6 +20,11 @@ jobs:
         run: npm run coverage
       - name: OpenAPI + SDK drift gate
         run: npm run openapi:check
+      - name: Golden evals gate (TS pipeline, offline rules-only, >= 0.90)
+        run: npm run evals -- --threshold 0.9
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with: { name: eval-results, path: autopilot/evals/results/ts-latest.json, retention-days: 14 }
   e2e:
     runs-on: ubuntu-latest
     defaults: { run: { working-directory: autopilot } }

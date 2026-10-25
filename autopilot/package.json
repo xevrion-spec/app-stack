@@ -15,7 +15,9 @@
     "openapi": "npm run openapi -w apps/api && npm run generate -w packages/sdk",
     "openapi:check": "npm run openapi && git diff --exit-code -- openapi packages/sdk/src/schema.d.ts",
     "seed": "tsx scripts/seed.ts",
-    "local": "node scripts/local.mjs"
+    "local": "node scripts/local.mjs",
+    "evals": "tsx scripts/evals.ts",
+    "docs:api": "node scripts/api-docs.mjs"
   },
   "allowScripts": {
     "better-sqlite3@11.10.0": true,

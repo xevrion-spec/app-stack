@@ -3,6 +3,7 @@ import { makeEnv, client, BANK_CSV } from "./harness.js";
 import { runPipeline } from "../src/services/pipeline.js";
 import { handlePipelineBatch, handleDeadLetters } from "../src/queue.js";
 import { TenantDb } from "../src/lib/db.js";
+import { MemoryTracer } from "@xevrion/pipeline";
 
 const txns0 = (r: { json: { items: unknown[] } }) => r.json.items;
 const A = "owner-a@example.test", B = "owner-b@example.test", R = "reviewer-a@example.test";
@@ -118,6 +119,15 @@ describe("ingestion, pipeline, ledger", () => {
     const txns = (await s.call("GET", "/v1/transactions", { user: A })).json.items as { description: string; category_code: string }[];
     expect(txns.find((t) => t.description.includes("TRANSFER TO SAVINGS"))!.category_code).toBe("8000");
     expect(txns.find((t) => t.description.includes("WHOLESALE"))!.category_code).not.toBe("4000");
+  });
+  it("pipeline traces every stage with summaries only (no bank descriptions)", async () => {
+    const up = await s.call("POST", "/v1/uploads/bank-csv", { user: A, raw: BANK_CSV, headers: { "content-type": "text/csv" } });
+    const t = new MemoryTracer();
+    await runPipeline(s.env, s.ta, up.json.jobId, undefined, t);
+    const spans = t.events.filter((e) => e.type === "span-create").map((e) => e.body.name);
+    expect(spans).toEqual(["categorise", "reconcile", "draft"]);
+    expect(t.events.some((e) => e.type === "score-create" && e.body.name === "qa_score")).toBe(true);
+    expect(JSON.stringify(t.events)).not.toMatch(/STRIPE|VODAFONE|MYSTERY/);
   });
   it("pipeline is idempotent when re-run", async () => {
     const { up } = await uploadAndRun(s);

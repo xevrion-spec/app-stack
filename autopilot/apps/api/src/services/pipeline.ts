@@ -13,6 +13,10 @@ import {
   type Receipt,
   type InvoiceRef,
   type Stage,
+  type PipelineTracer,
+  type TraceHandle,
+  tracerFromEnv,
+  openAiCompatible,
 } from "@xevrion/pipeline";
 import type { Env } from "../env.js";
 import { TenantDb, newId } from "../lib/db.js";
@@ -22,18 +26,7 @@ import { postTransactionJournal } from "./ledger.js";
 
 export function llmFromEnv(env: Env): LlmClient | undefined {
   if (!env.LLM_BASE_URL || !env.LLM_API_KEY) return undefined;
-  return {
-    async complete(prompt) {
-      const r = await fetch(env.LLM_BASE_URL!.replace(/\/$/, "") + "/chat/completions", {
-        method: "POST",
-        headers: { "content-type": "application/json", authorization: `Bearer ${env.LLM_API_KEY}` },
-        body: JSON.stringify({ model: env.LLM_MODEL ?? "llama-3.3-70b-fp8-fast", temperature: 0, messages: [{ role: "user", content: prompt }] }),
-      });
-      if (!r.ok) throw new Error(`LLM HTTP ${r.status}`);
-      const j = (await r.json()) as { choices?: { message?: { content?: string } }[] };
-      return j.choices?.[0]?.message?.content ?? "";
-    },
-  };
+  return openAiCompatible(env.LLM_BASE_URL, env.LLM_API_KEY, env.LLM_MODEL ?? "llama-3.3-70b-fp8-fast");
 }
 
 /** Idempotent stage marker: returns false if this stage already completed for the job (safe re-delivery). */
@@ -69,7 +62,28 @@ export interface PipelineSummary {
  * Runs categorise -> reconcile -> anomaly -> ledger -> qa -> outcome for all 'new' transactions of a tenant.
  * Every stage is idempotent (job_events unique on job/stage/status), so queue retries are safe.
  */
-export async function runPipeline(env: Env, tenantId: string, jobId: string, llm = llmFromEnv(env)): Promise<PipelineSummary> {
+export async function runPipeline(
+  env: Env,
+  tenantId: string,
+  jobId: string,
+  llm = llmFromEnv(env),
+  tracer: PipelineTracer = tracerFromEnv(env),
+): Promise<PipelineSummary> {
+  // Trace carries ids and summaries only (counts, methods, scores); no bank descriptions leave the tenant boundary.
+  const tr = tracer.trace("pipeline.monthly_books", { jobId }, { sessionId: jobId, userId: tenantId, tags: ["pipeline", env.ENVIRONMENT] });
+  try {
+    const out = await runStages(env, tenantId, jobId, llm, tr);
+    tr.end(out, [{ name: "qa_score", value: out.qaScore }]);
+    return out;
+  } catch (e) {
+    tr.end({ error: String(e).slice(0, 300) });
+    throw e;
+  } finally {
+    await tracer.flush();
+  }
+}
+
+async function runStages(env: Env, tenantId: string, jobId: string, llm: LlmClient | undefined, tr: TraceHandle): Promise<PipelineSummary> {
   const db = new TenantDb(env.DB, tenantId);
   const job = await db.first<{ id: string; status: string }>("select id, status from jobs where tenant_id = ?1 and id = ?2", jobId);
   if (!job) throw new Error(`job ${jobId} not found for tenant`);
@@ -102,7 +116,15 @@ export async function runPipeline(env: Env, tenantId: string, jobId: string, llm
     priority: r.priority,
   }));
   const codes = new Set((await db.all<{ code: string }>("select code from categories where tenant_id = ?1")).map((c) => c.code));
-  const cat = await categoriseLines(lines, rules, codes, llm);
+  const cat = await tr.span(
+    "categorise",
+    { lines: lines.length, rules: rules.length, llm: !!llm },
+    () => categoriseLines(lines, rules, codes, llm),
+    (o) => ({
+      methods: tally(o.items.map((i) => i.method)),
+      exceptions: tally(o.exceptions.map((e) => e.reasonCode)),
+    }),
+  );
   exceptions.push(...cat.exceptions);
   if (await begin(db, jobId, "categorise"))
     await db.batch([eventStmt(db, jobId, "categorise", "done", { lines: lines.length, methods: tally(cat.items.map((i) => i.method)) })]);
@@ -138,7 +160,16 @@ export async function runPipeline(env: Env, tenantId: string, jobId: string, llm
     dueDate: i.due_date,
   }));
   const invVat = new Map(invRows.map((i) => [i.id, i.vat_pence]));
-  const matches = reconcile(lines, receipts, invoices);
+  const matches = await tr.span(
+    "reconcile",
+    { lines: lines.length, receipts: receipts.length, invoices: invoices.length },
+    async () => reconcile(lines, receipts, invoices),
+    (m) => ({
+      matches: m.length,
+      invoiceMatches: m.filter((x) => x.kind === "invoice").length,
+      splits: m.filter((x) => x.split).length,
+    }),
+  );
   // A receipt matched to one of our invoices is a sale: it overrides the categoriser and clears "unknown category".
   for (const m of matches.filter((x) => x.kind === "invoice")) {
     const c = cat.items.find((i) => i.lineId === m.lineId);
@@ -163,9 +194,11 @@ export async function runPipeline(env: Env, tenantId: string, jobId: string, llm
   const writes: D1PreparedStatement[] = [];
   for (const t of txns) {
     const c = catByLine.get(t.id)!;
-    const m = matches.find((x) => x.lineId === t.id);
+    const ms = matches.filter((x) => x.lineId === t.id);
+    const m = ms[0];
     let vat = 0;
-    if (m?.kind === "receipt") vat = rcptById.get(m.refId)?.vatPence ?? 0;
+    if (m?.kind === "receipt")
+      vat = ms.reduce((a, x) => a + (rcptById.get(x.refId)?.vatPence ?? 0), 0); // split payments sum their receipts' VAT
     else if (m?.kind === "invoice") vat = invVat.get(m.refId) ?? 0;
     else if (t.amount_pence > 0 && c.categoryCode === "4000") vat = vatFromGross(t.amount_pence, VAT_RATES.STD ?? 0);
     const vatCode = c.vatRateCode ?? (c.categoryCode === "4000" ? "STD" : null);
@@ -201,12 +234,18 @@ export async function runPipeline(env: Env, tenantId: string, jobId: string, llm
   }
   if (await begin(db, jobId, "draft")) {
     writes.push(eventStmt(db, jobId, "draft", "done", { journals: txns.length }));
-    await db.batch(writes);
+    await tr.span(
+      "draft",
+      { statements: writes.length },
+      () => db.batch(writes),
+      () => ({ ok: true }),
+    );
   }
 
   // qa + outcome
   const score = qaScore(lines.length, exceptions);
   const billable = isBillableOutcome(score, exceptions);
+  tr.event("qa", { score, billable, exceptions: tally(exceptions.map((e) => e.reasonCode)) });
   if (await begin(db, jobId, "qa")) {
     await db.batch([
       eventStmt(db, jobId, "qa", "done", { score, exceptions: tally(exceptions.map((e) => e.reasonCode)) }),

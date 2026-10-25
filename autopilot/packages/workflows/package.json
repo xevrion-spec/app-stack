@@ -1,0 +1,22 @@
+{
+  "name": "@xevrion/workflows",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "scripts": {
+    "typecheck": "tsc --noEmit -p .",
+    "worker": "tsx src/worker.ts"
+  },
+  "devDependencies": {
+    "@temporalio/testing": "^1.24.0"
+  },
+  "dependencies": {
+    "@temporalio/activity": "^1.24.0",
+    "@temporalio/client": "^1.24.0",
+    "@temporalio/worker": "^1.24.0",
+    "@temporalio/workflow": "^1.24.0",
+    "@xevrion/sdk": "*"
+  }
+}

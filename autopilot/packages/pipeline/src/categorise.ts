@@ -54,14 +54,27 @@ export function ruleMatches(rule: CategoryRule, normDesc: string): boolean {
   }
 }
 
+const REFUND_RE = /\b(REFUND|RFND|REFD|REVERSAL|RETURN)\b/;
+export const SALES = "4000";
 const TRANSFER_RE = /\b(TRANSFER|TFR|TO SAVINGS|FROM SAVINGS|OWN ACCOUNT|POT)\b/;
 
 export function categoriseByRules(line: BankLine, rules: CategoryRule[]): Categorisation | null {
   const norm = normaliseDescription(line.description);
   if (TRANSFER_RE.test(norm)) return { lineId: line.id, categoryCode: TRANSFER, confidence: 0.9, method: "transfer" };
-  const hit = [...rules].sort((a, b) => a.priority - b.priority).find((r) => ruleMatches(r, norm));
-  if (!hit) return null;
-  return { lineId: line.id, categoryCode: hit.categoryCode, confidence: 0.95, method: "rule", ruleId: hit.id, vatRateCode: hit.vatRateCode ?? null };
+  const isIn = line.amountPence > 0;
+  const isRefund = REFUND_RE.test(norm);
+  // Priority first, then the most specific (longest) pattern: "GOOGLE ADS" beats "GOOGLE".
+  const ordered = [...rules].sort((a, b) => a.priority - b.priority || b.pattern.trim().length - a.pattern.trim().length);
+  for (const r of ordered) {
+    if (!ruleMatches(r, norm)) continue;
+    const ruleIsIncome = r.categoryCode === SALES;
+    // Money going out can never be a sale (e.g. "INVOICE PAYMENT TO PRINTER").
+    if (ruleIsIncome && !isIn) continue;
+    // Money coming in on an expense rule: a refund is a contra-expense (same account); otherwise it is suspicious.
+    const confidence = !ruleIsIncome && isIn ? (isRefund ? 0.9 : 0.6) : 0.95;
+    return { lineId: line.id, categoryCode: r.categoryCode, confidence, method: "rule", ruleId: r.id, vatRateCode: r.vatRateCode ?? null };
+  }
+  return null;
 }
 
 export const LlmCategorySchema = z.array(
