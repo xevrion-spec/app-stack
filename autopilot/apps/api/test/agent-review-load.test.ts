@@ -19,6 +19,7 @@ async function world() {
   const h = makeEnv({ RATE_LIMIT_API_KEY_PER_MINUTE: "1000000", RATE_LIMIT_PER_MINUTE: "1000000" });
   const call = client(h.env);
   await call("POST", "/v1/tenants", { user: A, body: { name: "Load Co (synthetic)" } });
+  h.raw.prepare("update tenants set plan = 'pro'").run(); // AR_LOAD_N up to 250k/month; free caps agent_reviews at 1,000
   for (const u of REVIEWERS) await call("POST", "/v1/users", { user: A, body: { email: u, role: "reviewer" } });
   const p = (await call("POST", "/v1/review-projects", { user: A, body: { name: "load" } })).json;
   const key = (await call("POST", "/v1/api-keys", { user: A, body: { name: "k", scopes: ["reviews:write", "reviews:read"], projectId: p.id } })).json.key;
@@ -97,19 +98,17 @@ describe(`agent review load (${N} requests, in-process)`, () => {
       );
     // duplicate creates under the same keys (client retries) must not add rows
     const dup = await Promise.all(
-      ids
-        .slice(0, 50)
-        .map((_, i) =>
-          s.call("POST", "/v1/agent-reviews", {
-            headers: { ...s.bearer, "idempotency-key": `L${i}` },
-            body: {
-              action: "load.op",
-              risk: i % 7 === 0 ? "critical" : "medium",
-              payload: { i },
-              ...(i % 3 === 0 ? { callbackUrl: "https://cb.example.test/h" } : {}),
-            },
-          }),
-        ),
+      ids.slice(0, 50).map((_, i) =>
+        s.call("POST", "/v1/agent-reviews", {
+          headers: { ...s.bearer, "idempotency-key": `L${i}` },
+          body: {
+            action: "load.op",
+            risk: i % 7 === 0 ? "critical" : "medium",
+            payload: { i },
+            ...(i % 3 === 0 ? { callbackUrl: "https://cb.example.test/h" } : {}),
+          },
+        }),
+      ),
     );
     expect(new Set(dup.map((d) => d.json.id)).size).toBe(50);
     // Every request gets 3 concurrent reviewers deciding at once: races on the same row are intended.

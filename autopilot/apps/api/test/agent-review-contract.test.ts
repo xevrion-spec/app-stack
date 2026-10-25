@@ -84,6 +84,7 @@ describe("agent review API contract (OpenAPI)", () => {
     await s.call("POST", `/v1/agent-reviews/${c.id}/legal-hold`, { user: A, body: { reason: "synthetic hold" } });
     await s.call("DELETE", `/v1/agent-reviews/${c.id}/legal-hold`, { user: A });
     await s.call("POST", `/v1/agent-reviews/${c.id}/redact`, { user: A });
+    await s.call("GET", "/v1/agent-review/usage", { user: A });
     expect(s.problems).toEqual([]);
     // Coverage of the contract itself: every documented agent-review operation was exercised (stream and export are text, checked below).
     const documented = Object.entries(spec.paths)

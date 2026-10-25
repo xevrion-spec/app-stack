@@ -15,6 +15,7 @@ import { sha256Hex } from "./csv.js";
 import { validateWebhookUrl } from "@xevrion/platform";
 import { devHttpHosts } from "./webhooks.js";
 import { retryDueCallbacks } from "./agent-review-delivery.js";
+import { enforceQuota, meterStmt } from "./usage.js";
 
 const DEFAULT_TIMEOUT_S = 24 * 3600;
 const now = () => new Date().toISOString();
@@ -283,6 +284,8 @@ export async function createReview(
     }
   }
   assertCallbackUrl(env, body.callbackUrl);
+  // metering (A10a): idempotent replays above are free; a new request counts against the monthly plan quota
+  await enforceQuota(db, "agent_reviews", 1);
   const t = now();
   const id = newId();
   const policy = choosePolicy(await livePolicies(db, projectId), id);
@@ -367,7 +370,8 @@ export async function createReview(
       ruleId: routing.ruleId,
     }),
   ];
-  if (auto) stmts.push(...autoDecision(db, outbox, row, body.payload, policyActor));
+  stmts.push(meterStmt(db, "agent_reviews"));
+  if (auto) stmts.push(...autoDecision(db, outbox, row, body.payload, policyActor), meterStmt(db, "agent_reviews_auto"));
   try {
     await db.batch([...stmts, ...outbox.stmts.splice(0)]);
   } catch (e) {
@@ -467,6 +471,7 @@ export async function transition(
   ];
   if (ev.type === "decide") {
     stmts.push(
+      meterStmt(db, ev.reviewer.startsWith("system:") ? "agent_review_system_decisions" : "agent_review_decisions"),
       db.stmt(
         "insert into review_decisions (tenant_id, id, request_id, reviewer, decision, reason, payload_version, payload_json, created_at) values (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9)",
         newId(),

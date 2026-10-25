@@ -36,9 +36,9 @@ export function isEnabled(flags: FlagSet, name: string, tenantId: string): boole
 
 /** Plan quotas per month. Metered units feed billing_events. */
 export const PLAN_QUOTAS: Record<string, Record<string, number>> = {
-  free: { transactions: 500, automation_runs: 1_000, webhook_deliveries: 1_000, api_requests: 10_000 },
-  starter: { transactions: 5_000, automation_runs: 20_000, webhook_deliveries: 20_000, api_requests: 200_000 },
-  pro: { transactions: 50_000, automation_runs: 200_000, webhook_deliveries: 200_000, api_requests: 2_000_000 },
+  free: { transactions: 500, automation_runs: 1_000, webhook_deliveries: 1_000, api_requests: 10_000, agent_reviews: 1_000 },
+  starter: { transactions: 5_000, automation_runs: 20_000, webhook_deliveries: 20_000, api_requests: 200_000, agent_reviews: 25_000 },
+  pro: { transactions: 50_000, automation_runs: 200_000, webhook_deliveries: 200_000, api_requests: 2_000_000, agent_reviews: 250_000 },
 };
 export function quotaCheck(plan: string | null, metric: string, used: number, adding = 1): { allowed: boolean; limit: number; remaining: number } {
   const limit = (PLAN_QUOTAS[plan ?? "free"] ?? PLAN_QUOTAS.free!)[metric] ?? Infinity;

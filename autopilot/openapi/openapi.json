@@ -3299,6 +3299,60 @@
         "required": [
           "reason"
         ]
+      },
+      "AgentReviewUsage": {
+        "type": "object",
+        "properties": {
+          "period": {
+            "type": "string"
+          },
+          "plan": {
+            "type": "string"
+          },
+          "requests": {
+            "type": "number"
+          },
+          "autoDecided": {
+            "type": "number"
+          },
+          "humanDecisions": {
+            "type": "number"
+          },
+          "systemDecisions": {
+            "type": "number"
+          },
+          "autoRate": {
+            "type": [
+              "number",
+              "null"
+            ],
+            "description": "Share of requests a policy decided without a human (null when none)"
+          },
+          "limit": {
+            "type": [
+              "number",
+              "null"
+            ],
+            "description": "Monthly request quota for the plan (null = unlimited)"
+          },
+          "remaining": {
+            "type": [
+              "number",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "period",
+          "plan",
+          "requests",
+          "autoDecided",
+          "humanDecisions",
+          "systemDecisions",
+          "autoRate",
+          "limit",
+          "remaining"
+        ]
       }
     },
     "parameters": {}
@@ -37401,6 +37455,101 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ReviewRequest"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthenticated",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "412": {
+            "description": "Precondition failed (stale ETag)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Rate limited or quota exceeded",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/agent-review/usage": {
+      "get": {
+        "tags": [
+          "Agent review"
+        ],
+        "summary": "This month's agent review usage vs plan quota",
+        "security": [
+          {
+            "accessJwt": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AgentReviewUsage"
                 }
               }
             }
