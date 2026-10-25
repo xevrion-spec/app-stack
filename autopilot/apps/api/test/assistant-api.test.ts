@@ -91,6 +91,7 @@ describe("onboarding", () => {
     expect(o.json.steps.find((s: { id: string }) => s.id === "import").done).toBe(false);
     expect(o.json.steps.find((s: { id: string }) => s.id === "accountant").done).toBe(true);
     expect((await call("POST", "/v1/onboarding/sample-data", { user: R })).status).toBe(403);
+    expect((await call("GET", "/v1/onboarding", { user: R })).status).toBe(200); // reviewers see the checklist (was wrongly 403)
     expect((await call("POST", "/v1/onboarding/sample-data", { user: A })).json.inserted).toBe(9);
     expect((await call("GET", "/v1/onboarding", { user: A })).json.sampleData).toBe(true);
     expect((await call("POST", "/v1/onboarding/sample-data", { user: A })).status).toBe(409);

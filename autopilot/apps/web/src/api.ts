@@ -63,3 +63,13 @@ export async function download(path: string, filename: string) {
   a.click();
   setTimeout(() => URL.revokeObjectURL(url), 1000);
 }
+
+/** JSON helper for endpoints whose responses are loosely typed in the OpenAPI spec (reports, ops, privacy). */
+export async function json<T>(path: string, method = "GET", body?: unknown): Promise<T> {
+  const res = await raw(path, {
+    method,
+    ...(body !== undefined ? { body: JSON.stringify(body), headers: { "content-type": "application/json" } } : {}),
+  });
+  return (await res.json()) as T;
+}
+export const today = () => new Date().toISOString().slice(0, 10);

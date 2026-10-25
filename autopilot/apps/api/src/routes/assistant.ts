@@ -25,7 +25,7 @@ export const __setAssistantRouter = (r: B.LlmRouter | null) => void (router = r)
 export const assistant = new OpenAPIHono<AppEnv>({ defaultHook: validationHook as never });
 assistant.use("/assistant/*", requireRole("owner", "reviewer"), requireFeature("assistant"));
 assistant.use("/onboarding", requireRole("owner", "reviewer"));
-assistant.use("/onboarding/*", requireRole("owner"));
+assistant.use("/onboarding/sample-data", requireRole("owner"));
 
 type Tx = { id: string; txn_date: string; description: string | null; amount_pence: number; category_code: string | null; sa_box: string | null };
 const cite = (t: Tx): B.Citation => ({ type: "transaction", id: t.id, label: `${t.txn_date} ${t.description ?? ""} ${B.gbp(t.amount_pence)}`.trim() });

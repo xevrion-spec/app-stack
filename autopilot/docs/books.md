@@ -50,3 +50,6 @@ Migration `0006_invoicing.sql` (additive). ADR 0017.
 - `POST /v1/extract/documents/{id}`: mock OCR then text extraction on a stored receipt.
 - `/v1/bank-feeds/accounts|connections|connections/{id}/sync|connections/{id}` (DELETE): mock Open Banking provider.
 - `/v1/ops/summary`, `/v1/admin/overview` (operators only, aggregates). See docs/slo.md and docs/cost-model.md.
+
+## Web (V7, ADR 0023)
+Ctrl/Cmd+K palette; theme toggle (system/dark/light); `?lang=en-XA` pseudo-locale. Screens: Get started, Receivables, Reports, Ask, Team & close, Bank feeds, Privacy, Ops. Playwright + axe cover all 15 pages (light) and the new screens in dark mode.

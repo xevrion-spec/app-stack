@@ -9,16 +9,37 @@ import { Transactions } from "./pages/Transactions";
 import { Upload } from "./pages/Upload";
 import { Vat } from "./pages/Vat";
 import { ErrorNote, Loading } from "./ui";
+import { Reports } from "./pages/Reports";
+import { Assistant } from "./pages/Assistant";
+import { GetStarted } from "./pages/GetStarted";
+import { Receivables } from "./pages/Receivables";
+import { Team } from "./pages/Team";
+import { Banking } from "./pages/Banking";
+import { Privacy } from "./pages/Privacy";
+import { Ops } from "./pages/Ops";
+import { CommandPalette, type Command } from "./CommandPalette";
+import { t, type MessageKey } from "./i18n";
+import { applyTheme, getTheme, nextTheme, type Theme } from "./theme";
 
 const ROUTES = [
-  ["review", "Review queue"],
-  ["transactions", "Transactions"],
-  ["upload", "Upload"],
-  ["invoices", "Invoices"],
-  ["vat", "VAT & SA"],
-  ["jobs", "Jobs"],
-  ["settings", "Settings"],
-] as const;
+  ["start", "nav.start"],
+  ["review", "nav.review"],
+  ["transactions", "nav.transactions"],
+  ["upload", "nav.upload"],
+  ["invoices", "nav.invoices"],
+  ["receivables", "nav.receivables"],
+  ["reports", "nav.reports"],
+  ["vat", "nav.vat"],
+  ["assistant", "nav.assistant"],
+  ["team", "nav.team"],
+  ["banking", "nav.banking"],
+  ["privacy", "nav.privacy"],
+  ["ops", "nav.ops"],
+  ["jobs", "nav.jobs"],
+  ["settings", "nav.settings"],
+] as const satisfies readonly (readonly [string, MessageKey])[];
+/** Pages an owner sees but a reviewer/accountant does not (the API enforces this too). */
+const OWNER_ONLY = new Set<string>(["banking", "privacy"]);
 type Route = (typeof ROUTES)[number][0];
 
 function readHash(): { route: Route; arg: string | null } {
@@ -34,6 +55,8 @@ export function App() {
   const [session, setSession] = useState<Session>({ state: "loading" });
   const [{ route, arg }, setLoc] = useState(readHash);
   const main = useRef<HTMLElement>(null);
+  const [theme, setTheme] = useState<Theme>(getTheme);
+  useEffect(() => applyTheme(theme), [theme]);
 
   const refresh = useCallback(async () => {
     if (!isProd && !devUser.get()) return setSession({ state: "signed_out" });
@@ -75,8 +98,21 @@ export function App() {
       vat: <Vat />,
       jobs: <Jobs selected={arg} onSelect={(id) => go("jobs", id)} />,
       settings: <Settings role={role} />,
+      start: <GetStarted role={role} />,
+      receivables: <Receivables role={role} />,
+      reports: <Reports />,
+      assistant: <Assistant />,
+      team: <Team email={session.me.email} role={role} />,
+      banking: <Banking />,
+      privacy: <Privacy />,
+      ops: <Ops />,
     }[route];
   }
+  const visible = ROUTES.filter(([k]) => session.state !== "ready" || session.me.role === "owner" || !OWNER_ONLY.has(k));
+  const commands: Command[] = [
+    ...visible.map(([k, key]) => ({ id: `go-${k}`, label: t(key), hint: "Go to", run: () => go(k) })),
+    { id: "theme", label: `${t("theme.label")}: ${t(`theme.${nextTheme(theme)}`)}`, hint: "Switch", run: () => setTheme(nextTheme(theme)) },
+  ];
   return (
     <>
       <a className="skip" href="#main">
@@ -87,15 +123,34 @@ export function App() {
         {session.state === "ready" ? (
           <nav aria-label="Main">
             <ul>
-              {ROUTES.map(([k, label]) => (
+              {visible.map(([k, key]) => (
                 <li key={k}>
                   <a href={`#/${k}`} aria-current={route === k ? "page" : undefined}>
-                    {label}
+                    {t(key)}
                   </a>
                 </li>
               ))}
             </ul>
           </nav>
+        ) : null}
+        <button
+          type="button"
+          className="link"
+          aria-label={`${t("theme.label")}: ${t(`theme.${theme}`)}`}
+          title={`${t("theme.label")}: ${t(`theme.${theme}`)}`}
+          onClick={() => setTheme(nextTheme(theme))}
+        >
+          {theme === "dark" ? "☾" : theme === "light" ? "☀" : "◐"}
+        </button>
+        {session.state === "ready" ? (
+          <button
+            type="button"
+            className="link kbd"
+            aria-label={t("palette.open")}
+            onClick={() => dispatchEvent(new KeyboardEvent("keydown", { key: "k", ctrlKey: true }))}
+          >
+            Ctrl K
+          </button>
         ) : null}
         {session.state === "ready" ? (
           <span className="who">
@@ -118,7 +173,8 @@ export function App() {
       <main id="main" ref={main}>
         {body}
       </main>
-      <footer className="foot muted">Xevrion Autopilot · drafts only, nothing is submitted to HMRC</footer>
+      <footer className="foot muted">{t("footer")}</footer>
+      {session.state === "ready" ? <CommandPalette commands={commands} /> : null}
     </>
   );
 }

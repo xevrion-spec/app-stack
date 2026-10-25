@@ -35,7 +35,8 @@ invoicing.use("/recurring-invoices/*", owner, requireFeature("recurring_invoices
 invoicing.use("/recurring-invoices", owner, requireFeature("recurring_invoices"));
 invoicing.use("/invoices/:id/payment-link", requireFeature("payment_links"));
 invoicing.use("/invoices/:id/currency", requireFeature("multi_currency"));
-invoicing.use("/receivables/*", owner);
+invoicing.use("/receivables/*", requireRole("owner", "reviewer"));
+invoicing.use("/receivables/reminders/*", owner);
 
 type Inv = {
   id: string;

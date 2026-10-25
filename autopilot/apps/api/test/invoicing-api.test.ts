@@ -127,7 +127,8 @@ describe("receivables", () => {
     expect((await call("POST", "/v1/receivables/reminders/run", { user: A, body: { today: "2026-08-15" } })).json.emitted).toEqual([]);
     expect(evTypes().filter((t) => t === "invoice.reminder_due")).toHaveLength(1);
     expect((await call("GET", "/v1/receivables/aged", { user: B })).json.totalPence).toBe(0);
-    expect((await call("GET", "/v1/receivables/aged", { user: R })).status).toBe(403);
+    expect((await call("GET", "/v1/receivables/aged", { user: R })).status).toBe(200); // reviewers/accountants may read receivables
+    expect((await call("POST", "/v1/receivables/reminders/run", { user: R, body: {} })).status).toBe(403);
   });
 });
 
