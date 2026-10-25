@@ -14,3 +14,16 @@ Pure functions; all amounts are integer pence. Tax and allowance outputs are **e
 | Calculators | `mileageAllowance`, `homeOffice` (flat rate vs actual), `annualInvestmentAllowance` | Returns `verified:false` + workings |
 | Tax pot | `estimateTax` | Trading allowance vs expenses, PA taper, bands, Class 4, payments on account, set-aside % |
 | Deadlines | `saDeadlines`, `vatDeadlines`, `mtdQuarterlyDeadlines`, `upcoming`, `taxYearOf` | Data only; nothing is sent |
+
+## API (`/v1/books`, reviewer+; API keys: `reports:read` for GET, `transactions:write` for imports/mileage/rules)
+| Endpoint | What |
+|---|---|
+| `POST /imports/statement?source=auto\|bank\|xero\|quickbooks\|freshbooks&dryRun=` | Raw text body. Auto-detects the format. Exact duplicates (fingerprint) are skipped, probable ones reported, rejects listed. Audited and metered; queues the pipeline |
+| `GET /rules/suggestions`, `POST /rules/learn` (owner) | Learned from `category_corrections` (written on every manual `PATCH /transactions/{id}`). Suppressed only when an identical rule exists |
+| `GET /recurring`, `/forecast?horizonDays=`, `/spikes?month=` | Recurring series; cash forecast (bank balance from ledger 1200/1210); spend spikes vs 3-month median |
+| `GET /reports/pnl\|cash-flow\|sa103?from&to`, `/reports/balance-sheet?asAt` | From journal lines plus the tenant chart. SA103 is `verified:false` |
+| `POST /calculators/mileage\|home-office\|aia`, `GET /tax-estimate?taxYear` | Estimates with workings. **UNVERIFIED** |
+| `GET /deadlines?today&days&vatFirstPeriodEnd&paymentsOnAccount` | SA + MTD always, VAT if registered. Data only |
+| `GET/POST /mileage-trips` | Mileage log; feeds the mileage calculator when `miles` omitted |
+
+Migration `0005_books.sql` (additive): `category_corrections`, `mileage_trips`, `category_rules.source/confidence`.

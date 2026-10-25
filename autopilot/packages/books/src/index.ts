@@ -10,3 +10,4 @@ export * from "./calculators.js";
 export * from "./tax.js";
 export * from "./deadlines.js";
 export * from "./rates.js";
+export * from "./spikes.js";

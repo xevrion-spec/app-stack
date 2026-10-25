@@ -7,17 +7,17 @@ nothing sends email, posts, submits to HMRC or connects to a bank. External prov
 
 | # | Item | Value | Effort | Risk | Status | Milestone |
 |---|---|---|---|---|---|---|
-| 1 | Bank statement importers: CSV (existing), OFX, QIF, MT940 + auto-detect | 5 | M | L | ✅ lib (API wiring next) | V1 |
-| 2 | Import from Xero / QuickBooks / FreshBooks CSV exports | 4 | S | L | ✅ lib (API wiring next) | V1 |
-| 3 | Duplicate detection (cross-file, fuzzy date/amount/description) | 5 | S | L | ✅ lib (API wiring next) | V1 |
-| 4 | Recurring transaction detection (subscriptions, rent, DDs) with next-expected date | 4 | M | L | ✅ lib (API wiring next) | V1 |
-| 5 | Categorisation that learns from corrections (per-tenant rules, confidence, decay) | 5 | M | M | ✅ lib (API wiring next) | V1 |
-| 6 | Anomaly detection (existing) + spend spikes vs baseline | 3 | S | L | ⏳ | V1 |
-| 7 | Reports: P&L, balance sheet, cash flow, tax summary | 5 | M | M | ✅ lib (API wiring next) | V2 |
-| 8 | Cash-flow forecast and cash runway (from recurring + history) | 5 | M | M | ✅ lib (API wiring next) | V2 |
-| 9 | Calculators: mileage, home office (simplified flat rate vs proportion), simplified expenses | 4 | S | M | ✅ lib (API wiring next) | V2 |
-| 10 | Capital allowances (AIA estimate) and tax-pot / set-aside estimate (income tax + Class 4) | 5 | M | H | ✅ lib (API wiring next) | V2 |
-| 11 | SA + VAT deadline calendar, payments on account, reminders as **events** only | 5 | S | M | ✅ lib (API wiring next) | V2 |
+| 1 | Bank statement importers: CSV (existing), OFX, QIF, MT940 + auto-detect | 5 | M | L | ✅ lib + API | V1 |
+| 2 | Import from Xero / QuickBooks / FreshBooks CSV exports | 4 | S | L | ✅ lib + API | V1 |
+| 3 | Duplicate detection (cross-file, fuzzy date/amount/description) | 5 | S | L | ✅ lib + API | V1 |
+| 4 | Recurring transaction detection (subscriptions, rent, DDs) with next-expected date | 4 | M | L | ✅ lib + API | V1 |
+| 5 | Categorisation that learns from corrections (per-tenant rules, confidence, decay) | 5 | M | M | ✅ lib + API | V1 |
+| 6 | Anomaly detection (existing) + spend spikes vs baseline | 3 | S | L | ✅ lib + API | V1 |
+| 7 | Reports: P&L, balance sheet, cash flow, tax summary | 5 | M | M | ✅ lib + API | V2 |
+| 8 | Cash-flow forecast and cash runway (from recurring + history) | 5 | M | M | ✅ lib + API | V2 |
+| 9 | Calculators: mileage, home office (simplified flat rate vs proportion), simplified expenses | 4 | S | M | ✅ lib + API | V2 |
+| 10 | Capital allowances (AIA estimate) and tax-pot / set-aside estimate (income tax + Class 4) | 5 | M | H | ✅ lib + API | V2 |
+| 11 | SA + VAT deadline calendar, payments on account, reminders as **events** only | 5 | S | M | ✅ lib + API | V2 |
 | 12 | Invoicing: credit notes, partial payments, recurring invoices, overdue reminders as events | 5 | M | L | ⏳ | V3 |
 | 13 | Payment links (interface + mock provider), multi-currency invoices with an FX-rates interface (ECB-style mock) | 4 | M | M | 🟡 planned | V3 |
 | 14 | MTD-ready data model (obligations, quarterly updates, submissions) + HMRC adapter interface + **mock** HMRC | 5 | L | H | 🟡 planned | V4 |

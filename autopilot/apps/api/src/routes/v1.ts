@@ -13,6 +13,7 @@ import { Outbox } from "../services/events.js";
 import { categoriseTransaction } from "../services/categorise.js";
 import { enforceQuota, meterStmt } from "../services/usage.js";
 import { platform } from "./platform.js";
+import { books } from "./books.js";
 import { etagFor, ifMatchFails, ifNoneMatchHits, orderBy, selectFields } from "@xevrion/platform";
 import { AppError, badRequest, conflict, notFound, tooLarge, unsupported } from "../lib/errors.js";
 import { parseBankCsv, sha256Hex } from "../services/csv.js";
@@ -343,7 +344,10 @@ v1.openapi(
     const { id } = c.req.valid("param");
     const b = c.req.valid("json");
     const db = scope(c);
-    const t = await db.first<{ description: string | null }>("select description from transactions where tenant_id = ?1 and id = ?2", id);
+    const t = await db.first<{ description: string | null; amount_pence: number }>(
+      "select description, amount_pence from transactions where tenant_id = ?1 and id = ?2",
+      id,
+    );
     if (!t) throw notFound("Transaction");
     const extra =
       b.createRule && t.description
@@ -358,6 +362,20 @@ v1.openapi(
             ),
           ]
         : [];
+    // Every manual categorisation is evidence for learned rules (/v1/books/rules/suggestions).
+    if (t.description)
+      extra.push(
+        db.stmt(
+          "insert into category_corrections (tenant_id, id, transaction_id, description, category_code, vat_rate_code, amount_pence, created_by) values (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8)",
+          newId(),
+          id,
+          t.description,
+          b.categoryCode,
+          b.vatRateCode,
+          t.amount_pence,
+          actor(c),
+        ),
+      );
     await categoriseTxn(c, id, b.categoryCode, b.vatRateCode, b.vatPence, extra);
     return c.json(
       (await db.first<z.infer<typeof S.TransactionSchema>>(
@@ -1008,3 +1026,4 @@ v1.openapi(def({ method: "get", path: "/export/ledger.json", tag: "Export", summ
 });
 
 v1.route("/", platform);
+v1.route("/books", books);

@@ -15,7 +15,9 @@ Branch: feature/value-max (from feature/quality-1000). Roadmap + status: docs/va
   SA/VAT/MTD deadline calendar. 91 tests (unit/property/golden); Stryker on tax/calculators/duplicates 92.1%.
 - Fixed: income-tax bands now on taxable income (basic band width was too wide); FITID duplicate match no longer requires same amount.
 - Rates: packages/domain-uk-tax/uk-rates.unverified.json (verified:false). ADR 0015, docs/books.md.
-- Next: API endpoints + migrations (tenant learned rules, recurring, reports, forecast, deadlines), then V3 invoicing.
+- Books API (/v1/books): importers, learned rules (corrections captured on PATCH), recurring, forecast, spikes, reports,
+  calculators, tax estimate, deadlines, mileage log. Migration 0005 (+down). ADR 0016. OpenAPI + SDK regenerated. 15 API tests.
+- Next: V3 invoicing, V4 extraction/MTD mock, V5 accountant/GDPR/notifications/plans, V6 assistant, V7 web/admin/SLOs.
 
 - Fixed flaky property test: merchantKey was not idempotent ("SO0"); fixed root cause (strip non-letters before noise words).
 - CI: licence gate failed under npm 10 (extraneous @img/sharp-wasm32 listed); script now skips extraneous. gitleaks clean on full history.

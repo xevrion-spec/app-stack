@@ -5,7 +5,18 @@ import { estimateTax, mileageAllowance, homeOffice, annualInvestmentAllowance, f
 describe("estimateTax golden examples", () => {
   it("£60k profit, no other income", () => {
     const t = estimateTax({ turnoverPence: 6_000_000, expensesPence: 0, useTradingAllowance: false });
-    expect(t).toMatchObject({ profitPence: 6_000_000, personalAllowancePence: 1_257_000, taxableProfitPence: 4_743_000, incomeTaxPence: 1_143_200, class4Pence: 245_660, totalPence: 1_388_860, paymentsOnAccountPence: 694_430, effectiveRate: 0.231, setAsidePercent: 24, usedTradingAllowance: false });
+    expect(t).toMatchObject({
+      profitPence: 6_000_000,
+      personalAllowancePence: 1_257_000,
+      taxableProfitPence: 4_743_000,
+      incomeTaxPence: 1_143_200,
+      class4Pence: 245_660,
+      totalPence: 1_388_860,
+      paymentsOnAccountPence: 694_430,
+      effectiveRate: 0.231,
+      setAsidePercent: 24,
+      usedTradingAllowance: false,
+    });
     expect(t.bands).toEqual([
       { name: "basic", pence: 3_770_000, rate: 0.2, taxPence: 754_000 },
       { name: "higher", pence: 973_000, rate: 0.4, taxPence: 389_200 },
@@ -17,7 +28,8 @@ describe("estimateTax golden examples", () => {
     expect(t.incomeTaxPence).toBe(7_620_300);
     expect(t.bands.map((b) => b.pence)).toEqual([3_770_000, 8_744_000, 7_486_000]);
   });
-  it("partial taper at £110k", () => expect(estimateTax({ turnoverPence: 11_000_000, expensesPence: 0, useTradingAllowance: false }).personalAllowancePence).toBe(757_000));
+  it("partial taper at £110k", () =>
+    expect(estimateTax({ turnoverPence: 11_000_000, expensesPence: 0, useTradingAllowance: false }).personalAllowancePence).toBe(757_000));
   it("other income shares the bands; income tax attributed pro rata", () => {
     const t = estimateTax({ turnoverPence: 2_000_000, expensesPence: 0, otherIncomePence: 2_000_000, useTradingAllowance: false });
     expect(t.taxableProfitPence).toBe(2_743_000);
@@ -71,25 +83,45 @@ describe("calculator boundaries and workings", () => {
     expect(() => annualInvestmentAllowance([{ costPence: -1 }])).toThrow("non-negative");
     const big = annualInvestmentAllowance([{ costPence: 150_000_000 }]);
     expect(big.value).toEqual({ claimPence: 100_000_000, excessPence: 50_000_000, excludedCarsPence: 0 });
-    expect(annualInvestmentAllowance([{ costPence: 10, isCar: true }], 12).workings).toEqual(["limit 100000000p for 12 months", "qualifying 0p", "cars excluded 10p (writing-down allowances instead)"]);
+    expect(annualInvestmentAllowance([{ costPence: 10, isCar: true }], 12).workings).toEqual([
+      "limit 100000000p for 12 months",
+      "qualifying 0p",
+      "cars excluded 10p (writing-down allowances instead)",
+    ]);
   });
 });
 
 describe("duplicate scoring", () => {
-  const e = (id: string, date: string, d = "TESCO STORES", amt = -100, ref?: string) => ({ id, date, description: d, amountPence: amt, ...(ref ? { externalId: ref } : {}) });
+  const e = (id: string, date: string, d = "TESCO STORES", amt = -100, ref?: string) => ({
+    id,
+    date,
+    description: d,
+    amountPence: amt,
+    ...(ref ? { externalId: ref } : {}),
+  });
   it("window boundary is inclusive", () => {
     expect(findDuplicates([e("n", "2026-01-04")], [e("x", "2026-01-01", "TESCO STORES LTD")])).toHaveLength(1);
     expect(findDuplicates([e("n", "2026-01-05")], [e("x", "2026-01-01", "TESCO STORES LTD")])).toHaveLength(0);
   });
   it("scores and prefers the closest date", () => {
     const m = findDuplicates([e("n", "2026-01-03")], [e("far", "2026-01-01", "TESCO STORES LTD"), e("near", "2026-01-03", "TESCO STORES LTD")]);
-    expect(m).toEqual([{ id: "n", duplicateOf: "near", kind: "probable", score: expect.any(Number), reason: "same amount, 0 day(s) apart, similar description" }]);
+    expect(m).toEqual([
+      { id: "n", duplicateOf: "near", kind: "probable", score: expect.any(Number), reason: "same amount, 0 day(s) apart, similar description" },
+    ]);
     expect(m[0]!.score).toBeGreaterThan(0.5);
     expect(m[0]!.score).toBeLessThanOrEqual(1);
   });
   it("same-date exact text gives the exact reason; different refs do not force a match", () => {
-    expect(findDuplicates([e("n", "2026-01-01")], [e("x", "2026-01-01")])[0]).toEqual({ id: "n", duplicateOf: "x", kind: "exact", score: 1, reason: "same date, amount and description" });
-    expect(findDuplicates([e("n", "2026-01-01", "TESCO STORES", -100, "R1")], [e("x", "2026-01-01", "TESCO STORES", -100, "R1")])[0]!.reason).toBe("same bank reference");
+    expect(findDuplicates([e("n", "2026-01-01")], [e("x", "2026-01-01")])[0]).toEqual({
+      id: "n",
+      duplicateOf: "x",
+      kind: "exact",
+      score: 1,
+      reason: "same date, amount and description",
+    });
+    expect(findDuplicates([e("n", "2026-01-01", "TESCO STORES", -100, "R1")], [e("x", "2026-01-01", "TESCO STORES", -100, "R1")])[0]!.reason).toBe(
+      "same bank reference",
+    );
     expect(findDuplicates([e("n", "2026-03-01", "A", -5, "R2")], [e("x", "2026-01-01", "B", -100, "R1")])).toEqual([]);
     expect(findDuplicates([e("n", "2026-01-01", "ZZZ QQQ")], [e("x", "2026-01-01", "ABC DEF")])).toEqual([]);
   });

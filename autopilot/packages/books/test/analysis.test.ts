@@ -5,7 +5,10 @@ import { merchantKey, similarity, daysBetween, addDays, findDuplicates, detectRe
 describe("text helpers", () => {
   it("merchantKey strips card noise and is stable", () => {
     expect(merchantKey("TESCO STORES 1234 LONDON")).toBe(merchantKey("Tesco Stores 9876 London"));
-    fc.assert(fc.property(fc.string(), (s) => merchantKey(merchantKey(s)) === merchantKey(s)), { numRuns: 2000 });
+    fc.assert(
+      fc.property(fc.string(), (s) => merchantKey(merchantKey(s)) === merchantKey(s)),
+      { numRuns: 2000 },
+    );
     for (const s of ["SO0", "oN0", "so_", "DD1 TESCO"]) expect(merchantKey(merchantKey(s))).toBe(merchantKey(s)); // former counterexamples
   });
   it("similarity is symmetric and bounded", () =>

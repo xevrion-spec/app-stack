@@ -12,6 +12,7 @@
   },
   "dependencies": {
     "@hono/zod-openapi": "^1.6.3",
+    "@xevrion/books": "*",
     "@xevrion/pipeline": "*",
     "@xevrion/platform": "*",
     "hono": "^4.13.13",
