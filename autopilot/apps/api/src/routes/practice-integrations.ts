@@ -12,6 +12,7 @@ import { def, validationHook } from "../lib/route.js";
 import { PracticeAudit, accessibleClient, practiceDb, requirePracticeRole } from "../lib/practice.js";
 import { Outbox } from "../services/events.js";
 import { ingestBankCsv } from "../services/ingest.js";
+import { meterPractice, practiceUsage } from "../services/practice-metering.js";
 import { MANAGERS } from "./practice.js";
 
 export const integrations = new OpenAPIHono<AppEnv>({ defaultHook: validationHook as never });
@@ -60,6 +61,7 @@ integrations.openapi(
     if (since > until) throw badRequest("since must be on or before until");
     const pdb = practiceDb(c);
     await accessibleClient(pdb, c.get("practice").role, id);
+    await meterPractice(pdb, "integration_syncs");
     const adapter = B.ledgerAdapterFor(provider);
     const txns = await adapter.transactions(since, until);
     const tdb = new TenantDb(c.env.DB, id);
@@ -83,4 +85,19 @@ integrations.openapi(
     await outbox.publish(c.env);
     return c.json({ provider, mode: adapter.mode, fetched: txns.length, inserted: r.inserted, duplicates: r.duplicates, jobId: r.jobId }, 200);
   },
+);
+
+integrations.openapi(
+  def({
+    method: "get",
+    path: "/practice/usage",
+    tag: TAG,
+    summary: "This month's metered usage vs plan caps (plans are placeholders; nothing is billed)",
+    response: z.object({
+      plan: z.string(),
+      period: z.string(),
+      metrics: z.array(z.object({ metric: z.string(), used: z.number(), cap: z.number(), remaining: z.number() })),
+    }),
+  }),
+  async (c) => c.json(await practiceUsage(practiceDb(c)), 200),
 );

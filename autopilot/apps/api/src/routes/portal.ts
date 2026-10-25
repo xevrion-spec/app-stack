@@ -16,6 +16,7 @@ import { Outbox } from "../services/events.js";
 import { sha256Hex } from "../services/csv.js";
 import { MAX_RECEIPT, RECEIPT_TYPES, scanHook } from "../services/scan.js";
 import { endSession, exchangeMagic, lookupSession } from "../services/portal-tokens.js";
+import { meterPractice } from "../services/practice-metering.js";
 import { DOC_COLS, ENG_COLS, docOut, engOut } from "./practice-onboard.js";
 
 type C = Context<AppEnv>;
@@ -264,6 +265,7 @@ portal.openapi(
     const bytes = await c.req.arrayBuffer();
     if (!bytes.byteLength) throw badRequest("Empty file");
     if (bytes.byteLength > MAX_RECEIPT) throw tooLarge("File is larger than 10 MB");
+    await meterPractice(pdb, "portal_uploads");
     if ((await scanHook(bytes, type)) !== "clean") throw badRequest("File failed the content scan");
     const sha = await sha256Hex(bytes);
     const key = `portal/${p.tenantId}/${id}/${sha}`;

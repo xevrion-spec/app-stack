@@ -23,6 +23,7 @@ import {
   type PracticeDb,
 } from "../lib/practice.js";
 import { mockLlmRouter, type LlmRouter } from "../services/llm-router.js";
+import { meterPractice } from "../services/practice-metering.js";
 import { MANAGERS, clientSummaries, wipByClient } from "./practice.js";
 
 type C = Context<AppEnv>;
@@ -720,6 +721,7 @@ intel.openapi(
     const role = c.get("practice").role;
     const asOf = b.asOf ?? today();
     if (b.clientId) await accessibleClient(pdb, role, b.clientId);
+    await meterPractice(pdb, "assistant_questions");
     const ruled = B.routeIntent(b.question);
     const intent = ruled?.intent ?? (await router.route(b.question));
     const via = ruled ? ("rules" as const) : intent ? ("mock-llm" as const) : ("none" as const);

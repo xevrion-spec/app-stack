@@ -59,3 +59,10 @@ is handled.
 4. Real provider responses (HMRC, Open Banking) are unvalidated because those integrations do not exist yet.
 5. The web CSP still allows `'unsafe-inline'` styles.
 6. The threat model needs a refresh.
+
+## M6 additions (2026-10-25)
+- [x] V14.4 CSP: no `unsafe-inline`/`unsafe-eval`; object-src none; base-uri/form-action self (test: `apps/web/test/csp.test.ts`).
+- [x] V11.1 Business-logic limits: per-practice monthly caps enforced atomically, 429 when a cap is reached (no overshoot).
+- [x] V7.3 Audit-log integrity survives backup/restore (drill test).
+- [x] gitleaks: the fake `ap_live_abcdef123` redaction fixture has a narrow regex allowlist entry; the scan is clean from the repo root and from autopilot/.
+- [ ] Malware scanning of portal uploads: `scanHook` is still a stub.

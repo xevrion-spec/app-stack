@@ -107,8 +107,8 @@ describe("CSV reader", () => {
     fc.assert(
       fc.property(fc.array(fc.array(cell, { minLength: 2, maxLength: 5 }), { minLength: 1, maxLength: 20 }), (rows) => {
         const text = rows.map((r) => r.map(enc).join(",")).join("\r\n");
-        // Rows whose cells are all empty are treated as blank lines and skipped by design.
-        expect(readCsv(text)).toEqual(rows.filter((r) => r.some((c) => c !== "")));
+        // Rows whose cells are all empty or whitespace-only are treated as blank lines and skipped by design.
+        expect(readCsv(text)).toEqual(rows.filter((r) => r.some((c) => c.trim() !== "")));
       }),
       RUNS,
     ));

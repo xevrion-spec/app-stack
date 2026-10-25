@@ -1,8 +1,31 @@
 /** Practice defaults: plan quotas (metered per practice) and starter close-checklist templates. */
-const QUOTAS: Record<string, { maxClients: number; maxStaff: number; aiReviewsPerMonth: number }> = {
-  trial: { maxClients: 25, maxStaff: 5, aiReviewsPerMonth: 10_000 },
-  practice: { maxClients: 500, maxStaff: 50, aiReviewsPerMonth: 500_000 },
-  enterprise: { maxClients: 5_000, maxStaff: 500, aiReviewsPerMonth: 5_000_000 },
+export type MeteredMetric = "assistant_questions" | "integration_syncs" | "portal_uploads" | "working_papers";
+interface Quota {
+  maxClients: number;
+  maxStaff: number;
+  aiReviewsPerMonth: number;
+  monthly: Record<MeteredMetric, number>;
+}
+/** Plan limits are PLACEHOLDERS (no prices or paid plans exist); they protect the service, not revenue. */
+const QUOTAS: Record<string, Quota> = {
+  trial: {
+    maxClients: 25,
+    maxStaff: 5,
+    aiReviewsPerMonth: 10_000,
+    monthly: { assistant_questions: 500, integration_syncs: 100, portal_uploads: 500, working_papers: 200 },
+  },
+  practice: {
+    maxClients: 500,
+    maxStaff: 50,
+    aiReviewsPerMonth: 500_000,
+    monthly: { assistant_questions: 20_000, integration_syncs: 5_000, portal_uploads: 25_000, working_papers: 10_000 },
+  },
+  enterprise: {
+    maxClients: 5_000,
+    maxStaff: 500,
+    aiReviewsPerMonth: 5_000_000,
+    monthly: { assistant_questions: 200_000, integration_syncs: 50_000, portal_uploads: 250_000, working_papers: 100_000 },
+  },
 };
 export const practiceQuota = (plan: string) => QUOTAS[plan] ?? QUOTAS.trial!;
 

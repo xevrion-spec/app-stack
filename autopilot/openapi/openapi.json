@@ -2896,12 +2896,19 @@
                         },
                         "aiReviewsPerMonth": {
                           "type": "number"
+                        },
+                        "monthly": {
+                          "type": "object",
+                          "additionalProperties": {
+                            "type": "number"
+                          }
                         }
                       },
                       "required": [
                         "maxClients",
                         "maxStaff",
-                        "aiReviewsPerMonth"
+                        "aiReviewsPerMonth",
+                        "monthly"
                       ]
                     }
                   },
@@ -15625,6 +15632,140 @@
                     "inserted",
                     "duplicates",
                     "jobId"
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthenticated",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "412": {
+            "description": "Precondition failed (stale ETag)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Rate limited or quota exceeded",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/practice/usage": {
+      "get": {
+        "tags": [
+          "Practice integrations"
+        ],
+        "summary": "This month's metered usage vs plan caps (plans are placeholders; nothing is billed)",
+        "security": [
+          {
+            "accessJwt": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "plan": {
+                      "type": "string"
+                    },
+                    "period": {
+                      "type": "string"
+                    },
+                    "metrics": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "metric": {
+                            "type": "string"
+                          },
+                          "used": {
+                            "type": "number"
+                          },
+                          "cap": {
+                            "type": "number"
+                          },
+                          "remaining": {
+                            "type": "number"
+                          }
+                        },
+                        "required": [
+                          "metric",
+                          "used",
+                          "cap",
+                          "remaining"
+                        ]
+                      }
+                    }
+                  },
+                  "required": [
+                    "plan",
+                    "period",
+                    "metrics"
                   ]
                 }
               }

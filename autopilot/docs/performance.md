@@ -69,3 +69,6 @@ The 429s on `bank-csv` are the monthly plan quota (`quota_exceeded`). That is in
 ETag / `If-None-Match` already exists for invoice reads (version-based). KV caching of reports was considered and rejected for
 now. Reports are sub-2 ms with the indexes, and a tenant-scoped KV key adds invalidation risk (stale figures in a tax
 product) for no measurable gain. Revisit when the P&L p95 on D1 exceeds 100 ms.
+
+## Practice perf budgets (M6, 2026-10-25)
+`practice-ops.test.ts` seeds 25 clients through the API plus bulk transactions (2k by default; `PERF=1` gives 250k). The budgets are: client list < 1.5 s (5 s with PERF) and practice anomalies < 5 s (20 s with PERF), and EXPLAIN must show an index on every practice hot path. Both modes passed locally. These are in-process sqlite numbers, not D1 latencies.

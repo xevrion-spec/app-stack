@@ -61,3 +61,29 @@ describe("integrations", () => {
     ).toBe('Date,Description,Amount\n01/07/2026,"A ""quoted"", line break",-0.05\n');
   });
 });
+
+describe("practice metering (M6)", () => {
+  const pid = () => (h.raw.prepare("select id from practices where name = 'Firm A'").get() as { id: string }).id;
+  const period = new Date().toISOString().slice(0, 7);
+  it("usage reports counts against caps; sync is metered", async () => {
+    await call("POST", `/v1/practice/clients/${tid}/integrations/xero/sync`, { user: M, body: { since: "2020-01-01", until: "2020-01-31" } });
+    const u = (await call("GET", "/v1/practice/usage", { user: PREP })).json;
+    expect(u).toMatchObject({ plan: "trial", period });
+    expect(u.metrics.find((m: { metric: string }) => m.metric === "integration_syncs")).toEqual({
+      metric: "integration_syncs",
+      used: 1,
+      cap: 100,
+      remaining: 99,
+    });
+    expect((await call("GET", "/v1/practice/usage", { user: PB })).json.metrics.every((m: { used: number }) => m.used === 0)).toBe(true);
+  });
+  it("returns 429 quota_exceeded at the cap without over-counting", async () => {
+    h.raw.prepare("insert into practice_usage (practice_id, period, metric, count) values (?, ?, 'integration_syncs', 100)").run(pid(), period);
+    const r = await call("POST", `/v1/practice/clients/${tid}/integrations/xero/sync`, { user: M, body: { since: "2020-01-01", until: "2020-01-31" } });
+    expect(r.status).toBe(429);
+    expect(r.json.error?.code ?? r.json.code).toBe("quota_exceeded");
+    expect(
+      (h.raw.prepare("select count from practice_usage where practice_id = ? and metric = 'integration_syncs'").get(pid()) as { count: number }).count,
+    ).toBe(100);
+  });
+});

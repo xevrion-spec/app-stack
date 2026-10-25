@@ -80,7 +80,7 @@ practice.openapi(
       email: z.string(),
       clients: z.number(),
       staff: z.number(),
-      quota: z.object({ maxClients: z.number(), maxStaff: z.number(), aiReviewsPerMonth: z.number() }),
+      quota: z.object({ maxClients: z.number(), maxStaff: z.number(), aiReviewsPerMonth: z.number(), monthly: z.record(z.string(), z.number()) }),
     }),
   }),
   async (c) => {

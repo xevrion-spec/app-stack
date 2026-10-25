@@ -13,7 +13,8 @@ Current branch: feature/practice-copilot (from feature/harden). Goal: UK account
       Tests: books intelligence (19) + practice-intel (5 API) + matrix extended. Suite 2,481 passed / 1 skipped; coverage 96.54/88.31.
 - [x] M5 integrations (ADR 0027): Xero/QBO/FreeAgent mappers + mock read adapters + per-client sync via real ingest; FreeAgent CSV importer (real); PM + e-sign interfaces/mocks; MTD VAT box validation + fraud headers + sandbox config + mock HMRC adapter; Open Banking consent interface + mock; integration.synced event; honest catalogue endpoint; docs/api-reference.md regenerated with practice/portal auth notes.
       Tests: contract (18) + API (6). Suite 2,510 passed / 1 skipped; coverage 96.59/88.6.
-- [ ] M6 ops: perf 500×5k, indexes, load, quotas/metering, SLOs, backup drill, ASVS, importers mutation 70+, CSP nonce.
+- [x] M6 ops: metering + 429 caps (placeholders), 5 indexes (EXPLAIN-checked), perf budgets (25 clients/2k txns, PERF=1 250k; NOT a 500-client load test), automated backup/restore drill with audit-chain re-verify, CSP without unsafe-inline (no nonce needed), importers mutation 66.7%→93.2%, ASVS/DR/perf docs, ADR 0028. Fixed a latent readCsv fuzz-oracle flake. Coverage 96.64% statements / 88.82% branches, 2,526 tests.
+  - Open: real D1 Time Travel restore rehearsal and a k6 load test against a deployed env (both need a deploy, so blocked); scanHook is still a stub.
 - [ ] M7 web: practice console + client portal screens, axe, Playwright.
 - [ ] M8 docs + honest benchmark rescore + Notion.
       Ship: box `bash /tmp/ship.sh "msg"` → CopyFromBox /tmp/ship.tgz → PC apply-ship.ps1.

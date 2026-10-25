@@ -25,6 +25,7 @@ import { Outbox } from "../services/events.js";
 import { sha256Hex } from "../services/csv.js";
 import { buildSnapshot, type PaperKind } from "../services/working-papers.js";
 import { issueMagicToken } from "../services/portal-tokens.js";
+import { meterPractice } from "../services/practice-metering.js";
 import { MANAGERS, SIGNERS } from "./practice.js";
 
 type C = Context<AppEnv>;
@@ -726,6 +727,7 @@ onboard.openapi(
     const { id } = c.req.valid("param");
     const b = c.req.valid("json");
     const { pdb } = await client(c, id);
+    await meterPractice(pdb, "working_papers");
     const snap = await buildSnapshot(new TenantDb(c.env.DB, id), b.kind, b.periodEnd);
     const wid = newId();
     await commit(pdb, id, { action: "working_paper.prepared", subject: wid, meta: { kind: b.kind, periodEnd: b.periodEnd, sha: snap.sha256 } }, [

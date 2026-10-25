@@ -34,3 +34,6 @@ Migrations are additive-first.
 - Schedule the nightly export to R2.
 - Run a timed restore drill on staging and record the actual RTO.
 - Add an alert when the export job fails.
+
+## Automated backup/restore drill (M6, 2026-10-25)
+`apps/api/test/practice-ops.test.ts` runs on every CI build. It covers backup, read-only restore, integrity_check, per-table row counts plus sha256 equality, and audit-chain re-verification with tamper detection. Locally the restore took well under the 5 s budget. **Not yet done:** a D1 Time Travel restore rehearsal against a real Cloudflare database. That needs a deploy, which is out of scope.

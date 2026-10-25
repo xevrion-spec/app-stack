@@ -350,6 +350,17 @@ exports[`practice authz matrix over every /v1/practice operation > GET /v1/pract
 }
 `;
 
+exports[`practice authz matrix over every /v1/practice operation > GET /v1/practice/usage 1`] = `
+{
+  "manager": 200,
+  "otherFirm": 200,
+  "partner": 200,
+  "preparer": 200,
+  "readonly": 200,
+  "reviewer": 200,
+}
+`;
+
 exports[`practice authz matrix over every /v1/practice operation > GET /v1/practice/working-papers/{id} 1`] = `
 {
   "manager": 404,
