@@ -1,5 +1,19 @@
 # Autopilot TODO (resume point)
 
+## Agent review layer (branch feature/agent-review-layer, approved 2026-10-25, t66u/t67u)
+
+Built INTO the existing app: same API, web, D1, auth/tenancy and CI. A tenant is an organisation, which has review projects with environments. Market check: docs/agent-review-market.md.
+Reuse: api_keys (hashed, scoped, rotatable), events catalog + outbox, webhook engine (HMAC, retries, SSRF guard), realtime DO, usage caps, idempotency middleware, OpenAPI + SDK, hash-chain audit pattern.
+
+- [ ] A1 core: packages/agent-review (states + transitions, fast-check property tests), migration 0016 (review_projects, review_requests, review_decisions, api_keys.project_id), /v1/agent-reviews API (create with idempotency key, get, list, decide approve/reject/edit/escalate, cancel), scopes reviews:read/write/decide.
+- [ ] A2 policy engine: rules (risk, action, amount/field thresholds) -> auto | human(n approvers, four-eyes) | reject; reviewer groups routing; SLA deadline + escalation sweep (cron); POST /v1/agent-reviews/simulate (dry run).
+- [ ] A3 delivery: review.* events through the existing webhooks (signed, retries/DLQ, replay); per-request callback_url (signed, SSRF-guarded); GET /wait long-poll; realtime SSE; at-least-once with idempotent decisions.
+- [ ] A4 audit/evidence: per-project hash chain, verify endpoint, export bundle, retention, field-level payload redaction, export/delete.
+- [ ] A5 SDK (generated TS) + Python client + CLI + LangGraph/CrewAI/function-calling adapters (tested on fakes), examples.
+- [ ] A6 reviewer UI (queue, diff/edit, shortcuts, realtime) + developer dashboard (keys, usage, logs, deliveries), axe.
+- [ ] A7 E2E: full journey Playwright + API suite, failure paths, load + contract tests, E2E 10x flake rate. Then docs + re-scored benchmark.
+      Notes for later (no action): contracts/terms/DPA need adult sign-off (Henry is 17); GDPR roles for customer payloads; never claim AI Act compliance.
+
 Current branch: feature/practice-copilot (from feature/harden). Goal: UK accountant/bookkeeper co-pilot. Push only, no PR, never main.
 
 ## Practice co-pilot milestones
@@ -74,6 +88,7 @@ Previous branch: feature/value-max (from feature/quality-1000). Roadmap + status
 (done on feature/value-max M0: Playwright 10/10 after upgrades; Lighthouse 100 perf / 100 a11y / 96 best practices on all pages; mutation ledger 91.9, webhooks 93.0) 4. Pay down complexity waivers (docs/quality.md list), starting with pipeline runStages. 5. Regex category rules run on normalised text (literal `\.` never matches) — decide: also match raw description. 6. JWT tamper table test; SDK/workflows DLQ extra tests. 7. Notion: Change Log, MVP build status, Decisions (needs a Notion run).
 
 ## Practice demo track (approved 2026-10-25, t57u)
+
 - [x] 1. Staff client workspace (#/practice/<id>): assign staff, engagement letters (draft/send/withdraw, sha256 shown), document requests (ad-hoc or template, waive), client queries, working papers (prepare; four-eyes sign-off hidden from the preparer, server-enforced), audit CSV export. Playwright e2e covers the full loop (staff → portal upload, answer, accept → reviewer sign-off) with axe on 3 screens, desktop and mobile. e2e total 23 passed, 1 pre-existing skip. Bundle 65.1/80 KB.
 - [~] 2. Test deployment (STOPPED by Henry t63u, left running, not public): autopilot-api-test + autopilot-web-test on separate test D1/R2/KV/queues behind the existing Access "All Workers" app (secrets set, ENVIRONMENT=staging fails closed). 15 remote migrations applied. Unauthenticated smoke: every path 302 to Access, API has no public route, forged x-dev-user 302. Scale seed via scripts/scale-seed.ts: 25 synthetic clients x 20 lines = 39,975 D1 rows written (free limit 100k/day; 500 clients would need about 800k, about 8 days of quota, mainly because each client gets 270 rule copies). Queue SQL 0.3-1.6 ms. NOT done: authenticated smoke (needs Henry Access login), HTTP load (needs a service token), Time Travel restore rehearsal.
 - [x] 3. Demo mode: "Load synthetic demo day" on Practice (3 synthetic clients, bank import, rules first pass + client auto-approve rule at >=0.95 with 20% QA sample, portal upload/answer/accept, working paper), exceptions-only review panel, docs/demo-script.md, e2e demo.spec.ts with axe (desktop+mobile). LLM not in deployed demo (FreeLLMAPI is PC-local).
