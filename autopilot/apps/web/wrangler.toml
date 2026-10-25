@@ -9,3 +9,19 @@ routes = [
 [assets]
 directory = "./dist" # built by `npm run build -w apps/web` (Vite copies public/ static pages in)
 not_found_handling = "single-page-application"
+
+# TEST deployment (synthetic data only) on workers.dev, behind the existing Access "All Workers" app.
+# Same-origin proxy: /v1/* goes to autopilot-api-test over a service binding (so the Access JWT header is forwarded
+# and no cross-origin cookie is needed); everything else is the static app. Build with VITE_DEMO=1 VITE_apiBase="".
+[env.staging]
+name = "autopilot-web-test"
+main = "staging-worker.ts"
+workers_dev = true
+routes = []
+services = [{ binding = "API", service = "autopilot-api-test" }]
+
+[env.staging.assets]
+directory = "./dist"
+binding = "ASSETS"
+not_found_handling = "single-page-application"
+run_worker_first = ["/v1/*"]

@@ -3,7 +3,7 @@ export interface Env {
   DOCS: R2Bucket;
   CONFIG: KVNamespace;
   PIPELINE: Queue<QueueMessage>;
-  ENVIRONMENT: "development" | "test" | "production";
+  ENVIRONMENT: "development" | "test" | "staging" | "production";
   ALLOWED_ORIGINS: string;
   /** Cloudflare Access team domain, e.g. "hidden-breeze-99ce.cloudflareaccess.com" */
   ACCESS_TEAM_DOMAIN?: string;

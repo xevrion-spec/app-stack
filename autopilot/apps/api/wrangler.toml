@@ -57,3 +57,56 @@ new_sqlite_classes = ["TenantRealtime"]
 # Outbox sweeper + webhook retries.
 [triggers]
 crons = ["* * * * *"]
+
+# ---------------------------------------------------------------------------
+# TEST deployment (synthetic data only). Separate resources; never touches production.
+# Not public: no route and workers_dev = false; reached only via the autopilot-web-test service binding,
+# whose workers.dev host sits behind the existing Cloudflare Access "All Workers" app.
+# ACCESS_TEAM_DOMAIN and ACCESS_AUD are set as Worker secrets (wrangler secret put --env staging), not here.
+# ENVIRONMENT = "staging" fails closed: x-dev-user is ignored, a valid Access JWT is required.
+[env.staging]
+name = "autopilot-api-test"
+workers_dev = false
+routes = []
+
+[env.staging.vars]
+ENVIRONMENT = "staging"
+ALLOWED_ORIGINS = "https://autopilot-web-test.henrydavenhall124.workers.dev"
+RATE_LIMIT_PER_MINUTE = "600"
+
+[[env.staging.d1_databases]]
+binding = "DB"
+database_name = "autopilot-test-db"
+database_id = "a026af48-0804-4a6b-9a6a-48ce1b88ef9b"
+migrations_dir = "../../migrations"
+
+[[env.staging.r2_buckets]]
+binding = "DOCS"
+bucket_name = "autopilot-test-documents"
+
+[[env.staging.kv_namespaces]]
+binding = "CONFIG"
+id = "fbe03fc8e35042a4a767cf1363ac6601"
+
+[[env.staging.queues.producers]]
+binding = "PIPELINE"
+queue = "autopilot-test-pipeline"
+
+[[env.staging.queues.consumers]]
+queue = "autopilot-test-pipeline"
+max_batch_size = 10
+max_retries = 3
+dead_letter_queue = "autopilot-test-pipeline-dlq"
+
+[[env.staging.queues.consumers]]
+queue = "autopilot-test-pipeline-dlq"
+max_batch_size = 10
+max_retries = 1
+
+[[env.staging.durable_objects.bindings]]
+name = "REALTIME"
+class_name = "TenantRealtime"
+
+# Hourly (not every minute) to stay well inside free-plan D1 read limits.
+[env.staging.triggers]
+crons = ["0 * * * *"]
