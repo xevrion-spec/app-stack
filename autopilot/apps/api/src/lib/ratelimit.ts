@@ -36,6 +36,25 @@ export const rateLimit: MiddlewareHandler<AppEnv> = async (c, next) => {
   return next();
 };
 
+/**
+ * Public login endpoints (no principal yet): per-client-IP bucket, default 20/min, so credential-stuffing and
+ * state-flooding against /sso/oidc/* is throttled. Missing IP shares one "unknown" bucket (fails closed-ish).
+ */
+export const loginRateLimit: MiddlewareHandler<AppEnv> = async (c, next) => {
+  const perMin = Math.max(1, Number(c.env.RATE_LIMIT_LOGIN_PER_MINUTE ?? 20) || 20);
+  const key = `login:${c.req.header("cf-connecting-ip") ?? "unknown"}`;
+  const r = takeToken(buckets.get(key) ?? null, now(), perMin, perMin / 60);
+  buckets.set(key, r.bucket);
+  if (buckets.size > 10_000) buckets.delete(buckets.keys().next().value!);
+  c.header("ratelimit-limit", String(perMin));
+  c.header("ratelimit-remaining", String(r.remaining));
+  if (!r.allowed) {
+    c.header("retry-after", String(Math.max(1, Math.ceil(60 / perMin))));
+    throw new AppError(429, "rate_limited", "Too many sign-in attempts");
+  }
+  return next();
+};
+
 /** API versioning: every response says which version served it; deprecated routes advertise Sunset + successor. */
 const API_VERSION = "1";
 const DEPRECATIONS: { method: string; path: RegExp; sunset: string; link: string }[] = [

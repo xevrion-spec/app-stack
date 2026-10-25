@@ -29,6 +29,7 @@ export interface Env {
   RECEIPT_RETIRED_PUBLIC_JWKS?: string;
   /** Requests per minute per principal (default 600). */
   RATE_LIMIT_PER_MINUTE?: string;
+  RATE_LIMIT_LOGIN_PER_MINUTE?: string;
   /** Requests per minute per API key (default 120). */
   RATE_LIMIT_API_KEY_PER_MINUTE?: string;
   /** "1" freezes all writes with 503 (disaster-recovery runbook step 1); reads keep working. */

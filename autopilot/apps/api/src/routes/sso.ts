@@ -8,6 +8,7 @@ import type { MiddlewareHandler } from "hono";
 import type { AppEnv } from "../env.js";
 import { def, validationHook } from "../lib/route.js";
 import { requireRole } from "../lib/auth.js";
+import { loginRateLimit } from "../lib/ratelimit.js";
 import { auditStmt } from "../lib/audit.js";
 import { AppError, badRequest, notFound } from "../lib/errors.js";
 import { TenantDb } from "../lib/db.js";
@@ -146,6 +147,7 @@ ssoAdmin.openapi(
 
 /** Public half: mounted on the root app before /v1 identity. */
 export const ssoPublic = new OpenAPIHono<AppEnv>({ defaultHook: validationHook });
+ssoPublic.use("/sso/oidc/*", loginRateLimit);
 ssoPublic.openapi(
   def({
     method: "get",

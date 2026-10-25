@@ -2,6 +2,7 @@ import { describe, it, expect, beforeAll, afterEach } from "vitest";
 import { SignJWT, exportJWK, generateKeyPair, type JWK } from "jose";
 import { makeEnv, client } from "./harness.js";
 import { __setSsoFetcher } from "../src/services/sso.js";
+import { __setRateLimitClock } from "../src/lib/ratelimit.js";
 
 const OWNER = "owner-sso@corp.example.test",
   ALICE = "alice@corp.example.test",
@@ -16,7 +17,10 @@ beforeAll(async () => {
   pubJwk = { ...(await exportJWK(kp.publicKey)), kid: "idp-1", alg: "RS256", use: "sig" };
   otherPriv = (await generateKeyPair("RS256")).privateKey as CryptoKey;
 });
-afterEach(() => __setSsoFetcher(null));
+afterEach(() => {
+  __setSsoFetcher(null);
+  __setRateLimitClock(null);
+});
 
 /** Mock IdP: authorize binds a code to (nonce, PKCE challenge); /token checks the verifier and mints an ID token. */
 type Grant = { challenge: string; claims: Record<string, unknown>; key?: CryptoKey; aud?: string; iss?: string; exp?: number };
