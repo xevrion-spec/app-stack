@@ -21,6 +21,13 @@ export function makeEnv(over: Partial<Env> = {}) {
         objects.set(k, { body: new Uint8Array(v), meta });
         return {} as R2Object;
       },
+      get: async (k: string) => {
+        const o = objects.get(k);
+        return o
+          ? ({ arrayBuffer: async () => o.body.buffer.slice(o.body.byteOffset, o.body.byteOffset + o.body.byteLength) } as unknown as R2ObjectBody)
+          : null;
+      },
+      delete: async (k: string) => void objects.delete(k),
     } as unknown as R2Bucket,
     CONFIG: { get: async (k: string) => kv.get(k) ?? null, put: async (k: string, v: string) => void kv.set(k, v) } as unknown as KVNamespace,
     PIPELINE: {

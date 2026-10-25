@@ -1,6 +1,7 @@
 /** Builds a Node-side Env for the Docker-free local run: SQLite-backed D1, filesystem R2, in-process queue. */
 import { sweep } from "../src/services/dispatch.js";
-import { mkdirSync, writeFileSync, readFileSync, existsSync } from "node:fs";
+import { maybeRunDaily } from "../src/services/schedules.js";
+import { mkdirSync, writeFileSync, readFileSync, existsSync, rmSync } from "node:fs";
 import { dirname, join } from "node:path";
 import type { Env, QueueMessage } from "../src/env.js";
 import { makeSqliteD1 } from "./sqlite-d1.js";
@@ -19,6 +20,7 @@ export function makeLocalEnv(dataDir: string, over: Partial<Env> = {}) {
     },
     get: async (k: string) =>
       existsSync(r2Path(k)) ? { arrayBuffer: async () => readFileSync(r2Path(k)).buffer, text: async () => readFileSync(r2Path(k), "utf8") } : null,
+    delete: async (k: string) => rmSync(r2Path(k), { force: true }),
   } as unknown as R2Bucket;
   const env: Env = {
     DB: d1,
@@ -47,7 +49,11 @@ export function makeLocalEnv(dataDir: string, over: Partial<Env> = {}) {
     sendBatch: async (ms: { body: QueueMessage }[]) => ms.forEach((m) => deliver(m.body)),
   } as unknown as Queue<QueueMessage>;
   // Local cron: outbox sweeper + webhook retries every 30 s (what the Workers cron does in production).
-  if (over.ENVIRONMENT !== "test") setInterval(() => void sweep(env).catch(() => {}), 30_000).unref?.();
+  if (over.ENVIRONMENT !== "test")
+    setInterval(() => {
+      void sweep(env).catch(() => {});
+      void maybeRunDaily(env).catch(() => {});
+    }, 30_000).unref?.();
   env.WEBHOOK_DEV_HTTP_HOSTS ??= "127.0.0.1,localhost";
   if (process.env.RATE_LIMIT_PER_MINUTE) env.RATE_LIMIT_PER_MINUTE = process.env.RATE_LIMIT_PER_MINUTE;
   return { env, raw };

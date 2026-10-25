@@ -192,3 +192,29 @@ export function buildQuarterlyUpdate(periodKey: string, turnoverPence: number, b
   for (const [k, v] of Object.entries(boxes)) if (v > 0) expenses[k] = v;
   return { periodKey, turnoverPence: Math.max(0, turnoverPence), otherIncomePence: Math.max(0, otherIncomePence), expenses };
 }
+
+// ---------- image OCR (interface + mock only) ----------
+export interface OcrResult {
+  text: string;
+  confidence: number; // 0..1
+  engine: string;
+}
+/** Turns an image/PDF into text for `DocumentExtractor`. No real OCR engine is wired (provider choice pending; ADR 0022). */
+export interface ImageOcr {
+  readonly name: string;
+  recognise(input: { bytes: Uint8Array; contentType: string }): Promise<OcrResult>;
+}
+export const OCR_CONTENT_TYPES = ["image/jpeg", "image/png", "image/webp", "image/heic", "application/pdf"] as const;
+/**
+ * Deterministic mock: if the file embeds a `SYNTHETIC-RECEIPT` text block (used by tests and demo fixtures) that text is
+ * returned verbatim; otherwise an empty low-confidence result so the receipt goes to human review. Never guesses figures.
+ */
+export class MockOcr implements ImageOcr {
+  readonly name = "mock-ocr";
+  async recognise(input: { bytes: Uint8Array; contentType: string }): Promise<OcrResult> {
+    if (!(OCR_CONTENT_TYPES as readonly string[]).includes(input.contentType)) throw new RangeError(`unsupported content type ${input.contentType}`);
+    const s = new TextDecoder().decode(input.bytes);
+    const m = s.match(/SYNTHETIC-RECEIPT\n([\s\S]{1,8000}?)\nEND-RECEIPT/);
+    return m ? { text: m[1]!, confidence: 0.9, engine: this.name } : { text: "", confidence: 0, engine: this.name };
+  }
+}

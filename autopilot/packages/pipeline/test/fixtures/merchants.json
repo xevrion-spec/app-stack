@@ -1,1634 +1,274 @@
 [
-[
-"CARD PAYMENT TO TRAINLINE.COM ON 12/07",
--42595,
-"6100",
-"merchant"
-],
-[
-"TFL TRAVEL CH LONDON GB",
--19922,
-"6100",
-"merchant"
-],
-[
-"DD UBER *TRIP REF 0012345678",
--51900,
-"6100",
-"merchant"
-],
-[
-"UBER BV*AB12CD",
--85469,
-"6100",
-"merchant"
-],
-[
-"POS NATIONAL RAIL ENQ 4492",
--6478,
-"6100",
-"merchant"
-],
-[
-"LNER LTD",
--9644,
-"6100",
-"merchant"
-],
-[
-"CARD PAYMENT TO GWR TICKETS ON 12/07",
--70389,
-"6100",
-"merchant"
-],
-[
-"AVANTI WEST COAST LONDON GB",
--12487,
-"6100",
-"merchant"
-],
-[
-"DD CROSSCOUNTRY TRAINS REF 0012345678",
--48081,
-"6100",
-"merchant"
-],
-[
-"NORTHERN RAIL*AB12CD",
--76537,
-"6100",
-"merchant"
-],
-[
-"POS THAMESLINK 4492",
--7752,
-"6100",
-"merchant"
-],
-[
-"SOUTHERN RAIL",
--66660,
-"6100",
-"merchant"
-],
-[
-"CARD PAYMENT TO SOUTHEASTERN ON 12/07",
--28290,
-"6100",
-"merchant"
-],
-[
-"SCOTRAIL LONDON GB",
--5064,
-"6100",
-"merchant"
-],
-[
-"DD EUROSTAR INTERNATIONAL REF 0012345678",
--11415,
-"6100",
-"merchant"
-],
-[
-"EASYJET*AB12CD",
--56988,
-"6100",
-"merchant"
-],
-[
-"POS RYANAIR 4492",
--54960,
-"6100",
-"merchant"
-],
-[
-"BRITISH AIRWAYS",
--9306,
-"6100",
-"merchant"
-],
-[
-"CARD PAYMENT TO JET2.COM ON 12/07",
--31694,
-"6100",
-"merchant"
-],
-[
-"BOLT.EU LONDON GB",
--12039,
-"6100",
-"merchant"
-],
-[
-"DD ADDISON LEE REF 0012345678",
--72376,
-"6100",
-"merchant"
-],
-[
-"FREE NOW*AB12CD",
--55792,
-"6100",
-"merchant"
-],
-[
-"POS RINGGO PARKING 4492",
--7897,
-"6100",
-"merchant"
-],
-[
-"JUSTPARK",
--74265,
-"6100",
-"merchant"
-],
-[
-"CARD PAYMENT TO PAYBYPHONE ON 12/07",
--16376,
-"6100",
-"merchant"
-],
-[
-"NCP LIMITED LONDON GB",
--29410,
-"6100",
-"merchant"
-],
-[
-"DD CONGESTION CHARGE REF 0012345678",
--82807,
-"6100",
-"merchant"
-],
-[
-"TFL ULEZ*AB12CD",
--82388,
-"6100",
-"merchant"
-],
-[
-"POS DART CHARGE 4492",
--76564,
-"6100",
-"merchant"
-],
-[
-"ESSO",
--8258,
-"6100",
-"merchant"
-],
-[
-"CARD PAYMENT TO TEXACO ON 12/07",
--75792,
-"6100",
-"merchant"
-],
-[
-"SHELL LONDON GB",
--76898,
-"6100",
-"merchant"
-],
-[
-"DD BP REF 0012345678",
--52143,
-"6100",
-"merchant"
-],
-[
-"GULF*AB12CD",
--6649,
-"6100",
-"merchant"
-],
-[
-"POS MURCO 4492",
--29127,
-"6100",
-"merchant"
-],
-[
-"SAINSBURYS FUEL",
--6255,
-"6100",
-"merchant"
-],
-[
-"CARD PAYMENT TO TESCO FUEL ON 12/07",
--73113,
-"6100",
-"merchant"
-],
-[
-"ASDA FUEL LONDON GB",
--17605,
-"6100",
-"merchant"
-],
-[
-"DD MORRISONS FUEL REF 0012345678",
--38109,
-"6100",
-"merchant"
-],
-[
-"PREMIER INN*AB12CD",
--55087,
-"6100",
-"merchant"
-],
-[
-"POS TRAVELODGE 4492",
--19057,
-"6100",
-"merchant"
-],
-[
-"AIRBNB",
--71018,
-"6100",
-"merchant"
-],
-[
-"CARD PAYMENT TO BOOKING.COM ON 12/07",
--15589,
-"6100",
-"merchant"
-],
-[
-"HOTELS.COM LONDON GB",
--74980,
-"6100",
-"merchant"
-],
-[
-"DD MEGABUS REF 0012345678",
--40583,
-"6100",
-"merchant"
-],
-[
-"NATIONAL EXPRESS*AB12CD",
--73584,
-"6100",
-"merchant"
-],
-[
-"POS STAGECOACH 4492",
--89541,
-"6100",
-"merchant"
-],
-[
-"FIRST BUS",
--23838,
-"6100",
-"merchant"
-],
-[
-"CARD PAYMENT TO ARRIVA ON 12/07",
--13657,
-"6100",
-"merchant"
-],
-[
-"SANTANDER CYCLES LONDON GB",
--76381,
-"6100",
-"merchant"
-],
-[
-"DD LIME REF 0012345678",
--75018,
-"6100",
-"merchant"
-],
-[
-"ZIPCAR*AB12CD",
--83893,
-"6100",
-"merchant"
-],
-[
-"POS ENTERPRISE RENT-A-CAR 4492",
--24774,
-"6100",
-"merchant"
-],
-[
-"HERTZ UK",
--48960,
-"6100",
-"merchant"
-],
-[
-"CARD PAYMENT TO EUROPCAR ON 12/07",
--12920,
-"6100",
-"merchant"
-],
-[
-"AVIS BUDGET LONDON GB",
--71943,
-"6100",
-"merchant"
-],
-[
-"CARD PAYMENT TO STAPLES ON 12/07",
--8379,
-"6200",
-"merchant"
-],
-[
-"RYMAN LONDON GB",
--74122,
-"6200",
-"merchant"
-],
-[
-"DD VIKING DIRECT REF 0012345678",
--7962,
-"6200",
-"merchant"
-],
-[
-"OFFICE DEPOT*AB12CD",
--81284,
-"6200",
-"merchant"
-],
-[
-"POS ROYAL MAIL 4492",
--27145,
-"6200",
-"merchant"
-],
-[
-"POST OFFICE",
--65216,
-"6200",
-"merchant"
-],
-[
-"CARD PAYMENT TO PARCELFORCE ON 12/07",
--89331,
-"6200",
-"merchant"
-],
-[
-"DPD UK LONDON GB",
--69843,
-"6200",
-"merchant"
-],
-[
-"DD EVRI REF 0012345678",
--56195,
-"6200",
-"merchant"
-],
-[
-"HERMES*AB12CD",
--41325,
-"6200",
-"merchant"
-],
-[
-"POS YODEL 4492",
--61177,
-"6200",
-"merchant"
-],
-[
-"UPS",
--76900,
-"6200",
-"merchant"
-],
-[
-"CARD PAYMENT TO FEDEX ON 12/07",
--59549,
-"6200",
-"merchant"
-],
-[
-"DHL LONDON GB",
--47543,
-"6200",
-"merchant"
-],
-[
-"DD VISTAPRINT REF 0012345678",
--39441,
-"6200",
-"merchant"
-],
-[
-"MOO PRINT*AB12CD",
--32711,
-"6200",
-"merchant"
-],
-[
-"POS INSTANTPRINT 4492",
--23712,
-"6200",
-"merchant"
-],
-[
-"PRINTED.COM",
--32144,
-"6200",
-"merchant"
-],
-[
-"CARD PAYMENT TO WHSMITH ON 12/07",
--10878,
-"6200",
-"merchant"
-],
-[
-"WH SMITH LONDON GB",
--75440,
-"6200",
-"merchant"
-],
-[
-"DD CURRYS REF 0012345678",
--39504,
-"6200",
-"merchant"
-],
-[
-"ARGOS*AB12CD",
--68988,
-"6200",
-"merchant"
-],
-[
-"POS AMAZON.CO.UK 4492",
--65045,
-"6200",
-"merchant"
-],
-[
-"AMAZON MARKETPLACE",
--45170,
-"6200",
-"merchant"
-],
-[
-"CARD PAYMENT TO VODAFONE ON 12/07",
--58979,
-"6300",
-"merchant"
-],
-[
-"EE LIMITED LONDON GB",
--37890,
-"6300",
-"merchant"
-],
-[
-"DD BT GROUP PLC REF 0012345678",
--79967,
-"6300",
-"merchant"
-],
-[
-"BT BROADBAND*AB12CD",
--9744,
-"6300",
-"merchant"
-],
-[
-"POS VIRGIN MEDIA 4492",
--15625,
-"6300",
-"merchant"
-],
-[
-"SKY BROADBAND",
--67250,
-"6300",
-"merchant"
-],
-[
-"CARD PAYMENT TO PLUSNET ON 12/07",
--54954,
-"6300",
-"merchant"
-],
-[
-"TALKTALK LONDON GB",
--21771,
-"6300",
-"merchant"
-],
-[
-"DD GIFFGAFF REF 0012345678",
--44983,
-"6300",
-"merchant"
-],
-[
-"TESCO MOBILE*AB12CD",
--20070,
-"6300",
-"merchant"
-],
-[
-"POS ID MOBILE 4492",
--64239,
-"6300",
-"merchant"
-],
-[
-"LEBARA",
--55422,
-"6300",
-"merchant"
-],
-[
-"CARD PAYMENT TO SMARTY ON 12/07",
--5288,
-"6300",
-"merchant"
-],
-[
-"VOXI LONDON GB",
--87734,
-"6300",
-"merchant"
-],
-[
-"DD HYPEROPTIC REF 0012345678",
--10323,
-"6300",
-"merchant"
-],
-[
-"COMMUNITY FIBRE*AB12CD",
--73298,
-"6300",
-"merchant"
-],
-[
-"POS ZEN INTERNET 4492",
--75257,
-"6300",
-"merchant"
-],
-[
-"O2 UK",
--41273,
-"6300",
-"merchant"
-],
-[
-"CARD PAYMENT TO THREE ON 12/07",
--44730,
-"6300",
-"merchant"
-],
-[
-"VONAGE LONDON GB",
--46048,
-"6300",
-"merchant"
-],
-[
-"DD RINGCENTRAL REF 0012345678",
--78055,
-"6300",
-"merchant"
-],
-[
-"CARD PAYMENT TO GITHUB ON 12/07",
--65250,
-"6400",
-"merchant"
-],
-[
-"GOOGLE *WORKSPACE LONDON GB",
--76158,
-"6400",
-"merchant"
-],
-[
-"DD GOOGLE CLOUD REF 0012345678",
--59945,
-"6400",
-"merchant"
-],
-[
-"MICROSOFT 365*AB12CD",
--9162,
-"6400",
-"merchant"
-],
-[
-"POS OFFICE 365 4492",
--12417,
-"6400",
-"merchant"
-],
-[
-"ADOBE",
--35531,
-"6400",
-"merchant"
-],
-[
-"CARD PAYMENT TO ADOBE SYSTEMS ON 12/07",
--62291,
-"6400",
-"merchant"
-],
-[
-"NOTION LABS LONDON GB",
--87201,
-"6400",
-"merchant"
-],
-[
-"DD CLOUDFLARE REF 0012345678",
--8669,
-"6400",
-"merchant"
-],
-[
-"AWS EMEA*AB12CD",
--8102,
-"6400",
-"merchant"
-],
-[
-"POS AMAZON WEB SERVICES 4492",
--40730,
-"6400",
-"merchant"
-],
-[
-"DIGITALOCEAN",
--84970,
-"6400",
-"merchant"
-],
-[
-"CARD PAYMENT TO HEROKU ON 12/07",
--75902,
-"6400",
-"merchant"
-],
-[
-"VERCEL INC LONDON GB",
--89441,
-"6400",
-"merchant"
-],
-[
-"DD NETLIFY REF 0012345678",
--58561,
-"6400",
-"merchant"
-],
-[
-"GODADDY*AB12CD",
--37452,
-"6400",
-"merchant"
-],
-[
-"POS NAMECHEAP 4492",
--50716,
-"6400",
-"merchant"
-],
-[
-"123 REG",
--87791,
-"6400",
-"merchant"
-],
-[
-"CARD PAYMENT TO IONOS ON 12/07",
--45632,
-"6400",
-"merchant"
-],
-[
-"SQUARESPACE LONDON GB",
--3107,
-"6400",
-"merchant"
-],
-[
-"DD WIX.COM REF 0012345678",
--60665,
-"6400",
-"merchant"
-],
-[
-"XERO*AB12CD",
--46741,
-"6400",
-"merchant"
-],
-[
-"POS QUICKBOOKS 4492",
--22176,
-"6400",
-"merchant"
-],
-[
-"FREEAGENT",
--80224,
-"6400",
-"merchant"
-],
-[
-"CARD PAYMENT TO SAGE ON 12/07",
--15497,
-"6400",
-"merchant"
-],
-[
-"ZOOM.US LONDON GB",
--64859,
-"6400",
-"merchant"
-],
-[
-"DD SLACK REF 0012345678",
--7877,
-"6400",
-"merchant"
-],
-[
-"DROPBOX*AB12CD",
--28750,
-"6400",
-"merchant"
-],
-[
-"POS ATLASSIAN 4492",
--37824,
-"6400",
-"merchant"
-],
-[
-"FIGMA",
--17102,
-"6400",
-"merchant"
-],
-[
-"CARD PAYMENT TO CANVA ON 12/07",
--32605,
-"6400",
-"merchant"
-],
-[
-"MAILCHIMP LONDON GB",
--52303,
-"6400",
-"merchant"
-],
-[
-"DD HUBSPOT REF 0012345678",
--51392,
-"6400",
-"merchant"
-],
-[
-"LINEAR*AB12CD",
--65228,
-"6400",
-"merchant"
-],
-[
-"POS OPENAI 4492",
--10711,
-"6400",
-"merchant"
-],
-[
-"JETBRAINS",
--21955,
-"6400",
-"merchant"
-],
-[
-"CARD PAYMENT TO 1PASSWORD ON 12/07",
--59025,
-"6400",
-"merchant"
-],
-[
-"LASTPASS LONDON GB",
--52794,
-"6400",
-"merchant"
-],
-[
-"DD AUTODESK REF 0012345678",
--72166,
-"6400",
-"merchant"
-],
-[
-"CARD PAYMENT TO GOOGLE ADS ON 12/07",
--36566,
-"6500",
-"merchant"
-],
-[
-"META ADS LONDON GB",
--18097,
-"6500",
-"merchant"
-],
-[
-"DD FACEBK ADS REF 0012345678",
--56579,
-"6500",
-"merchant"
-],
-[
-"FACEBOOK ADS*AB12CD",
--72268,
-"6500",
-"merchant"
-],
-[
-"POS INSTAGRAM ADS 4492",
--36643,
-"6500",
-"merchant"
-],
-[
-"LINKEDIN ADS",
--54583,
-"6500",
-"merchant"
-],
-[
-"CARD PAYMENT TO TIKTOK ADS ON 12/07",
--47174,
-"6500",
-"merchant"
-],
-[
-"BING ADS LONDON GB",
--89635,
-"6500",
-"merchant"
-],
-[
-"DD MICROSOFT ADS REF 0012345678",
--50015,
-"6500",
-"merchant"
-],
-[
-"YELL.COM*AB12CD",
--30395,
-"6500",
-"merchant"
-],
-[
-"POS CHECKATRADE 4492",
--19931,
-"6500",
-"merchant"
-],
-[
-"RATED PEOPLE",
--11026,
-"6500",
-"merchant"
-],
-[
-"CARD PAYMENT TO MYBUILDER ON 12/07",
--23247,
-"6500",
-"merchant"
-],
-[
-"BARK.COM LONDON GB",
--19980,
-"6500",
-"merchant"
-],
-[
-"CARD PAYMENT TO ACCOUNTANTS LLP ON 12/07",
--30553,
-"6600",
-"merchant"
-],
-[
-"BOOKKEEPER LONDON GB",
--86463,
-"6600",
-"merchant"
-],
-[
-"DD SOLICITORS REF 0012345678",
--30733,
-"6600",
-"merchant"
-],
-[
-"LAW FIRM*AB12CD",
--1731,
-"6600",
-"merchant"
-],
-[
-"POS COMPANIES HOUSE 4492",
--63715,
-"6600",
-"merchant"
-],
-[
-"ICO REGISTRATION",
--77367,
-"6600",
-"merchant"
-],
-[
-"CARD PAYMENT TO HISCOX ON 12/07",
--24050,
-"6600",
-"merchant"
-],
-[
-"SIMPLY BUSINESS LONDON GB",
--34588,
-"6600",
-"merchant"
-],
-[
-"DD AXA INSURANCE REF 0012345678",
--37103,
-"6600",
-"merchant"
-],
-[
-"ZURICH INSURANCE*AB12CD",
--686,
-"6600",
-"merchant"
-],
-[
-"POS UPWORK 4492",
--19244,
-"6600",
-"merchant"
-],
-[
-"FIVERR",
--55062,
-"6600",
-"merchant"
-],
-[
-"CARD PAYMENT TO PEOPLEPERHOUR ON 12/07",
--70219,
-"6600",
-"merchant"
-],
-[
-"TOPTAL LONDON GB",
--48548,
-"6600",
-"merchant"
-],
-[
-"CARD PAYMENT TO ACCOUNT FEE ON 12/07",
--80079,
-"6700",
-"merchant"
-],
-[
-"MONTHLY FEE LONDON GB",
--74381,
-"6700",
-"merchant"
-],
-[
-"DD OVERDRAFT INTEREST REF 0012345678",
--41911,
-"6700",
-"merchant"
-],
-[
-"SERVICE CHARGE*AB12CD",
--16598,
-"6700",
-"merchant"
-],
-[
-"POS NON-STERLING TRANSACTION FEE 4492",
--67716,
-"6700",
-"merchant"
-],
-[
-"FOREIGN TRANSACTION FEE",
--81099,
-"6700",
-"merchant"
-],
-[
-"CARD PAYMENT TO CARD FEE ON 12/07",
--85997,
-"6700",
-"merchant"
-],
-[
-"STRIPE FEE LONDON GB",
--88780,
-"6700",
-"merchant"
-],
-[
-"DD PAYPAL FEE REF 0012345678",
--7226,
-"6700",
-"merchant"
-],
-[
-"SUMUP FEE*AB12CD",
--60003,
-"6700",
-"merchant"
-],
-[
-"POS CHAPS FEE 4492",
--89354,
-"6700",
-"merchant"
-],
-[
-"UNPAID ITEM FEE",
--73454,
-"6700",
-"merchant"
-],
-[
-"CARD PAYMENT TO BOOKER WHOLESALE ON 12/07",
--51579,
-"5000",
-"merchant"
-],
-[
-"COSTCO WHOLESALE LONDON GB",
--52325,
-"5000",
-"merchant"
-],
-[
-"DD MAKRO REF 0012345678",
--52444,
-"5000",
-"merchant"
-],
-[
-"SCREWFIX*AB12CD",
--51808,
-"5000",
-"merchant"
-],
-[
-"POS TOOLSTATION 4492",
--13720,
-"5000",
-"merchant"
-],
-[
-"WICKES",
--63264,
-"5000",
-"merchant"
-],
-[
-"CARD PAYMENT TO TRAVIS PERKINS ON 12/07",
--83287,
-"5000",
-"merchant"
-],
-[
-"JEWSON LONDON GB",
--52636,
-"5000",
-"merchant"
-],
-[
-"DD B&Q TRADE REF 0012345678",
--8308,
-"5000",
-"merchant"
-],
-[
-"ALIBABA.COM*AB12CD",
--25133,
-"5000",
-"merchant"
-],
-[
-"POS ALIEXPRESS 4492",
--8977,
-"5000",
-"merchant"
-],
-[
-"PACKAGING SUPPLIES LTD",
--27513,
-"5000",
-"merchant"
-],
-[
-"CARD PAYMENT TO CASH AND CARRY ON 12/07",
--57903,
-"5000",
-"merchant"
-],
-[
-"FASTER PAYMENT STRIPE PAYOUT",
-86093,
-"4000",
-"income"
-],
-[
-"FASTER PAYMENT STRIPE PAYMENTS UK",
-58634,
-"4000",
-"income"
-],
-[
-"FASTER PAYMENT SUMUP PAYOUT",
-179286,
-"4000",
-"income"
-],
-[
-"FASTER PAYMENT ZETTLE PAYOUT",
-315954,
-"4000",
-"income"
-],
-[
-"FASTER PAYMENT IZETTLE",
-28564,
-"4000",
-"income"
-],
-[
-"FASTER PAYMENT SQUARE PAYOUT",
-54676,
-"4000",
-"income"
-],
-[
-"FASTER PAYMENT PAYPAL PAYOUT",
-1122,
-"4000",
-"income"
-],
-[
-"FASTER PAYMENT GOCARDLESS LTD",
-298157,
-"4000",
-"income"
-],
-[
-"FASTER PAYMENT SHOPIFY PAYMENTS",
-80306,
-"4000",
-"income"
-],
-[
-"FASTER PAYMENT ETSY PAYOUT",
-282342,
-"4000",
-"income"
-],
-[
-"FASTER PAYMENT EBAY PAYOUT",
-54196,
-"4000",
-"income"
-],
-[
-"FASTER PAYMENT WORLDPAY",
-191636,
-"4000",
-"income"
-],
-[
-"FASTER PAYMENT TAKEPAYMENTS",
-322775,
-"4000",
-"income"
-],
-[
-"FASTER PAYMENT DOJO PAYOUT",
-14369,
-"4000",
-"income"
-],
-[
-"INVOICE 2231 SMITH LTD",
-37865,
-"4000",
-"income"
-],
-[
-"FASTER PAYMENT REMITTANCE ACME LTD",
-110027,
-"4000",
-"income"
-],
-[
-"STRIPE PAYMENTS UK CHARGEBACK",
--6030,
-"9999",
-"outflow never sales"
-],
-[
-"SHOPIFY PAYMENTS CHARGEBACK",
--4082,
-"9999",
-"outflow never sales"
-],
-[
-"WORLDPAY CHARGEBACK",
--2216,
-"9999",
-"outflow never sales"
-],
-[
-"REFUND TRAINLINE",
-8765,
-"6100",
-"refund"
-],
-[
-"AMAZON MARKETPLACE REFUND",
-11883,
-"6200",
-"refund"
-],
-[
-"ADOBE REFUND",
-12432,
-"6400",
-"refund"
-],
-[
-"RYANAIR REFUND",
-16036,
-"6100",
-"refund"
-],
-[
-"ROYAL MAIL REFUND",
-4525,
-"6200",
-"refund"
-],
-[
-"SCREWFIX RETURN",
-4279,
-"5000",
-"refund"
-],
-[
-"VODAFONE REFUND",
-16493,
-"6300",
-"refund"
-],
-[
-"CANVA REVERSAL",
-15769,
-"6400",
-"refund"
-],
-[
-"TRANSFER TO SAVINGS",
-254668,
-"8000",
-"transfer"
-],
-[
-"TFR TO ISA",
-46028,
-"8000",
-"transfer"
-],
-[
-"TFR FROM SAVINGS",
--54575,
-"8000",
-"transfer"
-],
-[
-"OWN ACCOUNT TRANSFER",
-389157,
-"8000",
-"transfer"
-],
-[
-"MONZO POT TOP UP",
-251935,
-"8000",
-"transfer"
-],
-[
-"STARLING SPACE POT",
--271707,
-"8000",
-"transfer"
-],
-[
-"TRANSFER FROM BUSINESS ACCOUNT",
--108591,
-"8000",
-"transfer"
-],
-[
-"COFFEE SHOP",
--8954,
-"9999",
-"lookalike"
-],
-[
-"SHELLFISH BAR",
--6226,
-"9999",
-"lookalike"
-],
-[
-"BPM RECORDS",
--2701,
-"9999",
-"lookalike"
-],
-[
-"THREEFOLD DESIGN",
--743,
-"9999",
-"lookalike"
-],
-[
-"FEEFO",
--8952,
-"9999",
-"lookalike"
-],
-[
-"LIMEHOUSE DELI",
--5183,
-"9999",
-"lookalike"
-],
-[
-"SAGEBRUSH CAFE",
--1791,
-"9999",
-"lookalike"
-],
-[
-"UPSTAIRS BAR",
--4578,
-"9999",
-"lookalike"
-],
-[
-"GULFSTREAM CLEANING",
--8793,
-"9999",
-"lookalike"
-],
-[
-"STOCKWELL BARBERS",
--6308,
-"9999",
-"lookalike"
-],
-[
-"INKWELL TATTOO",
--3036,
-"9999",
-"lookalike"
-],
-[
-"FUELLED GYM",
--6127,
-"9999",
-"lookalike"
-],
-[
-"BOLTON WANDERERS",
--3950,
-"9999",
-"lookalike"
-],
-[
-"AVISO LTD",
--8536,
-"9999",
-"lookalike"
-],
-[
-"STAPLESTON FARM",
--5701,
-"9999",
-"lookalike"
-],
-[
-"TESCO STORES",
--83719,
-"9999",
-"personal/unknown"
-],
-[
-"SAINSBURYS",
--29534,
-"9999",
-"personal/unknown"
-],
-[
-"ASDA",
--80677,
-"9999",
-"personal/unknown"
-],
-[
-"ALDI",
--25878,
-"9999",
-"personal/unknown"
-],
-[
-"LIDL",
--31677,
-"9999",
-"personal/unknown"
-],
-[
-"WAITROSE",
--52818,
-"9999",
-"personal/unknown"
-],
-[
-"M&S SIMPLY FOOD",
--30019,
-"9999",
-"personal/unknown"
-],
-[
-"DELIVEROO",
--26503,
-"9999",
-"personal/unknown"
-],
-[
-"JUST EAT",
--68147,
-"9999",
-"personal/unknown"
-],
-[
-"UBER EATS",
--64889,
-"9999",
-"personal/unknown"
-],
-[
-"NETFLIX.COM",
--46904,
-"9999",
-"personal/unknown"
-],
-[
-"SPOTIFY",
--4098,
-"9999",
-"personal/unknown"
-],
-[
-"DISNEY PLUS",
--3961,
-"9999",
-"personal/unknown"
-],
-[
-"PUREGYM",
--36923,
-"9999",
-"personal/unknown"
-],
-[
-"GREGGS",
--62197,
-"9999",
-"personal/unknown"
-],
-[
-"PRET A MANGER",
--34270,
-"9999",
-"personal/unknown"
-],
-[
-"COSTA COFFEE",
--25681,
-"9999",
-"personal/unknown"
-],
-[
-"STARBUCKS",
--79616,
-"9999",
-"personal/unknown"
-],
-[
-"MCDONALDS",
--45425,
-"9999",
-"personal/unknown"
-],
-[
-"HMRC SELF ASSESSMENT",
--58919,
-"9999",
-"personal/unknown"
-],
-[
-"HMRC VAT",
--46112,
-"9999",
-"personal/unknown"
-],
-[
-"DVLA VEHICLE TAX",
--48093,
-"9999",
-"personal/unknown"
-],
-[
-"COUNCIL TAX",
--10856,
-"9999",
-"personal/unknown"
-],
-[
-"ATM CASH WITHDRAWAL",
--29196,
-"9999",
-"personal/unknown"
-],
-[
-"CHQ DEPOSIT",
--13689,
-"9999",
-"personal/unknown"
-],
-[
-"LOTTERY",
--30033,
-"9999",
-"personal/unknown"
-],
-[
-"BET365",
--61914,
-"9999",
-"personal/unknown"
-],
-[
-"APPLE PAY TOP UP",
--26082,
-"9999",
-"personal/unknown"
-],
-[
-"REVOLUT TOP UP",
--44567,
-"9999",
-"personal/unknown"
-],
-[
-"PAYPAL *FRIEND",
--27087,
-"9999",
-"personal/unknown"
-]
+  ["CARD PAYMENT TO TRAINLINE.COM ON 12/07", -42595, "6100", "merchant"],
+  ["TFL TRAVEL CH LONDON GB", -19922, "6100", "merchant"],
+  ["DD UBER *TRIP REF 0012345678", -51900, "6100", "merchant"],
+  ["UBER BV*AB12CD", -85469, "6100", "merchant"],
+  ["POS NATIONAL RAIL ENQ 4492", -6478, "6100", "merchant"],
+  ["LNER LTD", -9644, "6100", "merchant"],
+  ["CARD PAYMENT TO GWR TICKETS ON 12/07", -70389, "6100", "merchant"],
+  ["AVANTI WEST COAST LONDON GB", -12487, "6100", "merchant"],
+  ["DD CROSSCOUNTRY TRAINS REF 0012345678", -48081, "6100", "merchant"],
+  ["NORTHERN RAIL*AB12CD", -76537, "6100", "merchant"],
+  ["POS THAMESLINK 4492", -7752, "6100", "merchant"],
+  ["SOUTHERN RAIL", -66660, "6100", "merchant"],
+  ["CARD PAYMENT TO SOUTHEASTERN ON 12/07", -28290, "6100", "merchant"],
+  ["SCOTRAIL LONDON GB", -5064, "6100", "merchant"],
+  ["DD EUROSTAR INTERNATIONAL REF 0012345678", -11415, "6100", "merchant"],
+  ["EASYJET*AB12CD", -56988, "6100", "merchant"],
+  ["POS RYANAIR 4492", -54960, "6100", "merchant"],
+  ["BRITISH AIRWAYS", -9306, "6100", "merchant"],
+  ["CARD PAYMENT TO JET2.COM ON 12/07", -31694, "6100", "merchant"],
+  ["BOLT.EU LONDON GB", -12039, "6100", "merchant"],
+  ["DD ADDISON LEE REF 0012345678", -72376, "6100", "merchant"],
+  ["FREE NOW*AB12CD", -55792, "6100", "merchant"],
+  ["POS RINGGO PARKING 4492", -7897, "6100", "merchant"],
+  ["JUSTPARK", -74265, "6100", "merchant"],
+  ["CARD PAYMENT TO PAYBYPHONE ON 12/07", -16376, "6100", "merchant"],
+  ["NCP LIMITED LONDON GB", -29410, "6100", "merchant"],
+  ["DD CONGESTION CHARGE REF 0012345678", -82807, "6100", "merchant"],
+  ["TFL ULEZ*AB12CD", -82388, "6100", "merchant"],
+  ["POS DART CHARGE 4492", -76564, "6100", "merchant"],
+  ["ESSO", -8258, "6100", "merchant"],
+  ["CARD PAYMENT TO TEXACO ON 12/07", -75792, "6100", "merchant"],
+  ["SHELL LONDON GB", -76898, "6100", "merchant"],
+  ["DD BP REF 0012345678", -52143, "6100", "merchant"],
+  ["GULF*AB12CD", -6649, "6100", "merchant"],
+  ["POS MURCO 4492", -29127, "6100", "merchant"],
+  ["SAINSBURYS FUEL", -6255, "6100", "merchant"],
+  ["CARD PAYMENT TO TESCO FUEL ON 12/07", -73113, "6100", "merchant"],
+  ["ASDA FUEL LONDON GB", -17605, "6100", "merchant"],
+  ["DD MORRISONS FUEL REF 0012345678", -38109, "6100", "merchant"],
+  ["PREMIER INN*AB12CD", -55087, "6100", "merchant"],
+  ["POS TRAVELODGE 4492", -19057, "6100", "merchant"],
+  ["AIRBNB", -71018, "6100", "merchant"],
+  ["CARD PAYMENT TO BOOKING.COM ON 12/07", -15589, "6100", "merchant"],
+  ["HOTELS.COM LONDON GB", -74980, "6100", "merchant"],
+  ["DD MEGABUS REF 0012345678", -40583, "6100", "merchant"],
+  ["NATIONAL EXPRESS*AB12CD", -73584, "6100", "merchant"],
+  ["POS STAGECOACH 4492", -89541, "6100", "merchant"],
+  ["FIRST BUS", -23838, "6100", "merchant"],
+  ["CARD PAYMENT TO ARRIVA ON 12/07", -13657, "6100", "merchant"],
+  ["SANTANDER CYCLES LONDON GB", -76381, "6100", "merchant"],
+  ["DD LIME REF 0012345678", -75018, "6100", "merchant"],
+  ["ZIPCAR*AB12CD", -83893, "6100", "merchant"],
+  ["POS ENTERPRISE RENT-A-CAR 4492", -24774, "6100", "merchant"],
+  ["HERTZ UK", -48960, "6100", "merchant"],
+  ["CARD PAYMENT TO EUROPCAR ON 12/07", -12920, "6100", "merchant"],
+  ["AVIS BUDGET LONDON GB", -71943, "6100", "merchant"],
+  ["CARD PAYMENT TO STAPLES ON 12/07", -8379, "6200", "merchant"],
+  ["RYMAN LONDON GB", -74122, "6200", "merchant"],
+  ["DD VIKING DIRECT REF 0012345678", -7962, "6200", "merchant"],
+  ["OFFICE DEPOT*AB12CD", -81284, "6200", "merchant"],
+  ["POS ROYAL MAIL 4492", -27145, "6200", "merchant"],
+  ["POST OFFICE", -65216, "6200", "merchant"],
+  ["CARD PAYMENT TO PARCELFORCE ON 12/07", -89331, "6200", "merchant"],
+  ["DPD UK LONDON GB", -69843, "6200", "merchant"],
+  ["DD EVRI REF 0012345678", -56195, "6200", "merchant"],
+  ["HERMES*AB12CD", -41325, "6200", "merchant"],
+  ["POS YODEL 4492", -61177, "6200", "merchant"],
+  ["UPS", -76900, "6200", "merchant"],
+  ["CARD PAYMENT TO FEDEX ON 12/07", -59549, "6200", "merchant"],
+  ["DHL LONDON GB", -47543, "6200", "merchant"],
+  ["DD VISTAPRINT REF 0012345678", -39441, "6200", "merchant"],
+  ["MOO PRINT*AB12CD", -32711, "6200", "merchant"],
+  ["POS INSTANTPRINT 4492", -23712, "6200", "merchant"],
+  ["PRINTED.COM", -32144, "6200", "merchant"],
+  ["CARD PAYMENT TO WHSMITH ON 12/07", -10878, "6200", "merchant"],
+  ["WH SMITH LONDON GB", -75440, "6200", "merchant"],
+  ["DD CURRYS REF 0012345678", -39504, "6200", "merchant"],
+  ["ARGOS*AB12CD", -68988, "6200", "merchant"],
+  ["POS AMAZON.CO.UK 4492", -65045, "6200", "merchant"],
+  ["AMAZON MARKETPLACE", -45170, "6200", "merchant"],
+  ["CARD PAYMENT TO VODAFONE ON 12/07", -58979, "6300", "merchant"],
+  ["EE LIMITED LONDON GB", -37890, "6300", "merchant"],
+  ["DD BT GROUP PLC REF 0012345678", -79967, "6300", "merchant"],
+  ["BT BROADBAND*AB12CD", -9744, "6300", "merchant"],
+  ["POS VIRGIN MEDIA 4492", -15625, "6300", "merchant"],
+  ["SKY BROADBAND", -67250, "6300", "merchant"],
+  ["CARD PAYMENT TO PLUSNET ON 12/07", -54954, "6300", "merchant"],
+  ["TALKTALK LONDON GB", -21771, "6300", "merchant"],
+  ["DD GIFFGAFF REF 0012345678", -44983, "6300", "merchant"],
+  ["TESCO MOBILE*AB12CD", -20070, "6300", "merchant"],
+  ["POS ID MOBILE 4492", -64239, "6300", "merchant"],
+  ["LEBARA", -55422, "6300", "merchant"],
+  ["CARD PAYMENT TO SMARTY ON 12/07", -5288, "6300", "merchant"],
+  ["VOXI LONDON GB", -87734, "6300", "merchant"],
+  ["DD HYPEROPTIC REF 0012345678", -10323, "6300", "merchant"],
+  ["COMMUNITY FIBRE*AB12CD", -73298, "6300", "merchant"],
+  ["POS ZEN INTERNET 4492", -75257, "6300", "merchant"],
+  ["O2 UK", -41273, "6300", "merchant"],
+  ["CARD PAYMENT TO THREE ON 12/07", -44730, "6300", "merchant"],
+  ["VONAGE LONDON GB", -46048, "6300", "merchant"],
+  ["DD RINGCENTRAL REF 0012345678", -78055, "6300", "merchant"],
+  ["CARD PAYMENT TO GITHUB ON 12/07", -65250, "6400", "merchant"],
+  ["GOOGLE *WORKSPACE LONDON GB", -76158, "6400", "merchant"],
+  ["DD GOOGLE CLOUD REF 0012345678", -59945, "6400", "merchant"],
+  ["MICROSOFT 365*AB12CD", -9162, "6400", "merchant"],
+  ["POS OFFICE 365 4492", -12417, "6400", "merchant"],
+  ["ADOBE", -35531, "6400", "merchant"],
+  ["CARD PAYMENT TO ADOBE SYSTEMS ON 12/07", -62291, "6400", "merchant"],
+  ["NOTION LABS LONDON GB", -87201, "6400", "merchant"],
+  ["DD CLOUDFLARE REF 0012345678", -8669, "6400", "merchant"],
+  ["AWS EMEA*AB12CD", -8102, "6400", "merchant"],
+  ["POS AMAZON WEB SERVICES 4492", -40730, "6400", "merchant"],
+  ["DIGITALOCEAN", -84970, "6400", "merchant"],
+  ["CARD PAYMENT TO HEROKU ON 12/07", -75902, "6400", "merchant"],
+  ["VERCEL INC LONDON GB", -89441, "6400", "merchant"],
+  ["DD NETLIFY REF 0012345678", -58561, "6400", "merchant"],
+  ["GODADDY*AB12CD", -37452, "6400", "merchant"],
+  ["POS NAMECHEAP 4492", -50716, "6400", "merchant"],
+  ["123 REG", -87791, "6400", "merchant"],
+  ["CARD PAYMENT TO IONOS ON 12/07", -45632, "6400", "merchant"],
+  ["SQUARESPACE LONDON GB", -3107, "6400", "merchant"],
+  ["DD WIX.COM REF 0012345678", -60665, "6400", "merchant"],
+  ["XERO*AB12CD", -46741, "6400", "merchant"],
+  ["POS QUICKBOOKS 4492", -22176, "6400", "merchant"],
+  ["FREEAGENT", -80224, "6400", "merchant"],
+  ["CARD PAYMENT TO SAGE ON 12/07", -15497, "6400", "merchant"],
+  ["ZOOM.US LONDON GB", -64859, "6400", "merchant"],
+  ["DD SLACK REF 0012345678", -7877, "6400", "merchant"],
+  ["DROPBOX*AB12CD", -28750, "6400", "merchant"],
+  ["POS ATLASSIAN 4492", -37824, "6400", "merchant"],
+  ["FIGMA", -17102, "6400", "merchant"],
+  ["CARD PAYMENT TO CANVA ON 12/07", -32605, "6400", "merchant"],
+  ["MAILCHIMP LONDON GB", -52303, "6400", "merchant"],
+  ["DD HUBSPOT REF 0012345678", -51392, "6400", "merchant"],
+  ["LINEAR*AB12CD", -65228, "6400", "merchant"],
+  ["POS OPENAI 4492", -10711, "6400", "merchant"],
+  ["JETBRAINS", -21955, "6400", "merchant"],
+  ["CARD PAYMENT TO 1PASSWORD ON 12/07", -59025, "6400", "merchant"],
+  ["LASTPASS LONDON GB", -52794, "6400", "merchant"],
+  ["DD AUTODESK REF 0012345678", -72166, "6400", "merchant"],
+  ["CARD PAYMENT TO GOOGLE ADS ON 12/07", -36566, "6500", "merchant"],
+  ["META ADS LONDON GB", -18097, "6500", "merchant"],
+  ["DD FACEBK ADS REF 0012345678", -56579, "6500", "merchant"],
+  ["FACEBOOK ADS*AB12CD", -72268, "6500", "merchant"],
+  ["POS INSTAGRAM ADS 4492", -36643, "6500", "merchant"],
+  ["LINKEDIN ADS", -54583, "6500", "merchant"],
+  ["CARD PAYMENT TO TIKTOK ADS ON 12/07", -47174, "6500", "merchant"],
+  ["BING ADS LONDON GB", -89635, "6500", "merchant"],
+  ["DD MICROSOFT ADS REF 0012345678", -50015, "6500", "merchant"],
+  ["YELL.COM*AB12CD", -30395, "6500", "merchant"],
+  ["POS CHECKATRADE 4492", -19931, "6500", "merchant"],
+  ["RATED PEOPLE", -11026, "6500", "merchant"],
+  ["CARD PAYMENT TO MYBUILDER ON 12/07", -23247, "6500", "merchant"],
+  ["BARK.COM LONDON GB", -19980, "6500", "merchant"],
+  ["CARD PAYMENT TO ACCOUNTANTS LLP ON 12/07", -30553, "6600", "merchant"],
+  ["BOOKKEEPER LONDON GB", -86463, "6600", "merchant"],
+  ["DD SOLICITORS REF 0012345678", -30733, "6600", "merchant"],
+  ["LAW FIRM*AB12CD", -1731, "6600", "merchant"],
+  ["POS COMPANIES HOUSE 4492", -63715, "6600", "merchant"],
+  ["ICO REGISTRATION", -77367, "6600", "merchant"],
+  ["CARD PAYMENT TO HISCOX ON 12/07", -24050, "6600", "merchant"],
+  ["SIMPLY BUSINESS LONDON GB", -34588, "6600", "merchant"],
+  ["DD AXA INSURANCE REF 0012345678", -37103, "6600", "merchant"],
+  ["ZURICH INSURANCE*AB12CD", -686, "6600", "merchant"],
+  ["POS UPWORK 4492", -19244, "6600", "merchant"],
+  ["FIVERR", -55062, "6600", "merchant"],
+  ["CARD PAYMENT TO PEOPLEPERHOUR ON 12/07", -70219, "6600", "merchant"],
+  ["TOPTAL LONDON GB", -48548, "6600", "merchant"],
+  ["CARD PAYMENT TO ACCOUNT FEE ON 12/07", -80079, "6700", "merchant"],
+  ["MONTHLY FEE LONDON GB", -74381, "6700", "merchant"],
+  ["DD OVERDRAFT INTEREST REF 0012345678", -41911, "6700", "merchant"],
+  ["SERVICE CHARGE*AB12CD", -16598, "6700", "merchant"],
+  ["POS NON-STERLING TRANSACTION FEE 4492", -67716, "6700", "merchant"],
+  ["FOREIGN TRANSACTION FEE", -81099, "6700", "merchant"],
+  ["CARD PAYMENT TO CARD FEE ON 12/07", -85997, "6700", "merchant"],
+  ["STRIPE FEE LONDON GB", -88780, "6700", "merchant"],
+  ["DD PAYPAL FEE REF 0012345678", -7226, "6700", "merchant"],
+  ["SUMUP FEE*AB12CD", -60003, "6700", "merchant"],
+  ["POS CHAPS FEE 4492", -89354, "6700", "merchant"],
+  ["UNPAID ITEM FEE", -73454, "6700", "merchant"],
+  ["CARD PAYMENT TO BOOKER WHOLESALE ON 12/07", -51579, "5000", "merchant"],
+  ["COSTCO WHOLESALE LONDON GB", -52325, "5000", "merchant"],
+  ["DD MAKRO REF 0012345678", -52444, "5000", "merchant"],
+  ["SCREWFIX*AB12CD", -51808, "5000", "merchant"],
+  ["POS TOOLSTATION 4492", -13720, "5000", "merchant"],
+  ["WICKES", -63264, "5000", "merchant"],
+  ["CARD PAYMENT TO TRAVIS PERKINS ON 12/07", -83287, "5000", "merchant"],
+  ["JEWSON LONDON GB", -52636, "5000", "merchant"],
+  ["DD B&Q TRADE REF 0012345678", -8308, "5000", "merchant"],
+  ["ALIBABA.COM*AB12CD", -25133, "5000", "merchant"],
+  ["POS ALIEXPRESS 4492", -8977, "5000", "merchant"],
+  ["PACKAGING SUPPLIES LTD", -27513, "5000", "merchant"],
+  ["CARD PAYMENT TO CASH AND CARRY ON 12/07", -57903, "5000", "merchant"],
+  ["FASTER PAYMENT STRIPE PAYOUT", 86093, "4000", "income"],
+  ["FASTER PAYMENT STRIPE PAYMENTS UK", 58634, "4000", "income"],
+  ["FASTER PAYMENT SUMUP PAYOUT", 179286, "4000", "income"],
+  ["FASTER PAYMENT ZETTLE PAYOUT", 315954, "4000", "income"],
+  ["FASTER PAYMENT IZETTLE", 28564, "4000", "income"],
+  ["FASTER PAYMENT SQUARE PAYOUT", 54676, "4000", "income"],
+  ["FASTER PAYMENT PAYPAL PAYOUT", 1122, "4000", "income"],
+  ["FASTER PAYMENT GOCARDLESS LTD", 298157, "4000", "income"],
+  ["FASTER PAYMENT SHOPIFY PAYMENTS", 80306, "4000", "income"],
+  ["FASTER PAYMENT ETSY PAYOUT", 282342, "4000", "income"],
+  ["FASTER PAYMENT EBAY PAYOUT", 54196, "4000", "income"],
+  ["FASTER PAYMENT WORLDPAY", 191636, "4000", "income"],
+  ["FASTER PAYMENT TAKEPAYMENTS", 322775, "4000", "income"],
+  ["FASTER PAYMENT DOJO PAYOUT", 14369, "4000", "income"],
+  ["INVOICE 2231 SMITH LTD", 37865, "4000", "income"],
+  ["FASTER PAYMENT REMITTANCE ACME LTD", 110027, "4000", "income"],
+  ["STRIPE PAYMENTS UK CHARGEBACK", -6030, "9999", "outflow never sales"],
+  ["SHOPIFY PAYMENTS CHARGEBACK", -4082, "9999", "outflow never sales"],
+  ["WORLDPAY CHARGEBACK", -2216, "9999", "outflow never sales"],
+  ["REFUND TRAINLINE", 8765, "6100", "refund"],
+  ["AMAZON MARKETPLACE REFUND", 11883, "6200", "refund"],
+  ["ADOBE REFUND", 12432, "6400", "refund"],
+  ["RYANAIR REFUND", 16036, "6100", "refund"],
+  ["ROYAL MAIL REFUND", 4525, "6200", "refund"],
+  ["SCREWFIX RETURN", 4279, "5000", "refund"],
+  ["VODAFONE REFUND", 16493, "6300", "refund"],
+  ["CANVA REVERSAL", 15769, "6400", "refund"],
+  ["TRANSFER TO SAVINGS", 254668, "8000", "transfer"],
+  ["TFR TO ISA", 46028, "8000", "transfer"],
+  ["TFR FROM SAVINGS", -54575, "8000", "transfer"],
+  ["OWN ACCOUNT TRANSFER", 389157, "8000", "transfer"],
+  ["MONZO POT TOP UP", 251935, "8000", "transfer"],
+  ["STARLING SPACE POT", -271707, "8000", "transfer"],
+  ["TRANSFER FROM BUSINESS ACCOUNT", -108591, "8000", "transfer"],
+  ["COFFEE SHOP", -8954, "9999", "lookalike"],
+  ["SHELLFISH BAR", -6226, "9999", "lookalike"],
+  ["BPM RECORDS", -2701, "9999", "lookalike"],
+  ["THREEFOLD DESIGN", -743, "9999", "lookalike"],
+  ["FEEFO", -8952, "9999", "lookalike"],
+  ["LIMEHOUSE DELI", -5183, "9999", "lookalike"],
+  ["SAGEBRUSH CAFE", -1791, "9999", "lookalike"],
+  ["UPSTAIRS BAR", -4578, "9999", "lookalike"],
+  ["GULFSTREAM CLEANING", -8793, "9999", "lookalike"],
+  ["STOCKWELL BARBERS", -6308, "9999", "lookalike"],
+  ["INKWELL TATTOO", -3036, "9999", "lookalike"],
+  ["FUELLED GYM", -6127, "9999", "lookalike"],
+  ["BOLTON WANDERERS", -3950, "9999", "lookalike"],
+  ["AVISO LTD", -8536, "9999", "lookalike"],
+  ["STAPLESTON FARM", -5701, "9999", "lookalike"],
+  ["TESCO STORES", -83719, "9999", "personal/unknown"],
+  ["SAINSBURYS", -29534, "9999", "personal/unknown"],
+  ["ASDA", -80677, "9999", "personal/unknown"],
+  ["ALDI", -25878, "9999", "personal/unknown"],
+  ["LIDL", -31677, "9999", "personal/unknown"],
+  ["WAITROSE", -52818, "9999", "personal/unknown"],
+  ["M&S SIMPLY FOOD", -30019, "9999", "personal/unknown"],
+  ["DELIVEROO", -26503, "9999", "personal/unknown"],
+  ["JUST EAT", -68147, "9999", "personal/unknown"],
+  ["UBER EATS", -64889, "9999", "personal/unknown"],
+  ["NETFLIX.COM", -46904, "9999", "personal/unknown"],
+  ["SPOTIFY", -4098, "9999", "personal/unknown"],
+  ["DISNEY PLUS", -3961, "9999", "personal/unknown"],
+  ["PUREGYM", -36923, "9999", "personal/unknown"],
+  ["GREGGS", -62197, "9999", "personal/unknown"],
+  ["PRET A MANGER", -34270, "9999", "personal/unknown"],
+  ["COSTA COFFEE", -25681, "9999", "personal/unknown"],
+  ["STARBUCKS", -79616, "9999", "personal/unknown"],
+  ["MCDONALDS", -45425, "9999", "personal/unknown"],
+  ["HMRC SELF ASSESSMENT", -58919, "9999", "personal/unknown"],
+  ["HMRC VAT", -46112, "9999", "personal/unknown"],
+  ["DVLA VEHICLE TAX", -48093, "9999", "personal/unknown"],
+  ["COUNCIL TAX", -10856, "9999", "personal/unknown"],
+  ["ATM CASH WITHDRAWAL", -29196, "9999", "personal/unknown"],
+  ["CHQ DEPOSIT", -13689, "9999", "personal/unknown"],
+  ["LOTTERY", -30033, "9999", "personal/unknown"],
+  ["BET365", -61914, "9999", "personal/unknown"],
+  ["APPLE PAY TOP UP", -26082, "9999", "personal/unknown"],
+  ["REVOLUT TOP UP", -44567, "9999", "personal/unknown"],
+  ["PAYPAL *FRIEND", -27087, "9999", "personal/unknown"]
 ]

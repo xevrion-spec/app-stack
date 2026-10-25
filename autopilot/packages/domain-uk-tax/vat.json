@@ -49,12 +49,7 @@
     "box8": "Goods supplied to EU (NI)",
     "box9": "Goods acquired from EU (NI)"
   },
-  "schemes_todo": [
-    "standard accrual",
-    "cash accounting",
-    "flat rate",
-    "annual accounting"
-  ],
+  "schemes_todo": ["standard accrual", "cash accounting", "flat rate", "annual accounting"],
   "registration_threshold": {
     "value_placeholder": null,
     "verified": false,

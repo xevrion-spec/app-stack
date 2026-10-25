@@ -2,13 +2,25 @@
   "_notice": "UNVERIFIED PLACEHOLDERS for software testing only. Every figure must be checked on gov.uk (and with an accountant) for the relevant tax year before any customer relies on it. Never presented as tax advice.",
   "verified": false,
   "tax_year": "2026-27",
-  "mileage_allowance_ppm": { "car_van": { "first_miles": 10000, "first_pence": 45, "after_pence": 25 }, "motorcycle": { "pence": 24 }, "bicycle": { "pence": 20 } },
-  "home_office_flat_rate_monthly_pence": [ { "min_hours": 25, "max_hours": 50, "pence": 1000 }, { "min_hours": 51, "max_hours": 100, "pence": 1800 }, { "min_hours": 101, "max_hours": null, "pence": 2600 } ],
+  "mileage_allowance_ppm": {
+    "car_van": { "first_miles": 10000, "first_pence": 45, "after_pence": 25 },
+    "motorcycle": { "pence": 24 },
+    "bicycle": { "pence": 20 }
+  },
+  "home_office_flat_rate_monthly_pence": [
+    { "min_hours": 25, "max_hours": 50, "pence": 1000 },
+    { "min_hours": 51, "max_hours": 100, "pence": 1800 },
+    { "min_hours": 101, "max_hours": null, "pence": 2600 }
+  ],
   "trading_allowance_pence": 100000,
   "personal_allowance_pence": 1257000,
   "personal_allowance_taper": { "threshold_pence": 10000000, "reduce_by_per_pound": 0.5 },
   "_income_tax_bands_note": "upto_pence thresholds are on TAXABLE income (after personal allowance)",
-  "income_tax_bands": [ { "name": "basic", "upto_pence": 3770000, "rate": 0.2 }, { "name": "higher", "upto_pence": 12514000, "rate": 0.4 }, { "name": "additional", "upto_pence": null, "rate": 0.45 } ],
+  "income_tax_bands": [
+    { "name": "basic", "upto_pence": 3770000, "rate": 0.2 },
+    { "name": "higher", "upto_pence": 12514000, "rate": 0.4 },
+    { "name": "additional", "upto_pence": null, "rate": 0.45 }
+  ],
   "class4_nic": { "lower_pence": 1257000, "upper_pence": 5027000, "main_rate": 0.06, "upper_rate": 0.02 },
   "aia_limit_pence": 100000000,
   "payments_on_account": { "threshold_pence": 100000, "fraction": 0.5 },

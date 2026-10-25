@@ -6,7 +6,7 @@ import { OpenAPIHono, z } from "@hono/zod-openapi";
 import type { Context } from "hono";
 import * as B from "@xevrion/books";
 import { vatOnNet, VAT_RATES } from "@xevrion/pipeline";
-import type { AppEnv } from "../env.js";
+import type { AppEnv, Env } from "../env.js";
 import { requireRole } from "../lib/auth.js";
 import { TenantDb, newId } from "../lib/db.js";
 import { auditStmt } from "../lib/audit.js";
@@ -314,43 +314,7 @@ invoicing.openapi(
     body: z.object({ today: Day.optional() }),
     response: z.object({ emitted: z.array(z.object({ invoiceId: z.string(), kind: z.string() })) }),
   }),
-  async (c) => {
-    const db = scope(c);
-    const t = c.req.valid("json").today ?? today();
-    const rs = (await receivables(db)).filter((r) => r.outstanding > 0);
-    const sent = await db.all<{ invoice_id: string; kind: string }>("select invoice_id, kind from invoice_reminders where tenant_id = ?1");
-    const outbox = new Outbox(db);
-    const stmts: D1PreparedStatement[] = [];
-    const emitted: { invoiceId: string; kind: string }[] = [];
-    for (const r of rs)
-      for (const d of B.dueReminders(
-        r.due_date,
-        t,
-        sent.filter((s) => s.invoice_id === r.id).map((s) => s.kind),
-      )) {
-        emitted.push({ invoiceId: r.id, kind: d.kind });
-        outbox.add(
-          "invoice.reminder_due",
-          { invoiceId: r.id, number: r.number, kind: d.kind, outstandingPence: r.outstanding, customerEmail: r.customer_email },
-          actor(c),
-        );
-        stmts.push(
-          db.stmt(
-            "insert or ignore into invoice_reminders (tenant_id, id, invoice_id, kind, due_on, emitted_at) values (?1, ?2, ?3, ?4, ?5, ?6)",
-            newId(),
-            r.id,
-            d.kind,
-            d.dueOn,
-            new Date().toISOString(),
-          ),
-        );
-      }
-    if (stmts.length) {
-      await db.batch([...stmts, auditStmt(db, actor(c), "invoice.reminders", "invoices", { count: emitted.length }), ...outbox.stmts]);
-      await outbox.publish(c.env);
-    }
-    return c.json({ emitted }, 200);
-  },
+  async (c) => c.json(await runReminders(scope(c), c.env, actor(c), c.req.valid("json").today ?? today()), 200),
 );
 
 // ---------- recurring invoices ----------
@@ -445,68 +409,106 @@ invoicing.openapi(
     body: z.object({ today: Day.optional() }),
     response: z.object({ issued: z.array(z.object({ scheduleId: z.string(), invoiceId: z.string(), number: z.string(), issueDate: z.string() })) }),
   }),
-  async (c) => {
-    const db = scope(c);
-    const t = c.req.valid("json").today ?? today();
-    const due = await db.all<z.infer<typeof Schedule>>(
-      "select id, cadence, interval_n, next_issue_date, end_date, payment_terms_days, active, template_json from recurring_invoices where tenant_id = ?1 and active = 1 and next_issue_date <= ?2",
-      t,
-    );
-    const issued: { scheduleId: string; invoiceId: string; number: string; issueDate: string }[] = [];
-    for (const s of due) {
-      const tpl = Template.parse(JSON.parse(s.template_json));
-      const dates = B.dueIssueDates(s.next_issue_date, s.cadence as B.InvoiceCadence, t, { interval: s.interval_n, endDate: s.end_date });
-      const outbox = new Outbox(db);
-      const stmts: D1PreparedStatement[] = [];
-      for (const d of dates) {
-        let net = 0,
-          vat = 0;
-        for (const l of tpl.lines) {
-          const ln = Math.round(l.quantity * l.unitPence);
-          net += ln;
-          vat += vatOnNet(ln, VAT_RATES[l.vatRateCode] ?? 0);
-        }
-        const seq = await db.first<{ prefix: string; next_value: number }>(
-          "update invoice_sequences set next_value = next_value + 1 where tenant_id = ?1 returning prefix, next_value - 1 as next_value",
-        );
-        if (!seq) throw badRequest("Invoice numbering not initialised");
-        const number = `${seq.prefix}${String(seq.next_value).padStart(4, "0")}`;
-        const invId = newId();
-        stmts.push(
-          db.stmt(
-            "insert into invoices (tenant_id, id, number, customer_name, customer_email, issue_date, due_date, status, net_pence, vat_pence, gross_pence, lines_json, recurring_id) values (?1, ?2, ?3, ?4, ?5, ?6, ?7, 'draft', ?8, ?9, ?10, ?11, ?12)",
-            invId,
-            number,
-            tpl.customerName,
-            tpl.customerEmail ?? null,
-            d,
-            B.addDays(d, s.payment_terms_days),
-            net,
-            vat,
-            net + vat,
-            JSON.stringify(tpl.lines),
-            s.id,
-          ),
-        );
-        outbox.add("invoice.recurring_issued", { invoiceId: invId, scheduleId: s.id, number, grossPence: net + vat }, actor(c));
-        issued.push({ scheduleId: s.id, invoiceId: invId, number, issueDate: d });
+  async (c) => c.json(await runRecurring(scope(c), c.env, actor(c), c.req.valid("json").today ?? today()), 200),
+);
+
+/** Issue due recurring drafts for one tenant (never sends). Used by the route and the daily scheduler. */
+export async function runRecurring(db: TenantDb, env: Env, who: string, t: string) {
+  const due = await db.all<z.infer<typeof Schedule>>(
+    "select id, cadence, interval_n, next_issue_date, end_date, payment_terms_days, active, template_json from recurring_invoices where tenant_id = ?1 and active = 1 and next_issue_date <= ?2",
+    t,
+  );
+  const issued: { scheduleId: string; invoiceId: string; number: string; issueDate: string }[] = [];
+  for (const s of due) {
+    const tpl = Template.parse(JSON.parse(s.template_json));
+    const dates = B.dueIssueDates(s.next_issue_date, s.cadence as B.InvoiceCadence, t, { interval: s.interval_n, endDate: s.end_date });
+    const outbox = new Outbox(db);
+    const stmts: D1PreparedStatement[] = [];
+    for (const d of dates) {
+      let net = 0,
+        vat = 0;
+      for (const l of tpl.lines) {
+        const ln = Math.round(l.quantity * l.unitPence);
+        net += ln;
+        vat += vatOnNet(ln, VAT_RATES[l.vatRateCode] ?? 0);
       }
-      const next = dates.length ? B.nextIssueDate(dates[dates.length - 1]!, s.cadence as B.InvoiceCadence, s.interval_n) : s.next_issue_date;
-      const finished = s.end_date !== null && next > s.end_date;
-      // Guarded by next_issue_date so a concurrent run cannot issue the same period twice.
+      const seq = await db.first<{ prefix: string; next_value: number }>(
+        "update invoice_sequences set next_value = next_value + 1 where tenant_id = ?1 returning prefix, next_value - 1 as next_value",
+      );
+      if (!seq) throw badRequest("Invoice numbering not initialised");
+      const number = `${seq.prefix}${String(seq.next_value).padStart(4, "0")}`;
+      const invId = newId();
       stmts.push(
         db.stmt(
-          "update recurring_invoices set next_issue_date = ?3, active = ?4 where tenant_id = ?1 and id = ?2 and next_issue_date = ?5",
+          "insert into invoices (tenant_id, id, number, customer_name, customer_email, issue_date, due_date, status, net_pence, vat_pence, gross_pence, lines_json, recurring_id) values (?1, ?2, ?3, ?4, ?5, ?6, ?7, 'draft', ?8, ?9, ?10, ?11, ?12)",
+          invId,
+          number,
+          tpl.customerName,
+          tpl.customerEmail ?? null,
+          d,
+          B.addDays(d, s.payment_terms_days),
+          net,
+          vat,
+          net + vat,
+          JSON.stringify(tpl.lines),
           s.id,
-          next,
-          finished ? 0 : 1,
-          s.next_issue_date,
         ),
       );
-      stmts.push(auditStmt(db, actor(c), "recurring_invoice.run", s.id, { issued: dates.length, next }), ...outbox.stmts);
-      await db.batch(stmts);
-      await outbox.publish(c.env);
+      outbox.add("invoice.recurring_issued", { invoiceId: invId, scheduleId: s.id, number, grossPence: net + vat }, who);
+      issued.push({ scheduleId: s.id, invoiceId: invId, number, issueDate: d });
     }
-    return c.json({ issued }, 200);
-  },
-);
+    const next = dates.length ? B.nextIssueDate(dates[dates.length - 1]!, s.cadence as B.InvoiceCadence, s.interval_n) : s.next_issue_date;
+    const finished = s.end_date !== null && next > s.end_date;
+    // Guarded by next_issue_date so a concurrent run cannot issue the same period twice.
+    stmts.push(
+      db.stmt(
+        "update recurring_invoices set next_issue_date = ?3, active = ?4 where tenant_id = ?1 and id = ?2 and next_issue_date = ?5",
+        s.id,
+        next,
+        finished ? 0 : 1,
+        s.next_issue_date,
+      ),
+    );
+    stmts.push(auditStmt(db, who, "recurring_invoice.run", s.id, { issued: dates.length, next }), ...outbox.stmts);
+    await db.batch(stmts);
+    await outbox.publish(env);
+  }
+  return { issued };
+}
+
+/** Emit due reminder events for one tenant (events only; nothing is emailed). Used by the route and the daily scheduler. */
+export async function runReminders(db: TenantDb, env: Env, who: string, t: string) {
+  const rs = (await receivables(db)).filter((r) => r.outstanding > 0);
+  const sent = await db.all<{ invoice_id: string; kind: string }>("select invoice_id, kind from invoice_reminders where tenant_id = ?1");
+  const outbox = new Outbox(db);
+  const stmts: D1PreparedStatement[] = [];
+  const emitted: { invoiceId: string; kind: string }[] = [];
+  for (const r of rs)
+    for (const d of B.dueReminders(
+      r.due_date,
+      t,
+      sent.filter((s) => s.invoice_id === r.id).map((s) => s.kind),
+    )) {
+      emitted.push({ invoiceId: r.id, kind: d.kind });
+      outbox.add(
+        "invoice.reminder_due",
+        { invoiceId: r.id, number: r.number, kind: d.kind, outstandingPence: r.outstanding, customerEmail: r.customer_email },
+        who,
+      );
+      stmts.push(
+        db.stmt(
+          "insert or ignore into invoice_reminders (tenant_id, id, invoice_id, kind, due_on, emitted_at) values (?1, ?2, ?3, ?4, ?5, ?6)",
+          newId(),
+          r.id,
+          d.kind,
+          d.dueOn,
+          new Date().toISOString(),
+        ),
+      );
+    }
+  if (stmts.length) {
+    await db.batch([...stmts, auditStmt(db, who, "invoice.reminders", "invoices", { count: emitted.length }), ...outbox.stmts]);
+    await outbox.publish(env);
+  }
+  return { emitted };
+}

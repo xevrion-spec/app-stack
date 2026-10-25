@@ -25,6 +25,8 @@ Branch: feature/value-max (from feature/quality-1000). Roadmap + status: docs/va
 - V5: accountant role + four-eyes period close (locks period), comments + @mentions, notifications centre + prefs,
   memberships (multi-business), plan entitlements + seats, GDPR (DSAR, erasure w/ retention holds, consents, export).
   Migration 0008, ADR 0019/0020. Not done: web UI for these, document vault retention job, cost model.
+- V7a: daily scheduler (recurring drafts, reminder events, retention dry-run), MockOcr + /extract/documents/{id}, bank-feed routes (mock), ops summary + operator overview, migration 0009, ADR 0022, cost-model.md, slo.md.
+- Flaky API test found (1 in 25 runs): consent 'latest wins' ordered by random UUID within the same second; fixed with rowid ordering + deterministic regression test.
 - Done: V4 extraction/MTD mock, V5 accountant/GDPR/notifications/plans, V6 grounded assistant + onboarding (ADR 0021). Next: V7 web/admin/SLOs; cron wiring for recurring invoices/reminders; V5 web UI.
 
 - Fixed flaky property test: merchantKey was not idempotent ("SO0"); fixed root cause (strip non-letters before noise words).

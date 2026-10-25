@@ -9,8 +9,8 @@ import type { AppEnv } from "../env.js";
 import { requireRole } from "../lib/auth.js";
 import { TenantDb, newId } from "../lib/db.js";
 import { auditStmt } from "../lib/audit.js";
-import { badRequest, conflict, tooLarge } from "../lib/errors.js";
-import { def, validationHook } from "../lib/route.js";
+import { badRequest, conflict, notFound, tooLarge, unsupported } from "../lib/errors.js";
+import { def, IdParam, validationHook } from "../lib/route.js";
 import { requireFeature } from "../lib/entitlements.js";
 import { chart, ledger } from "./books.js";
 
@@ -19,8 +19,10 @@ const scope = (c: C) => new TenantDb(c.env.DB, c.get("principal").tenantId);
 const actor = (c: C) => c.get("principal").email;
 let extractor: B.DocumentExtractor = new B.TextReceiptExtractor();
 let gatewayFactory: () => B.MtdGateway = () => new B.MockMtdGateway();
-export const __setComplianceProviders = (p: { extractor?: B.DocumentExtractor; gateway?: () => B.MtdGateway }) => {
+let ocr: B.ImageOcr = new B.MockOcr();
+export const __setComplianceProviders = (p: { extractor?: B.DocumentExtractor; gateway?: () => B.MtdGateway; ocr?: B.ImageOcr }) => {
   if (p.extractor) extractor = p.extractor;
+  if (p.ocr) ocr = p.ocr;
   if (p.gateway) gatewayFactory = p.gateway;
 };
 
@@ -56,6 +58,53 @@ compliance.openapi(
     if (!bytes.byteLength) throw badRequest("Empty body");
     const r = await extractor.extract({ text: new TextDecoder().decode(bytes) });
     return c.json({ extractor: extractor.name, ...r }, 200);
+  },
+);
+
+compliance.openapi(
+  def({
+    method: "post",
+    path: "/extract/documents/{id}",
+    tag: "Extraction",
+    summary: "OCR a stored receipt (MOCK OCR engine) and extract fields; stores the result on the document for review",
+    params: IdParam,
+    response: ExtractionOut.extend({ documentId: z.string(), ocrEngine: z.string(), ocrConfidence: z.number() }),
+  }),
+  async (c) => {
+    const db = scope(c);
+    const id = c.req.valid("param").id;
+    const doc = await db.first<{ r2_key: string; content_type: string | null; purged_at: string | null }>(
+      "select r2_key, content_type, purged_at from documents where tenant_id = ?1 and id = ?2",
+      id,
+    );
+    if (!doc) throw notFound("Document not found");
+    if (doc.purged_at) throw conflict("Document file was removed under the retention policy");
+    const obj = await c.env.DOCS.get(doc.r2_key);
+    if (!obj) throw notFound("Stored file not found");
+    let o: B.OcrResult;
+    try {
+      o = await ocr.recognise({ bytes: new Uint8Array(await obj.arrayBuffer()), contentType: doc.content_type ?? "application/octet-stream" });
+    } catch (e) {
+      throw unsupported((e as Error).message);
+    }
+    const r = await extractor.extract({ text: o.text });
+    const out = { ...r, confidence: Math.min(r.confidence, o.confidence), needsReview: r.needsReview || o.confidence < 0.6 };
+    await db.batch([
+      db.stmt(
+        "update documents set extracted_json = ?3 where tenant_id = ?1 and id = ?2",
+        id,
+        JSON.stringify({
+          date: out.date,
+          merchant: out.vendor ?? "",
+          totalPence: out.totalPence,
+          vatPence: out.vatPence,
+          source: `ocr:${o.engine}`,
+          needsReview: out.needsReview,
+        }),
+      ),
+      auditStmt(db, actor(c), "document.extracted", id, { engine: o.engine, needsReview: out.needsReview }),
+    ]);
+    return c.json({ extractor: extractor.name, documentId: id, ocrEngine: o.engine, ocrConfidence: o.confidence, ...out }, 200);
   },
 );
 

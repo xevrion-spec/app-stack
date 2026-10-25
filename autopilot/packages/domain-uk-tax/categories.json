@@ -317,19 +317,7 @@
     {
       "code": "9999",
       "name": "Suspense / needs review",
-      "kw": [
-        "uber eats",
-        "deliveroo",
-        "just eat",
-        "netflix",
-        "spotify",
-        "disney plus",
-        "amazon prime video",
-        "puregym",
-        "bet365",
-        "lottery",
-        "atm cash"
-      ]
+      "kw": ["uber eats", "deliveroo", "just eat", "netflix", "spotify", "disney plus", "amazon prime video", "puregym", "bet365", "lottery", "atm cash"]
     }
   ]
 }

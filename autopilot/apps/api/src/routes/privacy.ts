@@ -190,7 +190,7 @@ privacy.openapi(
   async (c) => {
     const s = c.req.valid("query").subject?.toLowerCase();
     const history = await scope(c).all<z.infer<typeof Consent>>(
-      `select id, subject, purpose, granted, source, created_at from consents where tenant_id = ?1${s ? " and subject = ?2" : ""} order by created_at, id`,
+      `select id, subject, purpose, granted, source, created_at from consents where tenant_id = ?1${s ? " and subject = ?2" : ""} order by created_at, rowid`,
       ...(s ? [s] : []),
     );
     const latest = new Map<string, z.infer<typeof Consent>>();

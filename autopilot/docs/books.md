@@ -44,3 +44,9 @@ Migration `0006_invoicing.sql` (additive). ADR 0017.
 - `POST /v1/assistant/ask` `{question, today?}` → `{intent, answer, figures, citations[], period, grounded, router, suggestions?}`. Owner/reviewer, `assistant` feature. Deterministic intents; optional LLM router maps intent only (mock only). Tax answers are UNVERIFIED.
 - `GET /v1/assistant/suggestions`.
 - `GET /v1/onboarding` (7-step checklist), `POST /v1/onboarding/sample-data` (owner, empty account only, 9 synthetic rows), `DELETE /v1/onboarding/sample-data` (removes sample rows and everything derived from them).
+
+## Scheduled runs, OCR, bank feeds, retention, ops (ADR 0022)
+- Daily (after 06:00 UTC, once): recurring-invoice drafts, reminder **events**, document retention (dry run unless `DOCUMENT_RETENTION_DAYS`). Logged in `scheduler_runs`.
+- `POST /v1/extract/documents/{id}`: mock OCR then text extraction on a stored receipt.
+- `/v1/bank-feeds/accounts|connections|connections/{id}/sync|connections/{id}` (DELETE): mock Open Banking provider.
+- `/v1/ops/summary`, `/v1/admin/overview` (operators only, aggregates). See docs/slo.md and docs/cost-model.md.

@@ -2,6 +2,8 @@ import { describe, it, expect } from "vitest";
 import fc from "fast-check";
 import {
   TextReceiptExtractor,
+  MockOcr,
+  OCR_CONTENT_TYPES,
   MockExtractor,
   MockMtdGateway,
   MtdValidationError,
@@ -117,5 +119,20 @@ describe("buildQuarterlyUpdate", () => {
       otherIncomePence: 7,
       expenses: { travel: 100 },
     });
+  });
+});
+
+describe("ImageOcr contract (MockOcr)", () => {
+  const ocr = new MockOcr();
+  it("returns embedded synthetic receipt text verbatim with high confidence", async () => {
+    const bytes = new TextEncoder().encode("junk SYNTHETIC-RECEIPT\nShop\nTotal £1.00\nEND-RECEIPT trailing");
+    expect(await ocr.recognise({ bytes, contentType: "application/pdf" })).toEqual({ text: "Shop\nTotal £1.00", confidence: 0.9, engine: "mock-ocr" });
+  });
+  it("never guesses: no marker means empty text and zero confidence", async () => {
+    expect(await ocr.recognise({ bytes: new Uint8Array([0, 1, 2]), contentType: "image/png" })).toMatchObject({ text: "", confidence: 0 });
+  });
+  it.each(OCR_CONTENT_TYPES)("accepts %s", async (ct) => expect((await ocr.recognise({ bytes: new Uint8Array(), contentType: ct })).engine).toBe("mock-ocr"));
+  it("rejects unsupported content types", async () => {
+    await expect(ocr.recognise({ bytes: new Uint8Array(), contentType: "text/html" })).rejects.toThrow(RangeError);
   });
 });

@@ -163,6 +163,18 @@ describe("privacy", () => {
     expect(r.json.history).toHaveLength(2);
     expect((await call("GET", "/v1/privacy/consents", { user: B })).json.history).toHaveLength(0);
   });
+  it("consent latest-wins is by insertion order even within the same second (was flaky: ordered by random UUID)", async () => {
+    const { call, raw } = await setup();
+    const body = { subject: "d@example.test", purpose: "marketing_email" };
+    await call("POST", "/v1/privacy/consents", { user: A, body: { ...body, granted: true } });
+    await call("POST", "/v1/privacy/consents", { user: A, body: { ...body, granted: false } });
+    // Same timestamp; give the NEWER row the lexically smaller id, the case that used to pick the wrong "latest".
+    raw.prepare("update consents set created_at = '2026-01-01 00:00:00' where subject = ?").run(body.subject);
+    raw.prepare("update consents set id = 'zzzz-old' where subject = ? and granted = 1").run(body.subject);
+    raw.prepare("update consents set id = '0000-new' where subject = ? and granted = 0").run(body.subject);
+    const r = await call("GET", "/v1/privacy/consents?subject=d@example.test", { user: A });
+    expect(r.json.current).toEqual([expect.objectContaining({ granted: false })]);
+  });
   it("tenant export contains only this tenant's rows; retention policy is unverified", async () => {
     const { call } = await setup();
     await call("POST", "/v1/uploads/bank-csv", { user: B, raw: BANK_CSV, headers: { "content-type": "text/csv" } });

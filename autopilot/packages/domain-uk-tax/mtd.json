@@ -2,12 +2,7 @@
   "_notice": "Research prompts, not requirements. Confirm scope/dates on gov.uk and HMRC Developer Hub.",
   "mtd_vat": {
     "api_docs": "https://developer.service.hmrc.gov.uk/api-documentation",
-    "needs": [
-      "HMRC Developer Hub account",
-      "sandbox app",
-      "fraud prevention headers",
-      "production approval / recognised software listing"
-    ]
+    "needs": ["HMRC Developer Hub account", "sandbox app", "fraud prevention headers", "production approval / recognised software listing"]
   },
   "mtd_itsa": {
     "todo": "Confirm current mandation thresholds and start dates for sole traders; quarterly updates + final declaration flow"
