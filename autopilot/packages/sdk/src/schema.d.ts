@@ -26246,6 +26246,213 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/v1/agent-review/analytics/reviewers": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Reviewer quality: latency, approve rates, co-reviewer disagreement and rubber-stamp signals */
+        get: {
+            parameters: {
+                query?: {
+                    days?: number;
+                    projectId?: string;
+                };
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ReviewerQualityReport"];
+                    };
+                };
+                /** @description Bad request */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Error"];
+                    };
+                };
+                /** @description Unauthenticated */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Error"];
+                    };
+                };
+                /** @description Forbidden */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Error"];
+                    };
+                };
+                /** @description Not found */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Error"];
+                    };
+                };
+                /** @description Conflict */
+                409: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Error"];
+                    };
+                };
+                /** @description Precondition failed (stale ETag) */
+                412: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Error"];
+                    };
+                };
+                /** @description Rate limited or quota exceeded */
+                429: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Error"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/review-projects/{id}/suggestions": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Learn when to stop asking: guarded auto-approve rule suggestions with a shadow replay (draft only) */
+        get: {
+            parameters: {
+                query?: {
+                    days?: number;
+                    minSample?: number;
+                    target?: number;
+                };
+                header?: never;
+                path: {
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["AutoApproveSuggestions"];
+                    };
+                };
+                /** @description Bad request */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Error"];
+                    };
+                };
+                /** @description Unauthenticated */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Error"];
+                    };
+                };
+                /** @description Forbidden */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Error"];
+                    };
+                };
+                /** @description Not found */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Error"];
+                    };
+                };
+                /** @description Conflict */
+                409: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Error"];
+                    };
+                };
+                /** @description Precondition failed (stale ETag) */
+                412: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Error"];
+                    };
+                };
+                /** @description Rate limited or quota exceeded */
+                429: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Error"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/v1/agent-review/audit-sink": {
         parameters: {
             query?: never;
@@ -28366,6 +28573,57 @@ export interface components {
             /** @description Monthly request quota for the plan (null = unlimited) */
             limit: number | null;
             remaining: number | null;
+        };
+        ReviewerQualityReport: {
+            from: string;
+            minSample: number;
+            truncated: boolean;
+            reviewers: components["schemas"]["ReviewerQuality"][];
+        };
+        ReviewerQuality: {
+            reviewer: string;
+            decisions: number;
+            counts: {
+                approve: number;
+                reject: number;
+                edit: number;
+                escalate: number;
+            };
+            medianSeconds: number | null;
+            p90Seconds: number | null;
+            approveRate: number | null;
+            approveRateHighRisk: number | null;
+            /** @description Share of co-reviewed requests where another reviewer gave the opposite verdict */
+            disagreementRate: number | null;
+            flags: ("low_sample" | "fast_approvals" | "approves_high_risk_more")[];
+        };
+        AutoApproveSuggestions: {
+            from: string;
+            basedOnVersion: number | null;
+            considered: number;
+            suggestions: components["schemas"]["AutoApproveSuggestion"][];
+            /** @description Validated policy document (current rules + suggestions); not saved */
+            draft: {
+                [key: string]: unknown;
+            } | null;
+        };
+        AutoApproveSuggestion: {
+            action: string;
+            /** @enum {string} */
+            risk: "low" | "medium";
+            minConfidence: number;
+            sample: number;
+            cleanApprovals: number;
+            wilsonLower: number;
+            shadow: {
+                wouldAutoApprove: number;
+                wouldHaveBeenRejected: number;
+                wouldHaveBeenEdited: number;
+                excludedLowConfidence: number;
+            };
+            rule: {
+                [key: string]: unknown;
+            };
         };
         AuditSink: {
             url: string;

@@ -3354,6 +3354,221 @@
           "remaining"
         ]
       },
+      "ReviewerQualityReport": {
+        "type": "object",
+        "properties": {
+          "from": {
+            "type": "string"
+          },
+          "minSample": {
+            "type": "integer"
+          },
+          "truncated": {
+            "type": "boolean"
+          },
+          "reviewers": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ReviewerQuality"
+            }
+          }
+        },
+        "required": [
+          "from",
+          "minSample",
+          "truncated",
+          "reviewers"
+        ]
+      },
+      "ReviewerQuality": {
+        "type": "object",
+        "properties": {
+          "reviewer": {
+            "type": "string"
+          },
+          "decisions": {
+            "type": "integer"
+          },
+          "counts": {
+            "type": "object",
+            "properties": {
+              "approve": {
+                "type": "integer"
+              },
+              "reject": {
+                "type": "integer"
+              },
+              "edit": {
+                "type": "integer"
+              },
+              "escalate": {
+                "type": "integer"
+              }
+            },
+            "required": [
+              "approve",
+              "reject",
+              "edit",
+              "escalate"
+            ]
+          },
+          "medianSeconds": {
+            "type": [
+              "number",
+              "null"
+            ]
+          },
+          "p90Seconds": {
+            "type": [
+              "number",
+              "null"
+            ]
+          },
+          "approveRate": {
+            "type": [
+              "number",
+              "null"
+            ]
+          },
+          "approveRateHighRisk": {
+            "type": [
+              "number",
+              "null"
+            ]
+          },
+          "disagreementRate": {
+            "type": [
+              "number",
+              "null"
+            ],
+            "description": "Share of co-reviewed requests where another reviewer gave the opposite verdict"
+          },
+          "flags": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "enum": [
+                "low_sample",
+                "fast_approvals",
+                "approves_high_risk_more"
+              ]
+            }
+          }
+        },
+        "required": [
+          "reviewer",
+          "decisions",
+          "counts",
+          "medianSeconds",
+          "p90Seconds",
+          "approveRate",
+          "approveRateHighRisk",
+          "disagreementRate",
+          "flags"
+        ]
+      },
+      "AutoApproveSuggestions": {
+        "type": "object",
+        "properties": {
+          "from": {
+            "type": "string"
+          },
+          "basedOnVersion": {
+            "type": [
+              "integer",
+              "null"
+            ]
+          },
+          "considered": {
+            "type": "integer"
+          },
+          "suggestions": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/AutoApproveSuggestion"
+            }
+          },
+          "draft": {
+            "type": [
+              "object",
+              "null"
+            ],
+            "additionalProperties": {},
+            "description": "Validated policy document (current rules + suggestions); not saved"
+          }
+        },
+        "required": [
+          "from",
+          "basedOnVersion",
+          "considered",
+          "suggestions",
+          "draft"
+        ]
+      },
+      "AutoApproveSuggestion": {
+        "type": "object",
+        "properties": {
+          "action": {
+            "type": "string"
+          },
+          "risk": {
+            "type": "string",
+            "enum": [
+              "low",
+              "medium"
+            ]
+          },
+          "minConfidence": {
+            "type": "number"
+          },
+          "sample": {
+            "type": "integer"
+          },
+          "cleanApprovals": {
+            "type": "integer"
+          },
+          "wilsonLower": {
+            "type": "number"
+          },
+          "shadow": {
+            "type": "object",
+            "properties": {
+              "wouldAutoApprove": {
+                "type": "integer"
+              },
+              "wouldHaveBeenRejected": {
+                "type": "integer"
+              },
+              "wouldHaveBeenEdited": {
+                "type": "integer"
+              },
+              "excludedLowConfidence": {
+                "type": "integer"
+              }
+            },
+            "required": [
+              "wouldAutoApprove",
+              "wouldHaveBeenRejected",
+              "wouldHaveBeenEdited",
+              "excludedLowConfidence"
+            ]
+          },
+          "rule": {
+            "type": "object",
+            "additionalProperties": {}
+          }
+        },
+        "required": [
+          "action",
+          "risk",
+          "minConfidence",
+          "sample",
+          "cleanApprovals",
+          "wilsonLower",
+          "shadow",
+          "rule"
+        ]
+      },
       "AuditSink": {
         "type": "object",
         "properties": {
@@ -38185,6 +38400,263 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/AgentReviewUsage"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthenticated",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "412": {
+            "description": "Precondition failed (stale ETag)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Rate limited or quota exceeded",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/agent-review/analytics/reviewers": {
+      "get": {
+        "tags": [
+          "Agent review"
+        ],
+        "summary": "Reviewer quality: latency, approve rates, co-reviewer disagreement and rubber-stamp signals",
+        "security": [
+          {
+            "accessJwt": []
+          }
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 365,
+              "default": 30
+            },
+            "required": false,
+            "name": "days",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "maxLength": 64
+            },
+            "required": false,
+            "name": "projectId",
+            "in": "query"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReviewerQualityReport"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthenticated",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "412": {
+            "description": "Precondition failed (stale ETag)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Rate limited or quota exceeded",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/review-projects/{id}/suggestions": {
+      "get": {
+        "tags": [
+          "Agent review"
+        ],
+        "summary": "Learn when to stop asking: guarded auto-approve rule suggestions with a shadow replay (draft only)",
+        "security": [
+          {
+            "accessJwt": []
+          }
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 64
+            },
+            "required": true,
+            "name": "id",
+            "in": "path"
+          },
+          {
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 365,
+              "default": 90
+            },
+            "required": false,
+            "name": "days",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": "integer",
+              "minimum": 20,
+              "maximum": 10000,
+              "default": 50
+            },
+            "required": false,
+            "name": "minSample",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": "number",
+              "minimum": 0.9,
+              "maximum": 0.999,
+              "default": 0.97
+            },
+            "required": false,
+            "name": "target",
+            "in": "query"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AutoApproveSuggestions"
                 }
               }
             }

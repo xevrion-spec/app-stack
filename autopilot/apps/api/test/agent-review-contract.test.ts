@@ -85,6 +85,8 @@ describe("agent review API contract (OpenAPI)", () => {
     await s.call("DELETE", `/v1/agent-reviews/${c.id}/legal-hold`, { user: A });
     await s.call("POST", `/v1/agent-reviews/${c.id}/redact`, { user: A });
     await s.call("GET", "/v1/agent-review/usage", { user: A });
+    await s.call("GET", "/v1/agent-review/analytics/reviewers", { user: A });
+    await s.call("GET", `/v1/review-projects/${p.id}/suggestions`, { user: A });
     await s.call("PUT", "/v1/agent-review/audit-sink", { user: A, body: { url: "https://siem.example.test/in" } });
     await s.call("GET", "/v1/agent-review/audit-sink", { user: A });
     await s.call("POST", "/v1/agent-review/audit-sink/resume", { user: A });
