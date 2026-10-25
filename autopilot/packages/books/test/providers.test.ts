@@ -201,7 +201,7 @@ describe("mock adapters: exact behaviour (mutation-hardening)", () => {
   it("MockExtractor returns its fixed synthetic extraction", async () => {
     const m = new MockExtractor();
     expect(m.name).toBe("mock");
-    expect(await m.extract({ text: "" })).toMatchObject({
+    expect(await (m as DocumentExtractor).extract({ text: "" })).toMatchObject({
       vendor: "Synthetic Supplies Ltd",
       date: "2026-07-01",
       invoiceNumber: "MOCK-1",
