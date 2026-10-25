@@ -80,6 +80,57 @@ export const EVENT_CATALOG = {
     description: "A draft VAT return was computed (never submitted)",
     schema: z.object({ draftId: id, periodStart: z.string(), periodEnd: z.string(), box5Pence: pence }),
   },
+  "practice.client_added": {
+    version: 1,
+    description: "An accountancy practice took this business on as a client",
+    schema: z.object({ practiceId: id, clientName: z.string() }),
+  },
+  "review.approved": {
+    version: 1,
+    description: "The practice approved a transaction's first-pass categorisation (manual, bulk, auto-rule or QA)",
+    schema: z.object({
+      transactionId: id,
+      categoryCode: z.string(),
+      aiCategoryCode: z.string().nullable(),
+      method: z.enum(["manual", "bulk", "auto_rule", "qa"]),
+      by: z.string(),
+    }),
+  },
+  "query.raised": {
+    version: 1,
+    description: "The accountant asked the client a question (portal only; Autopilot sends no email)",
+    schema: z.object({ queryId: id, transactionId: id.nullable(), question: z.string() }),
+  },
+  "query.answered": {
+    version: 1,
+    description: "The client answered a query in the portal",
+    schema: z.object({ queryId: id, by: z.string() }),
+  },
+  "checklist.completed": {
+    version: 1,
+    description: "A month/quarter/year-end close checklist was completed and signed",
+    schema: z.object({ checklistId: id, kind: z.string(), periodEnd: z.string(), by: z.string() }),
+  },
+  "portal.invited": {
+    version: 1,
+    description: "A client contact was invited to the portal (event only: the magic link is never emailed by Autopilot)",
+    schema: z.object({ portalUserId: id, email: z.string() }),
+  },
+  "document_request.fulfilled": {
+    version: 1,
+    description: "The client uploaded a requested document through the portal",
+    schema: z.object({ requestId: id, documentId: id, title: z.string() }),
+  },
+  "engagement.accepted": {
+    version: 1,
+    description: "The client accepted an engagement letter (letter hash recorded)",
+    schema: z.object({ engagementId: id, letterSha256: z.string(), by: z.string() }),
+  },
+  "working_paper.signed_off": {
+    version: 1,
+    description: "A working paper snapshot was signed off by a reviewer (four-eyes)",
+    schema: z.object({ workingPaperId: id, periodEnd: z.string(), snapshotSha256: z.string(), by: z.string() }),
+  },
 } as const;
 
 export type EventType = keyof typeof EVENT_CATALOG;

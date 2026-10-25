@@ -13,6 +13,7 @@ import { auditStmt } from "./lib/audit.js";
 import { def } from "./lib/route.js";
 import * as S from "./schemas.js";
 import { defaultSetupStatements } from "./services/defaults.js";
+import { practiceApi } from "./routes/practice-api.js";
 import { v1 } from "./routes/v1.js";
 import { rateLimit, versioning } from "./lib/ratelimit.js";
 import { requireScopes } from "./lib/auth.js";
@@ -206,6 +207,8 @@ export function createApp() {
     },
   );
 
+  // Practice (firm) routes authenticate staff against practice_staff, not tenant membership (ADR 0024).
+  app.route("/v1", practiceApi);
   app.use("/v1/*", async (c, next) => (c.req.method === "POST" && new URL(c.req.url).pathname === "/v1/tenants" ? next() : principal(c, next)));
   app.use("/v1/*", requireScopes);
   app.use("/v1/*", rateLimit);

@@ -35,7 +35,12 @@ beforeAll(async () => {
   const inv = (
     await call("POST", "/v1/invoices", {
       user: A,
-      body: { customerName: "Acme", issueDate: "2026-07-01", dueDate: "2026-07-31", lines: [{ description: "d", quantity: 1, unitPence: 100, vatRateCode: "STD" }] },
+      body: {
+        customerName: "Acme",
+        issueDate: "2026-07-01",
+        dueDate: "2026-07-31",
+        lines: [{ description: "d", quantity: 1, unitPence: 100, vatRateCode: "STD" }],
+      },
     })
   ).json;
   const txn = (await call("GET", "/v1/transactions?limit=1", { user: A })).json.items[0];

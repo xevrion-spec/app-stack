@@ -1,7 +1,24 @@
 # Autopilot TODO (resume point)
-Branch: feature/value-max (from feature/quality-1000). Roadmap + status: docs/value-roadmap.md. Constraints: synthetic data, no deploys, no emails/posts, no secrets, no PR, never main.
+
+Current branch: feature/practice-copilot (from feature/harden). Goal: UK accountant/bookkeeper co-pilot. Push only, no PR, never main.
+
+## Practice co-pilot milestones
+
+- [x] M1 firm model: practices, staff roles, clients, assignments, isolation, dashboards (health/workload/review ageing/deadlines/WIP), bulk preview+confirm. ADR 0024.
+- [x] M2 workflow: review queue + SLA + claims, bulk approve with thresholds, auto-approve rules (floor 0.9), QA sampling, close checklists + templates, client queries, task templates, time, billing records, per-client bank CSV import.
+      Tests: practice-api (24), practice-lib (7), books practice (15), practice-authz-matrix (44). Full suite 2,362 passed / 1 skipped; coverage 96.32/88.3.
+- [ ] M3 onboarding/engagement: engagement letter + 64-8-style authorisation records, document requests, portal API (mock magic link), upload checklist, client audit export, working papers + sign-off snapshots. (Hash-chained audit already done in M1.)
+- [ ] M4 intelligence: per-practice learning, anomalies, reason codes, eval harness, drift, practice assistant.
+- [ ] M5 integrations: Xero/QBO/FreeAgent read adapters (mock) + CSV importers, PM/e-sign interfaces, MTD mock HMRC, Open Banking interface, events, API docs.
+- [ ] M6 ops: perf 500×5k, indexes, load, quotas/metering, SLOs, backup drill, ASVS, importers mutation 70+, CSP nonce.
+- [ ] M7 web: practice console + client portal screens, axe, Playwright.
+- [ ] M8 docs + honest benchmark rescore + Notion.
+      Ship: box `bash /tmp/ship.sh "msg"` → CopyFromBox /tmp/ship.tgz → PC apply-ship.ps1.
+
+Previous branch: feature/value-max (from feature/quality-1000). Roadmap + status: docs/value-roadmap.md. Constraints: synthetic data, no deploys, no emails/posts, no secrets, no PR, never main.
 
 ## H1 — harden (feature/harden) — done
+
 - Perf: migration 0010 (11 additive indexes, EXPLAIN-verified). Bank sync batched (N+1 removed). CSV export streamed (keyset 2k pages). Ledger export O(n²)→O(n). 100k txns: list p50 46.5→0.9 ms. HTTP load A/B: 468→581 rps, p95 65→48 ms (docs/performance.md).
 - Guards: perf-guards.test.ts (N+1 query-count invariance ×7 endpoints, 10k budgets, 100k under PERF=1, per-API-key rate limit, body limit, maintenance freeze, log redaction, dev-auth fail-closed).
 - Security: authz-matrix.test.ts (every OpenAPI op × anon/non-member/roles + cross-tenant + leak regex, 159 tests). Global 2 MB/10 MB streaming body limit. Per-API-key buckets. x-dev-user fail-closed. Log redaction. docs/security-checklist.md (ASVS L2 + API Top 10).
@@ -13,6 +30,7 @@ Branch: feature/value-max (from feature/quality-1000). Roadmap + status: docs/va
 - TODO: WAF hard rate limit; nightly D1 export to R2 + timed restore drill; external pentest; web CSP without unsafe-inline; SEO 82 (meta description).
 
 ## Done (this commit)
+
 - A: 1,612 tests (unit/property/integration/RTL/chaos/migration/perf 10k); coverage 93.9/86.0 gated 90/85; Stryker 89.3% (break 70);
   knip, madge, licence allow-list, prod npm audit, gitleaks, ESLint complexity, bundle budget, Lighthouse CI config, load script; split CI jobs.
 - B/C: events outbox + catalog, signed webhooks (retries/jitter/DLQ/replay/auto-disable/SSRF incl. send-time re-check), automations engine,
@@ -21,6 +39,7 @@ Branch: feature/value-max (from feature/quality-1000). Roadmap + status: docs/va
 - Upgrades: zod 4 + @hono/zod-openapi 1.x (fixes high advisory), vitest 4, vite 7, wrangler 4.152, undici override.
 
 ## V1/V2 (books library) — done
+
 - packages/books: OFX/QIF/MT940/CSV importers, Xero/QuickBooks/FreshBooks imports, duplicates, recurring, learning rules,
   P&L/balance sheet/cash flow/tax summary, cash forecast + runway, mileage/home-office/AIA calculators, tax-pot estimate,
   SA/VAT/MTD deadline calendar. 91 tests (unit/property/golden); Stryker on tax/calculators/duplicates 92.1%.
@@ -46,8 +65,5 @@ Branch: feature/value-max (from feature/quality-1000). Roadmap + status: docs/va
 - CI: licence gate failed under npm 10 (extraneous @img/sharp-wasm32 listed); script now skips extraneous. gitleaks clean on full history.
 
 ## Remaining
-(done on feature/value-max M0: Playwright 10/10 after upgrades; Lighthouse 100 perf / 100 a11y / 96 best practices on all pages; mutation ledger 91.9, webhooks 93.0)
-4. Pay down complexity waivers (docs/quality.md list), starting with pipeline runStages.
-5. Regex category rules run on normalised text (literal `\.` never matches) — decide: also match raw description.
-6. JWT tamper table test; SDK/workflows DLQ extra tests.
-7. Notion: Change Log, MVP build status, Decisions (needs a Notion run).
+
+(done on feature/value-max M0: Playwright 10/10 after upgrades; Lighthouse 100 perf / 100 a11y / 96 best practices on all pages; mutation ledger 91.9, webhooks 93.0) 4. Pay down complexity waivers (docs/quality.md list), starting with pipeline runStages. 5. Regex category rules run on normalised text (literal `\.` never matches) — decide: also match raw description. 6. JWT tamper table test; SDK/workflows DLQ extra tests. 7. Notion: Change Log, MVP build status, Decisions (needs a Notion run).

@@ -9,9 +9,10 @@ import { TenantDb, newId, encodeCursor, decodeCursor } from "../lib/db.js";
 import { auditStmt } from "../lib/audit.js";
 import { requireRole } from "../lib/auth.js";
 import { validationHook } from "../lib/route.js";
+import { ingestBankCsv } from "../services/ingest.js";
+import { scanHook, RECEIPT_TYPES, MAX_RECEIPT } from "../services/scan.js";
 import { Outbox } from "../services/events.js";
 import { categoriseTransaction } from "../services/categorise.js";
-import { enforceQuota, meterStmt } from "../services/usage.js";
 import { platform } from "./platform.js";
 import { books } from "./books.js";
 import { invoicing } from "./invoicing.js";
@@ -23,7 +24,7 @@ import { ops } from "./ops.js";
 import { assistant } from "./assistant.js";
 import { etagFor, ifMatchFails, ifNoneMatchHits, orderBy, selectFields, PLAN_SEATS } from "@xevrion/platform";
 import { AppError, badRequest, conflict, notFound, tooLarge, unsupported } from "../lib/errors.js";
-import { parseBankCsv, sha256Hex } from "../services/csv.js";
+import { sha256Hex } from "../services/csv.js";
 import { categoryKind } from "../services/ledger.js";
 
 export const v1 = new OpenAPIHono<AppEnv>({ defaultHook: validationHook as never });
@@ -122,13 +123,6 @@ v1.openapi(
 
 // ---------- ingestion ----------
 const MAX_CSV = 2 * 1024 * 1024;
-const MAX_RECEIPT = 10 * 1024 * 1024;
-const RECEIPT_TYPES = new Set(["application/pdf", "image/jpeg", "image/png", "image/heic", "image/webp"]);
-
-/** Virus/content scan hook. STUB: marks clean; replace with a real scanner before accepting customer files. */
-async function scanHook(_bytes: ArrayBuffer, _contentType: string): Promise<"clean" | "rejected"> {
-  return "clean";
-}
 
 v1.use("/uploads/*", owner);
 v1.openapi(
@@ -145,72 +139,7 @@ v1.openapi(
     if (!["text/csv", "text/plain", "application/csv"].includes(ct)) throw unsupported("Send the CSV with content-type text/csv");
     const bytes = await c.req.arrayBuffer();
     if (bytes.byteLength > MAX_CSV) throw tooLarge("CSV larger than 2 MB");
-    const text = new TextDecoder().decode(bytes);
-    let parsed;
-    try {
-      parsed = parseBankCsv(text);
-    } catch (e) {
-      throw badRequest((e as Error).message);
-    }
-    const db = scope(c);
-    const sha = await sha256Hex(bytes);
-    const docId = newId(),
-      jobId = newId();
-    const key = `${db.tenantId}/statements/${docId}.csv`;
-    if ((await scanHook(bytes, ct)) !== "clean") throw badRequest("File rejected by scanner");
-    await c.env.DOCS.put(key, bytes, { httpMetadata: { contentType: "text/csv" }, sha256: sha, customMetadata: { tenant: db.tenantId } });
-    await enforceQuota(db, "transactions", parsed.lines.length);
-    const outbox = new Outbox(db);
-    let inserted = 0,
-      duplicates = 0;
-    const stmts: D1PreparedStatement[] = [
-      db.stmt("insert into jobs (tenant_id, id, kind, period, status) values (?1, ?2, 'monthly_books', null, 'queued')", jobId),
-      db.stmt(
-        "insert into documents (tenant_id, id, job_id, r2_key, filename, sha256, kind, size_bytes, content_type, scan_status) values (?1, ?2, ?3, ?4, ?5, ?6, 'bank_csv', ?7, 'text/csv', 'clean')",
-        docId,
-        jobId,
-        key,
-        c.req.header("x-filename")?.slice(0, 120) ?? "statement.csv",
-        sha,
-        bytes.byteLength,
-      ),
-    ];
-    for (const l of parsed.lines) {
-      const fp = await sha256Hex(`${l.date}|${l.amountPence}|${l.description.toUpperCase()}`);
-      const exists = await db.first("select id from transactions where tenant_id = ?1 and fingerprint = ?2", fp);
-      if (exists) {
-        duplicates++;
-        continue;
-      }
-      inserted++;
-      const txnId = newId();
-      outbox.add(
-        "transaction.created",
-        { transactionId: txnId, jobId, date: l.date, description: l.description, amountPence: l.amountPence, currency: l.currency },
-        actor(c),
-      );
-      stmts.push(
-        db.stmt(
-          "insert or ignore into transactions (tenant_id, id, job_id, source, txn_date, description, amount_pence, currency, document_id, fingerprint, status, original_currency) values (?1, ?2, ?3, 'bank_csv', ?4, ?5, ?6, ?7, ?8, ?9, 'new', ?10)",
-          txnId,
-          jobId,
-          l.date,
-          l.description,
-          l.amountPence,
-          l.currency,
-          docId,
-          fp,
-          l.currency === "GBP" ? null : l.currency,
-        ),
-      );
-    }
-    stmts.push(auditStmt(db, actor(c), "upload.bank_csv", docId, { sha256: sha, inserted, duplicates, rejected: parsed.rejected.length }), ...outbox.stmts);
-    if (inserted) stmts.push(meterStmt(db, "transactions", inserted));
-    await db.batch(stmts);
-    await outbox.publish(c.env);
-    if (inserted) await c.env.PIPELINE.send({ jobId, tenantId: db.tenantId });
-    else await db.run("update jobs set status = 'completed' where tenant_id = ?1 and id = ?2", jobId);
-    return c.json({ documentId: docId, sha256: sha, jobId, inserted, duplicates, rejectedRows: parsed.rejected }, 201);
+    return c.json(await ingestBankCsv(c.env, scope(c), actor(c), bytes, c.req.header("x-filename")), 201);
   },
 );
 

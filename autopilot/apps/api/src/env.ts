@@ -58,9 +58,24 @@ export interface Principal {
   apiKey?: { id: string; prefix: string; scopes: string[] };
 }
 
+export type PracticeRole = "partner" | "manager" | "preparer" | "reviewer" | "readonly";
+export interface PracticePrincipal {
+  practiceId: string;
+  email: string;
+  role: PracticeRole;
+}
+/** A client contact signed in to the portal with a (mock) magic-link session: one business, one practice. */
+interface PortalPrincipal {
+  portalUserId: string;
+  practiceId: string;
+  tenantId: string;
+  email: string;
+}
 interface AppVariables {
   requestId: string;
   principal: Principal;
+  practice: PracticePrincipal;
+  portal: PortalPrincipal;
   identityEmail: string;
   identitySubject: string;
 }

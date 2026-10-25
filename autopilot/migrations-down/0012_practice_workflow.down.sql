@@ -1,0 +1,11 @@
+-- Manual, confirmed rollback only.
+drop table if exists billing_records;
+drop table if exists time_entries;
+drop table if exists tasks;
+drop table if exists task_templates;
+drop table if exists client_queries;
+drop table if exists close_items;
+drop table if exists close_checklists;
+drop table if exists close_templates;
+drop table if exists review_log;
+drop table if exists review_claims;

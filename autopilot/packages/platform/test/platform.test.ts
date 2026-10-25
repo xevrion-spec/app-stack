@@ -57,6 +57,9 @@ const txnCreated = (data: Partial<{ description: string; amountPence: number }> 
 describe("event catalog", () => {
   it("has the documented v1 events", () =>
     expect(EVENT_TYPES.sort()).toEqual([
+      "checklist.completed",
+      "document_request.fulfilled",
+      "engagement.accepted",
       "exception.opened",
       "exception.resolved",
       "invoice.created",
@@ -66,10 +69,16 @@ describe("event catalog", () => {
       "invoice.recurring_issued",
       "invoice.reminder_due",
       "job.completed",
+      "portal.invited",
+      "practice.client_added",
+      "query.answered",
+      "query.raised",
+      "review.approved",
       "transaction.categorised",
       "transaction.created",
       "trigger.received",
       "vat_draft.ready",
+      "working_paper.signed_off",
     ]));
   it.each(EVENT_TYPES)("%s is versioned and documented", (t) => {
     const d = catalogDocument().find((x) => x.type === t)!;

@@ -1,0 +1,450 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`practice authz matrix over every /v1/practice operation > DELETE /v1/practice/staff/{email} 1`] = `
+{
+  "otherFirm": 404,
+  "preparer": 403,
+  "readonly": 403,
+  "reviewer": 403,
+}
+`;
+
+exports[`practice authz matrix over every /v1/practice operation > GET /v1/practice 1`] = `
+{
+  "manager": 200,
+  "otherFirm": 200,
+  "partner": 200,
+  "preparer": 200,
+  "readonly": 200,
+  "reviewer": 200,
+}
+`;
+
+exports[`practice authz matrix over every /v1/practice operation > GET /v1/practice/billing/records 1`] = `
+{
+  "manager": 200,
+  "otherFirm": 200,
+  "partner": 200,
+  "preparer": 403,
+  "readonly": 403,
+  "reviewer": 403,
+}
+`;
+
+exports[`practice authz matrix over every /v1/practice operation > GET /v1/practice/billing/wip 1`] = `
+{
+  "manager": 200,
+  "otherFirm": 200,
+  "partner": 200,
+  "preparer": 403,
+  "readonly": 403,
+  "reviewer": 403,
+}
+`;
+
+exports[`practice authz matrix over every /v1/practice operation > GET /v1/practice/checklists 1`] = `
+{
+  "manager": 200,
+  "otherFirm": 200,
+  "partner": 200,
+  "preparer": 200,
+  "readonly": 200,
+  "reviewer": 200,
+}
+`;
+
+exports[`practice authz matrix over every /v1/practice operation > GET /v1/practice/checklists/{id} 1`] = `
+{
+  "manager": 200,
+  "otherFirm": 404,
+  "partner": 200,
+  "preparer": 404,
+  "readonly": 200,
+  "reviewer": 404,
+}
+`;
+
+exports[`practice authz matrix over every /v1/practice operation > GET /v1/practice/clients 1`] = `
+{
+  "manager": 200,
+  "otherFirm": 200,
+  "partner": 200,
+  "preparer": 200,
+  "readonly": 200,
+  "reviewer": 200,
+}
+`;
+
+exports[`practice authz matrix over every /v1/practice operation > GET /v1/practice/clients/{id} 1`] = `
+{
+  "manager": 200,
+  "otherFirm": 404,
+  "partner": 200,
+  "preparer": 404,
+  "readonly": 200,
+  "reviewer": 404,
+}
+`;
+
+exports[`practice authz matrix over every /v1/practice operation > GET /v1/practice/close-templates 1`] = `
+{
+  "manager": 200,
+  "otherFirm": 200,
+  "partner": 200,
+  "preparer": 200,
+  "readonly": 200,
+  "reviewer": 200,
+}
+`;
+
+exports[`practice authz matrix over every /v1/practice operation > GET /v1/practice/dashboard 1`] = `
+{
+  "manager": 200,
+  "otherFirm": 200,
+  "partner": 200,
+  "preparer": 200,
+  "readonly": 200,
+  "reviewer": 200,
+}
+`;
+
+exports[`practice authz matrix over every /v1/practice operation > GET /v1/practice/deadlines 1`] = `
+{
+  "manager": 200,
+  "otherFirm": 200,
+  "partner": 200,
+  "preparer": 200,
+  "readonly": 200,
+  "reviewer": 200,
+}
+`;
+
+exports[`practice authz matrix over every /v1/practice operation > GET /v1/practice/qa 1`] = `
+{
+  "manager": 200,
+  "otherFirm": 200,
+  "partner": 200,
+  "preparer": 200,
+  "readonly": 200,
+  "reviewer": 200,
+}
+`;
+
+exports[`practice authz matrix over every /v1/practice operation > GET /v1/practice/queries 1`] = `
+{
+  "manager": 200,
+  "otherFirm": 200,
+  "partner": 200,
+  "preparer": 200,
+  "readonly": 200,
+  "reviewer": 200,
+}
+`;
+
+exports[`practice authz matrix over every /v1/practice operation > GET /v1/practice/review-queue 1`] = `
+{
+  "manager": 200,
+  "otherFirm": 200,
+  "partner": 200,
+  "preparer": 200,
+  "readonly": 200,
+  "reviewer": 200,
+}
+`;
+
+exports[`practice authz matrix over every /v1/practice operation > GET /v1/practice/staff 1`] = `
+{
+  "manager": 200,
+  "otherFirm": 200,
+  "partner": 200,
+  "preparer": 200,
+  "readonly": 200,
+  "reviewer": 200,
+}
+`;
+
+exports[`practice authz matrix over every /v1/practice operation > GET /v1/practice/task-templates 1`] = `
+{
+  "manager": 200,
+  "otherFirm": 200,
+  "partner": 200,
+  "preparer": 200,
+  "readonly": 200,
+  "reviewer": 200,
+}
+`;
+
+exports[`practice authz matrix over every /v1/practice operation > GET /v1/practice/tasks 1`] = `
+{
+  "manager": 200,
+  "otherFirm": 200,
+  "partner": 200,
+  "preparer": 200,
+  "readonly": 200,
+  "reviewer": 200,
+}
+`;
+
+exports[`practice authz matrix over every /v1/practice operation > GET /v1/practice/time 1`] = `
+{
+  "manager": 200,
+  "otherFirm": 200,
+  "partner": 200,
+  "preparer": 200,
+  "readonly": 200,
+  "reviewer": 200,
+}
+`;
+
+exports[`practice authz matrix over every /v1/practice operation > PATCH /v1/practice/clients/{id} 1`] = `
+{
+  "manager": 200,
+  "otherFirm": 404,
+  "partner": 200,
+  "preparer": 403,
+  "readonly": 403,
+  "reviewer": 403,
+}
+`;
+
+exports[`practice authz matrix over every /v1/practice operation > PATCH /v1/practice/tasks/{id} 1`] = `
+{
+  "manager": 200,
+  "otherFirm": 404,
+  "partner": 200,
+  "preparer": 404,
+  "readonly": 403,
+  "reviewer": 404,
+}
+`;
+
+exports[`practice authz matrix over every /v1/practice operation > POST /v1/practice/billing/records 1`] = `
+{
+  "manager": 400,
+  "otherFirm": 400,
+  "partner": 400,
+  "preparer": 403,
+  "readonly": 403,
+  "reviewer": 403,
+}
+`;
+
+exports[`practice authz matrix over every /v1/practice operation > POST /v1/practice/bulk 1`] = `
+{
+  "manager": 400,
+  "otherFirm": 400,
+  "partner": 400,
+  "preparer": 403,
+  "readonly": 403,
+  "reviewer": 403,
+}
+`;
+
+exports[`practice authz matrix over every /v1/practice operation > POST /v1/practice/checklists/{id}/complete 1`] = `
+{
+  "manager": 409,
+  "otherFirm": 404,
+  "partner": 409,
+  "preparer": 403,
+  "readonly": 403,
+  "reviewer": 404,
+}
+`;
+
+exports[`practice authz matrix over every /v1/practice operation > POST /v1/practice/checklists/{id}/items/{idx} 1`] = `
+{
+  "manager": 400,
+  "otherFirm": 400,
+  "partner": 400,
+  "preparer": 400,
+  "readonly": 403,
+  "reviewer": 400,
+}
+`;
+
+exports[`practice authz matrix over every /v1/practice operation > POST /v1/practice/clients 1`] = `
+{
+  "manager": 400,
+  "otherFirm": 400,
+  "partner": 400,
+  "preparer": 403,
+  "readonly": 403,
+  "reviewer": 403,
+}
+`;
+
+exports[`practice authz matrix over every /v1/practice operation > POST /v1/practice/clients/{id}/auto-approve 1`] = `
+{
+  "manager": 200,
+  "otherFirm": 404,
+  "partner": 200,
+  "preparer": 403,
+  "readonly": 403,
+  "reviewer": 403,
+}
+`;
+
+exports[`practice authz matrix over every /v1/practice operation > POST /v1/practice/clients/{id}/checklists 1`] = `
+{
+  "manager": 400,
+  "otherFirm": 400,
+  "partner": 400,
+  "preparer": 400,
+  "readonly": 403,
+  "reviewer": 400,
+}
+`;
+
+exports[`practice authz matrix over every /v1/practice operation > POST /v1/practice/clients/{id}/imports/bank-csv 1`] = `
+{
+  "manager": 415,
+  "otherFirm": 404,
+  "partner": 415,
+  "preparer": 404,
+  "readonly": 403,
+  "reviewer": 404,
+}
+`;
+
+exports[`practice authz matrix over every /v1/practice operation > POST /v1/practice/clients/{id}/queries 1`] = `
+{
+  "manager": 400,
+  "otherFirm": 400,
+  "partner": 400,
+  "preparer": 400,
+  "readonly": 403,
+  "reviewer": 400,
+}
+`;
+
+exports[`practice authz matrix over every /v1/practice operation > POST /v1/practice/close-templates 1`] = `
+{
+  "manager": 400,
+  "otherFirm": 400,
+  "partner": 400,
+  "preparer": 403,
+  "readonly": 403,
+  "reviewer": 403,
+}
+`;
+
+exports[`practice authz matrix over every /v1/practice operation > POST /v1/practice/qa/{clientId}/{transactionId} 1`] = `
+{
+  "manager": 400,
+  "otherFirm": 400,
+  "partner": 400,
+  "preparer": 403,
+  "readonly": 403,
+  "reviewer": 400,
+}
+`;
+
+exports[`practice authz matrix over every /v1/practice operation > POST /v1/practice/queries/{id}/close 1`] = `
+{
+  "manager": 404,
+  "otherFirm": 404,
+  "partner": 200,
+  "preparer": 404,
+  "readonly": 403,
+  "reviewer": 404,
+}
+`;
+
+exports[`practice authz matrix over every /v1/practice operation > POST /v1/practice/review/approve 1`] = `
+{
+  "manager": 400,
+  "otherFirm": 400,
+  "partner": 400,
+  "preparer": 400,
+  "readonly": 403,
+  "reviewer": 400,
+}
+`;
+
+exports[`practice authz matrix over every /v1/practice operation > POST /v1/practice/review/bulk-approve 1`] = `
+{
+  "manager": 200,
+  "otherFirm": 200,
+  "partner": 200,
+  "preparer": 403,
+  "readonly": 403,
+  "reviewer": 200,
+}
+`;
+
+exports[`practice authz matrix over every /v1/practice operation > POST /v1/practice/review/claim 1`] = `
+{
+  "manager": 400,
+  "otherFirm": 400,
+  "partner": 400,
+  "preparer": 400,
+  "readonly": 403,
+  "reviewer": 400,
+}
+`;
+
+exports[`practice authz matrix over every /v1/practice operation > POST /v1/practice/staff 1`] = `
+{
+  "manager": 403,
+  "otherFirm": 400,
+  "partner": 400,
+  "preparer": 403,
+  "readonly": 403,
+  "reviewer": 403,
+}
+`;
+
+exports[`practice authz matrix over every /v1/practice operation > POST /v1/practice/task-templates 1`] = `
+{
+  "manager": 400,
+  "otherFirm": 400,
+  "partner": 400,
+  "preparer": 403,
+  "readonly": 403,
+  "reviewer": 403,
+}
+`;
+
+exports[`practice authz matrix over every /v1/practice operation > POST /v1/practice/tasks/generate 1`] = `
+{
+  "manager": 400,
+  "otherFirm": 400,
+  "partner": 400,
+  "preparer": 403,
+  "readonly": 403,
+  "reviewer": 403,
+}
+`;
+
+exports[`practice authz matrix over every /v1/practice operation > POST /v1/practice/time 1`] = `
+{
+  "manager": 400,
+  "otherFirm": 400,
+  "partner": 400,
+  "preparer": 400,
+  "readonly": 403,
+  "reviewer": 400,
+}
+`;
+
+exports[`practice authz matrix over every /v1/practice operation > POST /v1/practices 1`] = `
+{
+  "manager": 400,
+  "otherFirm": 400,
+  "partner": 400,
+  "preparer": 400,
+  "readonly": 400,
+  "reviewer": 400,
+}
+`;
+
+exports[`practice authz matrix over every /v1/practice operation > PUT /v1/practice/clients/{id}/assignments 1`] = `
+{
+  "manager": 400,
+  "otherFirm": 400,
+  "partner": 400,
+  "preparer": 403,
+  "readonly": 403,
+  "reviewer": 403,
+}
+`;
