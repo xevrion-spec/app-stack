@@ -9,7 +9,25 @@ import { def, IdParam, validationHook } from "../lib/route.js";
 import { requireRole } from "../lib/auth.js";
 import * as S from "../services/agent-review.js";
 import * as E from "../services/agent-review-evidence.js";
-import { ledgerSince } from "../services/agent-review-ledger.js";
+import { entriesAfter, toEntry } from "../services/audit-stream.js";
+import { badRequest } from "../lib/errors.js";
+
+// base64url over UTF-8 (the "since" sentinel is \uffff, which plain btoa cannot encode)
+const encodeCursor = (c: { at: string; request: string; seq: number }) =>
+  btoa(String.fromCharCode(...new TextEncoder().encode(JSON.stringify([c.at, c.request, c.seq]))))
+    .replace(/\+/g, "-")
+    .replace(/\//g, "_")
+    .replace(/=+$/, "");
+function decodeCursor(s: string): { at: string; request: string; seq: number } {
+  try {
+    const bin = atob(s.replace(/-/g, "+").replace(/_/g, "/"));
+    const [at, request, seq] = JSON.parse(new TextDecoder().decode(Uint8Array.from(bin, (ch) => ch.charCodeAt(0)))) as [unknown, unknown, unknown];
+    if (typeof at === "string" && typeof request === "string" && Number.isInteger(seq)) return { at, request, seq: seq as number };
+  } catch {
+    /* fall through */
+  }
+  throw badRequest("Invalid cursor");
+}
 import { scope, boundProject } from "./agent-reviews.js";
 
 export const agentReviewEvidence = new OpenAPIHono<AppEnv>({ defaultHook: validationHook });
@@ -102,13 +120,24 @@ agentReviewEvidence.openapi(
     path: "/agent-review/audit/export",
     tag: "Agent review",
     summary: "Ledger entries after `since` as NDJSON (SIEM ingestion). Content-free: payloads appear only as hashes. Page with the last line's `at`.",
-    query: z.object({ since: z.string().max(40).default("1970-01-01T00:00:00.000Z"), limit: z.coerce.number().int().min(1).max(5000).default(1000) }),
+    query: z.object({
+      since: z.string().max(40).default("1970-01-01T00:00:00.000Z"),
+      /** Opaque cursor from the previous page's `next-cursor` header. Preferred over `since`: no entries are lost when several share a timestamp. */
+      cursor: z.string().max(400).optional(),
+      limit: z.coerce.number().int().min(1).max(5000).default(1000),
+    }),
     response: z.string(),
     raw: { contentType: "application/x-ndjson" },
   }),
   async (c) => {
     const q = c.req.valid("query");
-    const rows = await ledgerSince(scope(c), q.since, q.limit);
-    return c.body(rows.map((e) => JSON.stringify(e)).join("\n") + (rows.length ? "\n" : ""), 200, { "content-type": "application/x-ndjson" }) as never;
+    const cur = q.cursor ? decodeCursor(q.cursor) : { at: q.since, request: "\uffff", seq: Number.MAX_SAFE_INTEGER };
+    const rows = (await entriesAfter(scope(c), cur, q.limit)).map(toEntry);
+    const last = rows[rows.length - 1];
+    const next = last ? encodeCursor({ at: last.at, request: last.requestId, seq: last.seq }) : (q.cursor ?? encodeCursor(cur));
+    return c.body(rows.map((e) => JSON.stringify(e)).join("\n") + (rows.length ? "\n" : ""), 200, {
+      "content-type": "application/x-ndjson",
+      "next-cursor": next,
+    }) as never;
   },
 );

@@ -50,12 +50,6 @@ export async function loadChain(db: TenantDb, requestId: string): Promise<R.Ledg
   return (await db.all<LedgerRow>(`select ${LEDGER_COLS} from review_ledger where tenant_id = ?1 and request_id = ?2 order by seq`, requestId)).map(toEntry);
 }
 
-export async function ledgerSince(db: TenantDb, since: string, limit: number): Promise<R.LedgerEntry[]> {
-  return (
-    await db.all<LedgerRow>(`select ${LEDGER_COLS} from review_ledger where tenant_id = ?1 and at > ?2 order by at, request_id, seq limit ?3`, since, limit)
-  ).map(toEntry);
-}
-
 type Head = { chain_seq: number; chain_head: string | null; current_payload_json: string; id: string };
 type Decision = { reviewer: string; decision: string; payload_version: number; created_at: string };
 export type Integrity =
