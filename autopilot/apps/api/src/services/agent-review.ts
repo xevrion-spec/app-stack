@@ -410,11 +410,13 @@ const STATUS_FOR: Record<R.TransitionErrorCode, number> = {
   not_requester: 403,
 };
 
-export async function loadReview(db: TenantDb, id: string, boundProject: string | null): Promise<RequestRow> {
+/** `scope`: null = unrestricted; a project id (API key binding) or a set of ids (custom role ABAC; empty = nothing). */
+export async function loadReview(db: TenantDb, id: string, scope: string | readonly string[] | null): Promise<RequestRow> {
+  const set = scope === null ? null : typeof scope === "string" ? [scope] : scope;
   const r = await db.first<RequestRow>(
-    `select ${COLS} from review_requests where tenant_id = ?1 and id = ?2${boundProject ? " and project_id = ?3" : ""}`,
+    `select ${COLS} from review_requests where tenant_id = ?1 and id = ?2${set ? " and project_id in (select value from json_each(?3))" : ""}`,
     id,
-    ...(boundProject ? [boundProject] : []),
+    ...(set ? [JSON.stringify(set)] : []),
   );
   if (!r) throw notFound("Review request");
   return r;

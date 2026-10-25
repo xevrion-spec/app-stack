@@ -1,4 +1,5 @@
 export type ErrorCode =
+  | "forbidden_by_role"
   | "sso_unconfigured"
   | "ip_not_allowed"
   | "legal_hold"

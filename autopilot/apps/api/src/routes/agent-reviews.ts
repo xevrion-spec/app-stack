@@ -18,6 +18,7 @@ import * as S from "../services/agent-review.js";
 import { replay } from "../services/agent-review-replay.js";
 import { attemptCallback, CALLBACK_COLS, type CallbackRow } from "../services/agent-review-delivery.js";
 import { randomToken } from "@xevrion/platform";
+import { permissionFor, riskAllowed, roleOfUser, visibleProjects } from "../services/custom-roles.js";
 
 type C = Context<AppEnv>;
 export const agentReviews = new OpenAPIHono<AppEnv>({ defaultHook: validationHook });
@@ -99,10 +100,19 @@ agentReviews.openapi(
 );
 
 /** The project an API key is bound to (null = tenant-wide key or a human). */
-export async function boundProject(c: C): Promise<string | null> {
+async function boundProject(c: C): Promise<string | null> {
   const k = c.get("principal").apiKey;
   if (!k) return null;
   return (await scope(c).first<{ project_id: string | null }>("select project_id from api_keys where tenant_id = ?1 and id = ?2", k.id))?.project_id ?? null;
+}
+/** What the caller may see: API-key project binding, else a custom role's project/environment conditions, else all. */
+export async function accessScope(c: C): Promise<string | string[] | null> {
+  const bound = await boundProject(c);
+  if (bound) return bound;
+  const p = c.get("principal");
+  if (p.apiKey || p.role === "owner") return null;
+  const role = await roleOfUser(scope(c), p.userId);
+  return role ? visibleProjects(scope(c), role) : null;
 }
 async function resolveProject(c: C, requested: string | undefined): Promise<string> {
   const bound = await boundProject(c);
@@ -485,6 +495,8 @@ agentReviews.openapi(
     const arg = (v: unknown) => (args.push(v), `?${args.length + 1}`);
     const project = bound ?? q.projectId;
     if (project) conds.push(`project_id = ${arg(project)}`);
+    const access = bound ? null : await accessScope(c);
+    if (Array.isArray(access)) conds.push(`project_id in (select value from json_each(${arg(JSON.stringify(access))}))`);
     if (q.status) conds.push(`status = ${arg(q.status)}`);
     if (q.risk) conds.push(`risk = ${arg(q.risk)}`);
     if (q.group)
@@ -513,7 +525,7 @@ agentReviews.openapi(
   }),
   async (c) => {
     const db = scope(c);
-    const r = await S.expireIfDue(c.env, db, await S.loadReview(db, c.req.valid("param").id, await boundProject(c)));
+    const r = await S.expireIfDue(c.env, db, await S.loadReview(db, c.req.valid("param").id, await accessScope(c)));
     const ds = await db.all<S.DecisionRow>(
       "select id, reviewer, decision, reason, payload_version, created_at from review_decisions where tenant_id = ?1 and request_id = ?2 order by created_at, id",
       r.id,
@@ -537,9 +549,13 @@ agentReviews.openapi(
   async (c) => {
     const b = c.req.valid("json");
     const db = scope(c);
-    const r = await S.expireIfDue(c.env, db, await S.loadReview(db, c.req.valid("param").id, await boundProject(c)));
+    const r = await S.expireIfDue(c.env, db, await S.loadReview(db, c.req.valid("param").id, await accessScope(c)));
     const group = S.decidingGroup(r);
     const p = c.get("principal");
+    const role = p.apiKey || p.role === "owner" ? null : await roleOfUser(db, p.userId);
+    if (role && !role.permissions.has(permissionFor(b.decision)))
+      throw new AppError(403, "forbidden_by_role", `Your role does not allow ${b.decision} decisions`);
+    if (role && !riskAllowed(role, r.risk)) throw new AppError(403, "forbidden_by_role", `Your role cannot decide ${r.risk}-risk requests`);
     if (group && !p.apiKey && p.role !== "owner" && !R.FINAL.has(r.status)) {
       const member = await db.first(
         "select 1 from review_group_members where tenant_id = ?1 and group_name = ?2 and email = ?3",
@@ -570,7 +586,7 @@ agentReviews.openapi(
   }),
   async (c) => {
     const db = scope(c);
-    const r = await S.expireIfDue(c.env, db, await S.loadReview(db, c.req.valid("param").id, await boundProject(c)));
+    const r = await S.expireIfDue(c.env, db, await S.loadReview(db, c.req.valid("param").id, await accessScope(c)));
     return c.json(S.reviewOut(await S.transition(c.env, db, r, { type: "cancel", by: actor(c) }, { actor: actor(c) })), 200);
   },
 );
@@ -621,7 +637,7 @@ agentReviews.openapi(
   }),
   async (c) => {
     const db = scope(c);
-    const r = await S.loadReview(db, c.req.valid("param").id, await boundProject(c));
+    const r = await S.loadReview(db, c.req.valid("param").id, await accessScope(c));
     const rows = await db.all<CallbackRow>(`select ${CALLBACK_COLS} from review_callbacks where tenant_id = ?1 and request_id = ?2 order by created_at`, r.id);
     return c.json({ items: rows.map(cbOut) }, 200);
   },
@@ -637,7 +653,7 @@ agentReviews.openapi(
   }),
   async (c) => {
     const db = scope(c);
-    const r = await S.loadReview(db, c.req.valid("param").id, await boundProject(c));
+    const r = await S.loadReview(db, c.req.valid("param").id, await accessScope(c));
     const ids = (await db.all<{ id: string }>("select id from review_callbacks where tenant_id = ?1 and request_id = ?2", r.id)).map((x) => x.id);
     if (!ids.length) throw notFound("Callback");
     for (const id of ids) {
@@ -667,7 +683,7 @@ agentReviews.openapi(
   }),
   async (c) => {
     const db = scope(c);
-    const bound = await boundProject(c);
+    const bound = await accessScope(c);
     const id = c.req.valid("param").id;
     const until = Date.now() + c.req.valid("query").timeoutSeconds * 1000;
     let r = await S.expireIfDue(c.env, db, await S.loadReview(db, id, bound));
@@ -695,7 +711,7 @@ agentReviews.openAPIRegistry.registerPath(
 );
 agentReviews.get("/agent-reviews/:id/stream", async (c) => {
   const db = scope(c);
-  const bound = await boundProject(c);
+  const bound = await accessScope(c);
   const id = c.req.param("id");
   const maxSeconds = Math.min(Math.max(Number(c.req.query("maxSeconds") ?? 55) || 55, 1), 55);
   let r = await S.loadReview(db, id, bound);

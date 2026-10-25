@@ -28,7 +28,7 @@ function decodeCursor(s: string): { at: string; request: string; seq: number } {
   }
   throw badRequest("Invalid cursor");
 }
-import { scope, boundProject } from "./agent-reviews.js";
+import { scope, accessScope } from "./agent-reviews.js";
 
 export const agentReviewEvidence = new OpenAPIHono<AppEnv>({ defaultHook: validationHook });
 
@@ -63,7 +63,7 @@ agentReviewEvidence.openapi(
   }),
   async (c) => {
     const db = scope(c);
-    const r = await S.loadReview(db, c.req.valid("param").id, await boundProject(c));
+    const r = await S.loadReview(db, c.req.valid("param").id, await accessScope(c));
     const { chain, integrity } = await E.integrityOf(db, r);
     return c.json({ entries: chain, integrity }, 200);
   },
@@ -80,7 +80,7 @@ agentReviewEvidence.openapi(
   }),
   async (c) => {
     const db = scope(c);
-    const r = await S.loadReview(db, c.req.valid("param").id, await boundProject(c));
+    const r = await S.loadReview(db, c.req.valid("param").id, await accessScope(c));
     return c.json(await E.issueReceipt(c.env, db, r), 200);
   },
 );
@@ -96,7 +96,7 @@ agentReviewEvidence.openapi(
   }),
   async (c) => {
     const db = scope(c);
-    const r = await S.loadReview(db, c.req.valid("param").id, await boundProject(c));
+    const r = await S.loadReview(db, c.req.valid("param").id, await accessScope(c));
     c.header("content-disposition", `attachment; filename="review-evidence-${r.id}.json"`);
     return c.json(await E.evidencePack(c.env, db, r), 200);
   },
