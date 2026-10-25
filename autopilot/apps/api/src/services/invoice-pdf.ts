@@ -20,7 +20,7 @@ export interface InvoicePdfInput {
 
 const gbp = (p: number) => `${p < 0 ? "-" : ""}£${(Math.abs(p) / 100).toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ",")}`;
 /** Keep printable WinAnsi-safe characters only (Helvetica cannot encode others). */
-export const pdfSafe = (s: string, max = 90) =>
+const pdfSafe = (s: string, max = 90) =>
   s
     .replace(/[\u2018\u2019]/g, "'")
     .replace(/[\u201C\u201D]/g, '"')

@@ -3,7 +3,7 @@ import { createSdk, type Schemas } from "@xevrion/sdk";
 export type { Schemas };
 const PROD_HOST = "app.xevrion.co.uk";
 export const isProd = typeof location !== "undefined" && location.hostname === PROD_HOST;
-export const API_BASE: string = import.meta.env.VITE_API_BASE ?? (isProd ? "https://api.xevrion.co.uk" : "http://127.0.0.1:8787");
+const API_BASE: string = import.meta.env.VITE_API_BASE ?? (isProd ? "https://api.xevrion.co.uk" : "http://127.0.0.1:8787");
 
 const DEV_KEY = "autopilot.devUser";
 export const devUser = {

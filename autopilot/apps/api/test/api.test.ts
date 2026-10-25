@@ -6,7 +6,9 @@ import { TenantDb } from "../src/lib/db.js";
 import { MemoryTracer } from "@xevrion/pipeline";
 
 const txns0 = (r: { json: { items: unknown[] } }) => r.json.items;
-const A = "owner-a@example.test", B = "owner-b@example.test", R = "reviewer-a@example.test";
+const A = "owner-a@example.test",
+  B = "owner-b@example.test",
+  R = "reviewer-a@example.test";
 
 async function setup(vat: Record<string, unknown> = { vatRegistered: true, vatScheme: "standard" }) {
   const h = makeEnv();
@@ -25,14 +27,19 @@ async function uploadAndRun(s: Awaited<ReturnType<typeof setup>>, user = A, csv 
 
 describe("platform", () => {
   it("health, request ids and security headers", async () => {
-    const { env } = makeEnv(); const call = client(env);
+    const { env } = makeEnv();
+    const call = client(env);
     const r = await call("GET", "/health", { headers: { "x-request-id": "rid-123" } });
-    expect(r.status).toBe(200); expect(r.headers.get("x-request-id")).toBe("rid-123");
+    expect(r.status).toBe(200);
+    expect(r.headers.get("x-request-id")).toBe("rid-123");
     expect(r.headers.get("x-frame-options")).toBeTruthy();
   });
   it("rejects unauthenticated calls with typed error", async () => {
-    const { env } = makeEnv(); const r = await client(env)("GET", "/v1/me");
-    expect(r.status).toBe(401); expect(r.json.error.code).toBeTypeOf("string"); expect(r.json.error.requestId).toBeTruthy();
+    const { env } = makeEnv();
+    const r = await client(env)("GET", "/v1/me");
+    expect(r.status).toBe(401);
+    expect(r.json.error.code).toBeTypeOf("string");
+    expect(r.json.error.requestId).toBeTruthy();
   });
   it("dev header is ignored in production (Access JWT required)", async () => {
     const { env } = makeEnv({ ENVIRONMENT: "production", ACCESS_AUD: "aud", ACCESS_TEAM_DOMAIN: "example.cloudflareaccess.com" });
@@ -40,32 +47,40 @@ describe("platform", () => {
     expect(r.status).toBe(401);
   });
   it("serves an OpenAPI 3.1 document covering the API", async () => {
-    const { env } = makeEnv(); const r = await client(env)("GET", "/openapi.json");
+    const { env } = makeEnv();
+    const r = await client(env)("GET", "/openapi.json");
     expect(r.json.openapi).toBe("3.1.0");
     expect(Object.keys(r.json.paths).length).toBeGreaterThanOrEqual(25);
     expect(r.json.paths["/v1/export/transactions.csv"]).toBeTruthy();
   });
   it("validation errors are 400 validation_failed", async () => {
-    const { env } = makeEnv(); const r = await client(env)("POST", "/v1/tenants", { user: A, body: { name: "" } });
-    expect(r.status).toBe(400); expect(r.json.error.code).toBe("validation_failed");
+    const { env } = makeEnv();
+    const r = await client(env)("POST", "/v1/tenants", { user: A, body: { name: "" } });
+    expect(r.status).toBe(400);
+    expect(r.json.error.code).toBe("validation_failed");
   });
 });
 
 describe("tenancy and roles", () => {
   let s: Awaited<ReturnType<typeof setup>>;
-  beforeEach(async () => { s = await setup(); });
+  beforeEach(async () => {
+    s = await setup();
+  });
 
   it("tenant bootstrap seeds categories and rules", async () => {
     const cats = await s.call("GET", "/v1/categories", { user: A });
-    expect(cats.status).toBe(200); expect(cats.json.length).toBeGreaterThan(5);
+    expect(cats.status).toBe(200);
+    expect(cats.json.length).toBeGreaterThan(5);
     const me = await s.call("GET", "/v1/me", { user: A });
-    expect(me.json.role).toBe("owner"); expect(me.json.tenantId).toBe(s.ta);
+    expect(me.json.role).toBe("owner");
+    expect(me.json.tenantId).toBe(s.ta);
   });
   it("tenant B never sees tenant A data", async () => {
     await uploadAndRun(s);
     const a = await s.call("GET", "/v1/transactions", { user: A });
     const b = await s.call("GET", "/v1/transactions", { user: B });
-    expect(a.json.items.length).toBe(11); expect(b.json.items.length).toBe(0);
+    expect(a.json.items.length).toBe(11);
+    expect(b.json.items.length).toBe(0);
     const id = a.json.items[0].id;
     const steal = await s.call("PATCH", `/v1/transactions/${id}`, { user: B, body: { categoryCode: "6300" } });
     expect(steal.status).toBe(404);
@@ -91,14 +106,18 @@ describe("tenancy and roles", () => {
 
 describe("ingestion, pipeline, ledger", () => {
   let s: Awaited<ReturnType<typeof setup>>;
-  beforeEach(async () => { s = await setup(); });
+  beforeEach(async () => {
+    s = await setup();
+  });
 
   it("stores the CSV in R2 under the tenant prefix with checksum and dedupes re-uploads", async () => {
     const { up } = await uploadAndRun(s);
-    expect(up.inserted).toBe(11); expect(up.sha256).toMatch(/^[0-9a-f]{64}$/);
+    expect(up.inserted).toBe(11);
+    expect(up.sha256).toMatch(/^[0-9a-f]{64}$/);
     expect([...s.objects.keys()][0]!.startsWith(`${s.ta}/`)).toBe(true);
     const again = await s.call("POST", "/v1/uploads/bank-csv", { user: A, raw: BANK_CSV, headers: { "content-type": "text/csv" } });
-    expect(again.json.inserted).toBe(0); expect(again.json.duplicates).toBe(11);
+    expect(again.json.inserted).toBe(0);
+    expect(again.json.duplicates).toBe(11);
   });
   it("rejects wrong content-type and oversize files", async () => {
     expect((await s.call("POST", "/v1/uploads/bank-csv", { user: A, raw: "x", headers: { "content-type": "application/json" } })).status).toBe(415);
@@ -150,11 +169,27 @@ describe("ingestion, pipeline, ledger", () => {
   });
   it("queue consumer acks on success, retries with backoff on failure, DLQ marks job failed", async () => {
     const up = await s.call("POST", "/v1/uploads/bank-csv", { user: A, raw: BANK_CSV, headers: { "content-type": "text/csv" } });
-    const acks: string[] = [], retries: number[] = [];
-    const mk = (body: { jobId: string; tenantId: string }) => ({ body, attempts: 2, ack: () => acks.push(body.jobId), retry: (o?: { delaySeconds?: number }) => retries.push(o?.delaySeconds ?? 0) });
+    const acks: string[] = [],
+      retries: number[] = [];
+    const mk = (body: { jobId: string; tenantId: string }) => ({
+      body,
+      attempts: 2,
+      ack: () => acks.push(body.jobId),
+      retry: (o?: { delaySeconds?: number }) => retries.push(o?.delaySeconds ?? 0),
+    });
     await handlePipelineBatch({ messages: [mk({ jobId: up.json.jobId, tenantId: s.ta })] } as never, s.env);
     expect(acks).toEqual([up.json.jobId]);
-    const broken = { ...s.env, DB: { prepare: () => { throw new Error("db down"); }, batch: () => { throw new Error("db down"); } } } as never;
+    const broken = {
+      ...s.env,
+      DB: {
+        prepare: () => {
+          throw new Error("db down");
+        },
+        batch: () => {
+          throw new Error("db down");
+        },
+      },
+    } as never;
     await handlePipelineBatch({ messages: [mk({ jobId: "j", tenantId: s.ta })] } as never, broken);
     expect(retries).toEqual([20]);
     await handleDeadLetters({ messages: [mk({ jobId: up.json.jobId, tenantId: s.ta })] } as never, s.env);
@@ -165,14 +200,23 @@ describe("ingestion, pipeline, ledger", () => {
 
 describe("invoices, VAT, SA, review, export, idempotency", () => {
   let s: Awaited<ReturnType<typeof setup>>;
-  beforeEach(async () => { s = await setup(); });
-  const inv = { customerName: "Acme Ltd", issueDate: "2026-07-02", dueDate: "2026-08-01", lines: [{ description: "Design work", quantity: 2, unitPence: 25000, vatRateCode: "STD" }] };
+  beforeEach(async () => {
+    s = await setup();
+  });
+  const inv = {
+    customerName: "Acme Ltd",
+    issueDate: "2026-07-02",
+    dueDate: "2026-08-01",
+    lines: [{ description: "Design work", quantity: 2, unitPence: 25000, vatRateCode: "STD" }],
+  };
 
   it("numbers invoices sequentially, computes VAT, and enforces status transitions", async () => {
     const a = await s.call("POST", "/v1/invoices", { user: A, body: inv });
     const b = await s.call("POST", "/v1/invoices", { user: A, body: inv });
     expect(a.status).toBe(201);
-    expect(a.json.net_pence).toBe(50000); expect(a.json.vat_pence).toBe(10000); expect(a.json.gross_pence).toBe(60000);
+    expect(a.json.net_pence).toBe(50000);
+    expect(a.json.vat_pence).toBe(10000);
+    expect(a.json.gross_pence).toBe(60000);
     expect(a.json.number).not.toBe(b.json.number);
     expect((await s.call("POST", `/v1/invoices/${a.json.id}/status`, { user: A, body: { status: "paid" } })).status).toBe(409);
     expect((await s.call("POST", `/v1/invoices/${a.json.id}/status`, { user: A, body: { status: "sent" } })).status).toBe(200);
@@ -200,8 +244,10 @@ describe("invoices, VAT, SA, review, export, idempotency", () => {
     expect(v.status).toBe(201);
     const bx = v.json;
     for (let i = 1; i <= 9; i++) expect(bx[`box${i}`]).toBeTypeOf("number");
-    expect(bx.box3).toBe(bx.box1 + bx.box2); expect(bx.box5).toBe(bx.box3 - bx.box4);
-    expect(v.json.status).toBe("draft"); expect(v.json.ratesVerified).toBe(false);
+    expect(bx.box3).toBe(bx.box1 + bx.box2);
+    expect(bx.box5).toBe(bx.box3 - bx.box4);
+    expect(v.json.status).toBe("draft");
+    expect(v.json.ratesVerified).toBe(false);
   });
   it("flat-rate VAT applies the tenant percentage", async () => {
     const f = await setup({ vatRegistered: true, vatScheme: "flat_rate", flatRatePercent: 12.5 });
@@ -219,27 +265,34 @@ describe("invoices, VAT, SA, review, export, idempotency", () => {
     expect(invNow.status).toBe("paid");
     const q2 = (await s.call("POST", "/v1/vat/drafts", { user: A, body: { periodStart: "2026-04-01", periodEnd: "2026-06-30" } })).json;
     const q3 = (await s.call("POST", "/v1/vat/drafts", { user: A, body: { periodStart: "2026-07-01", periodEnd: "2026-09-30" } })).json;
-    expect(q2.box1).toBe(10000); expect(q2.box6).toBe(50000);
-    expect(q3.box1).toBe(0); expect(q3.box6).toBe(0);
+    expect(q2.box1).toBe(10000);
+    expect(q2.box6).toBe(50000);
+    expect(q3.box1).toBe(0);
+    expect(q3.box6).toBe(0);
     const cashQ3 = (await s.call("POST", "/v1/vat/drafts", { user: A, body: { periodStart: "2026-07-01", periodEnd: "2026-09-30", scheme: "cash" } })).json;
     expect(cashQ3.box1).toBe(10000);
   });
   it("SA summary is a draft with income and expenses", async () => {
     await uploadAndRun(s);
     const r = await s.call("GET", "/v1/sa/summary", { user: A });
-    expect(r.status).toBe(200); expect(r.json.status).toBe("draft"); expect(r.json.verified).toBe(false);
+    expect(r.status).toBe(200);
+    expect(r.json.status).toBe("draft");
+    expect(r.json.verified).toBe(false);
     expect(r.json.turnoverPence).toBeGreaterThan(0);
   });
   it("resolving an exception with override updates the transaction and closes it", async () => {
     await uploadAndRun(s);
     const ex = (await s.call("GET", "/v1/exceptions", { user: A })).json.items[0];
-    const r = await s.call("POST", `/v1/exceptions/${ex.id}/resolve`, { user: A, body: { decision: "override", override: { categoryCode: "6300" }, note: "phone" } });
+    const r = await s.call("POST", `/v1/exceptions/${ex.id}/resolve`, {
+      user: A,
+      body: { decision: "override", override: { categoryCode: "6300" }, note: "phone" },
+    });
     expect(r.status).toBe(200);
     const again = await s.call("POST", `/v1/exceptions/${ex.id}/resolve`, { user: A, body: { decision: "approve" } });
     expect(again.status).toBe(409);
   });
   it("CSV export neutralises formula injection; JSON ledger export works; billing event recorded", async () => {
-    await uploadAndRun(s, A, "Date,Description,Amount\n01/07/2026,=HYPERLINK(\"x\"),-1.00\n");
+    await uploadAndRun(s, A, 'Date,Description,Amount\n01/07/2026,=HYPERLINK("x"),-1.00\n');
     const csv = await s.call("GET", "/v1/export/transactions.csv", { user: A });
     expect(csv.text).toContain("'=HYPERLINK");
     const j = await s.call("GET", "/v1/export/ledger.json", { user: A });
@@ -250,7 +303,8 @@ describe("invoices, VAT, SA, review, export, idempotency", () => {
   it("paginates with an opaque cursor", async () => {
     await uploadAndRun(s);
     const p1 = await s.call("GET", "/v1/transactions?limit=5", { user: A });
-    expect(p1.json.items.length).toBe(5); expect(p1.json.nextCursor).toBeTruthy();
+    expect(p1.json.items.length).toBe(5);
+    expect(p1.json.nextCursor).toBeTruthy();
     const p2 = await s.call("GET", `/v1/transactions?limit=5&cursor=${encodeURIComponent(p1.json.nextCursor)}`, { user: A });
     expect(p2.json.items[0].id).not.toBe(p1.json.items[0].id);
     const ids = new Set([...p1.json.items, ...p2.json.items].map((x: { id: string }) => x.id));

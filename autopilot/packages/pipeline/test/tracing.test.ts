@@ -10,7 +10,14 @@ describe("tracing", () => {
   it("records spans, errors and scores", async () => {
     const t = new MemoryTracer();
     const tr = t.trace("x", { a: 1 });
-    expect(await tr.span("ok", {}, async () => 42, (n) => ({ n }))).toBe(42);
+    expect(
+      await tr.span(
+        "ok",
+        {},
+        async () => 42,
+        (n) => ({ n }),
+      ),
+    ).toBe(42);
     await expect(tr.span("boom", {}, async () => Promise.reject(new Error("bad")))).rejects.toThrow("bad");
     tr.end({ done: true }, [{ name: "qa", value: 0.9 }]);
     expect(t.events.map((e) => e.type)).toEqual(["trace-create", "span-create", "span-update", "span-create", "span-update", "trace-create", "score-create"]);
@@ -37,12 +44,14 @@ describe("tracing", () => {
 describe("LLM client and validation", () => {
   const lines = [{ id: "a", date: "2026-07-01", description: "ZXQ UNKNOWN VENDOR", amountPence: -1000 }];
   it("uses the LLM for unknown lines and accepts only allowed codes", async () => {
-    const fake = (async () => new Response(JSON.stringify({ choices: [{ message: { content: '[{"i":0,"code":"6200","confidence":0.97}]' } }] }))) as unknown as typeof fetch;
+    const fake = (async () =>
+      new Response(JSON.stringify({ choices: [{ message: { content: '[{"i":0,"code":"6200","confidence":0.97}]' } }] }))) as unknown as typeof fetch;
     const r = await categoriseLines(lines, [], new Set(["6200", "9999"]), openAiCompatible("http://llm", "k", "m", fake));
     expect(r.items[0]).toMatchObject({ categoryCode: "6200", method: "llm" });
   });
   it("rejects invented codes and malformed output into suspense + review", async () => {
-    const invented = (async () => new Response(JSON.stringify({ choices: [{ message: { content: '[{"i":0,"code":"7777","confidence":0.99}]' } }] }))) as unknown as typeof fetch;
+    const invented = (async () =>
+      new Response(JSON.stringify({ choices: [{ message: { content: '[{"i":0,"code":"7777","confidence":0.99}]' } }] }))) as unknown as typeof fetch;
     const r1 = await categoriseLines(lines, [], new Set(["6200", "9999"]), openAiCompatible("http://llm", "k", "m", invented));
     expect(r1.items[0]!.categoryCode).toBe("9999");
     const junk = (async () => new Response(JSON.stringify({ choices: [{ message: { content: "sure! here you go" } }] }))) as unknown as typeof fetch;

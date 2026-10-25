@@ -3,9 +3,10 @@ import { download, gbp, sdk, unwrap, type Schemas } from "../api";
 import { useLoad } from "../hooks";
 import { Badge, Empty, ErrorNote, Loading, Page } from "../ui";
 
-type Txn = Schemas["Transaction"];
+type Txn = Schemas["TransactionPage"]["items"][number];
 const STATUSES = ["", "needs_review", "categorised", "reconciled", "new"] as const;
 
+// eslint-disable-next-line max-lines-per-function -- known debt (docs/quality.md): split in a follow-up
 export function Transactions() {
   const [status, setStatus] = useState<string>("");
   const [cursor, setCursor] = useState<string | undefined>();
@@ -98,7 +99,7 @@ export function Transactions() {
                 <tr key={t.id}>
                   <td>{t.txn_date}</td>
                   <td>{t.description}</td>
-                  <td className={`num ${t.amount_pence < 0 ? "neg" : "pos"}`}>{gbp(t.amount_pence)}</td>
+                  <td className={`num ${(t.amount_pence ?? 0) < 0 ? "neg" : "pos"}`}>{gbp(t.amount_pence ?? 0)}</td>
                   <td>
                     {editing === t.id ? (
                       <form
@@ -149,7 +150,7 @@ export function Transactions() {
                         </button>
                       </form>
                     ) : (
-                      catName(t.category_code)
+                      catName(t.category_code ?? null)
                     )}
                   </td>
                   <td className="num">{gbp(t.vat_pence)}</td>

@@ -49,7 +49,6 @@ export class TenantDb {
 }
 
 export const newId = () => crypto.randomUUID();
-export const nowIso = () => new Date().toISOString();
 
 /** Opaque cursor pagination over (created_at, id). */
 export function encodeCursor(createdAt: string, id: string): string {

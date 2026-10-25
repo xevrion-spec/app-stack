@@ -2,27 +2,36 @@
  * Test harness: a D1-compatible adapter over better-sqlite3 (real SQLite, real migrations), plus in-memory R2/KV/Queue fakes.
  * It implements the subset of the D1 API the app uses: prepare/bind/first/all/run/batch.
  */
-import type { Env, PipelineMessage } from "../src/env.js";
+import type { Env, PipelineMessage, EventsMessage, QueueMessage } from "../src/env.js";
 import { createApp } from "../src/app.js";
 import { makeSqliteD1 } from "../dev/sqlite-d1.js";
 
-export const makeD1 = () => makeSqliteD1();
+const makeD1 = () => makeSqliteD1();
 
 export function makeEnv(over: Partial<Env> = {}) {
   const { d1, raw } = makeD1();
   const objects = new Map<string, { body: Uint8Array; meta: unknown }>();
   const kv = new Map<string, string>();
   const sent: PipelineMessage[] = [];
+  const events: EventsMessage[] = [];
   const env: Env = {
     DB: d1,
-    DOCS: { put: async (k: string, v: ArrayBuffer, meta: unknown) => { objects.set(k, { body: new Uint8Array(v), meta }); return {} as R2Object; } } as unknown as R2Bucket,
+    DOCS: {
+      put: async (k: string, v: ArrayBuffer, meta: unknown) => {
+        objects.set(k, { body: new Uint8Array(v), meta });
+        return {} as R2Object;
+      },
+    } as unknown as R2Bucket,
     CONFIG: { get: async (k: string) => kv.get(k) ?? null, put: async (k: string, v: string) => void kv.set(k, v) } as unknown as KVNamespace,
-    PIPELINE: { send: async (m: PipelineMessage) => void sent.push(m), sendBatch: async () => {} } as unknown as Queue<PipelineMessage>,
+    PIPELINE: {
+      send: async (m: QueueMessage) => void (m.kind === "events" ? events.push(m) : sent.push(m)),
+      sendBatch: async () => {},
+    } as unknown as Queue<QueueMessage>,
     ENVIRONMENT: "test",
     ALLOWED_ORIGINS: "http://localhost:5173",
     ...over,
   };
-  return { env, raw, objects, kv, sent };
+  return { env, raw, objects, kv, sent, events };
 }
 
 export function client(env: Env) {
@@ -31,11 +40,18 @@ export function client(env: Env) {
     const headers: Record<string, string> = { ...(opts.user ? { "x-dev-user": opts.user } : {}), ...(opts.headers ?? {}) };
     let body: BodyInit | undefined;
     if (opts.raw !== undefined) body = opts.raw;
-    else if (opts.body !== undefined) { body = JSON.stringify(opts.body); headers["content-type"] = "application/json"; }
+    else if (opts.body !== undefined) {
+      body = JSON.stringify(opts.body);
+      headers["content-type"] = "application/json";
+    }
     const res = await app.request(path, { method, headers, ...(body !== undefined ? { body } : {}) }, env);
     const text = await res.text();
     let json: any = null;
-    try { json = JSON.parse(text); } catch { /* not json */ }
+    try {
+      json = JSON.parse(text);
+    } catch {
+      /* not json */
+    }
     return { status: res.status, json, text, headers: res.headers };
   };
 }

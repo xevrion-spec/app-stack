@@ -10,3 +10,5 @@ coverage/
 .wrangler/
 node_modules/
 .local/
+.stryker-tmp/
+reports/

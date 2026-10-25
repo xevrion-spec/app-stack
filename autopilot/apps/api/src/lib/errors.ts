@@ -9,6 +9,10 @@ export type ErrorCode =
   | "payload_too_large"
   | "unsupported_media_type"
   | "rate_limited"
+  | "quota_exceeded"
+  | "precondition_failed"
+  | "version_conflict"
+  | "insufficient_scope"
   | "not_implemented"
   | "internal";
 
@@ -29,4 +33,3 @@ export const notFound = (what = "Resource") => new AppError(404, "not_found", `$
 export const conflict = (m: string) => new AppError(409, "conflict", m);
 export const tooLarge = (m: string) => new AppError(413, "payload_too_large", m);
 export const unsupported = (m: string) => new AppError(415, "unsupported_media_type", m);
-export const notImplemented = (m: string) => new AppError(501, "not_implemented", m);

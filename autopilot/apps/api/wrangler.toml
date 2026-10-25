@@ -44,3 +44,16 @@ max_retries = 1
 
 [observability]
 enabled = true
+
+# Realtime: one Durable Object per tenant (SSE + WebSocket fan-out). Requires a migration tag on first deploy.
+[[durable_objects.bindings]]
+name = "REALTIME"
+class_name = "TenantRealtime"
+
+[[migrations]]
+tag = "v1-realtime"
+new_sqlite_classes = ["TenantRealtime"]
+
+# Outbox sweeper + webhook retries.
+[triggers]
+crons = ["* * * * *"]

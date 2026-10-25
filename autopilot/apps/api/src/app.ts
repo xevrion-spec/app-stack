@@ -13,7 +13,11 @@ import { def } from "./lib/route.js";
 import * as S from "./schemas.js";
 import { defaultSetupStatements } from "./services/defaults.js";
 import { v1 } from "./routes/v1.js";
+import { rateLimit, versioning } from "./lib/ratelimit.js";
+import { requireScopes } from "./lib/auth.js";
+import { inboundHook } from "./routes/inbound.js";
 
+// eslint-disable-next-line max-lines-per-function -- known debt (docs/quality.md): split in a follow-up
 export function createApp() {
   const app = new OpenAPIHono<AppEnv>({
     defaultHook: (result, c) => {
@@ -53,7 +57,29 @@ export function createApp() {
     cors({
       origin: (c.env.ALLOWED_ORIGINS ?? "").split(",").map((s) => s.trim()),
       credentials: true,
-      allowHeaders: ["content-type", "idempotency-key", "x-tenant-id", "x-request-id", "x-dev-user", "x-filename"],
+      allowHeaders: [
+        "content-type",
+        "idempotency-key",
+        "x-tenant-id",
+        "x-request-id",
+        "x-dev-user",
+        "x-filename",
+        "authorization",
+        "if-match",
+        "if-none-match",
+      ],
+      exposeHeaders: [
+        "etag",
+        "ratelimit-limit",
+        "ratelimit-remaining",
+        "ratelimit-reset",
+        "retry-after",
+        "api-version",
+        "deprecation",
+        "sunset",
+        "link",
+        "x-request-id",
+      ],
     })(c, next),
   );
 
@@ -76,7 +102,37 @@ export function createApp() {
     return c.json({ ok: db === "ok", db, env: c.env.ENVIRONMENT, time: new Date().toISOString() }, db === "ok" ? 200 : 503);
   });
 
+  // Readiness: every dependency the request path needs. Liveness stays /health (cheap).
+  app.get("/health/ready", async (c) => {
+    const check = async (name: string, f: () => Promise<unknown>) => {
+      const t = Date.now();
+      try {
+        await f();
+        return { name, ok: true, ms: Date.now() - t };
+      } catch (e) {
+        return { name, ok: false, ms: Date.now() - t, error: String((e as Error).message ?? e).slice(0, 120) };
+      }
+    };
+    const checks = await Promise.all([
+      check("d1", () => c.env.DB.prepare("select 1").first()),
+      check("d1_migrations", async () => {
+        const r = await c.env.DB.prepare("select count(*) n from d1_migrations").first<{ n: number }>();
+        if (!r || r.n < 4) throw new Error(`only ${r?.n ?? 0} migrations applied`);
+      }),
+      check("kv", () => c.env.CONFIG.get("flags")),
+      check("queue_binding", async () => {
+        if (!c.env.PIPELINE) throw new Error("PIPELINE binding missing");
+      }),
+    ]);
+    const ok = checks.every((x) => x.ok);
+    return c.json({ ok, checks, realtime: !!c.env.REALTIME }, ok ? 200 : 503);
+  });
+
+  // Inbound triggers: external systems POST signed JSON; becomes a trigger.received event for automations.
+  app.post("/hooks/inbound/:id", async (c) => inboundHook(c));
+
   // Bootstrap: an authenticated identity with no membership creates its tenant and becomes owner.
+  app.use("*", versioning);
   app.use("/v1/*", identity);
   app.openapi(
     def({
@@ -124,6 +180,8 @@ export function createApp() {
   );
 
   app.use("/v1/*", async (c, next) => (c.req.method === "POST" && new URL(c.req.url).pathname === "/v1/tenants" ? next() : principal(c, next)));
+  app.use("/v1/*", requireScopes);
+  app.use("/v1/*", rateLimit);
   app.use("/v1/*", idempotency);
   app.route("/v1", v1);
 

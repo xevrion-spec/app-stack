@@ -8,7 +8,9 @@ import { categoriseByRules, categoriseLines, SUSPENSE, type CategoryRule } from 
 import table from "./fixtures/merchants.json" with { type: "json" };
 
 const rules: CategoryRule[] = cats.accounts.flatMap((a) =>
-  a.kw.filter((k) => k.trim().length >= 2).map((k, i) => ({ id: `${a.code}-${i}`, pattern: k, matchType: "contains" as const, categoryCode: a.code, priority: 100 })),
+  a.kw
+    .filter((k) => k.trim().length >= 2)
+    .map((k, i) => ({ id: `${a.code}-${i}`, pattern: k, matchType: "contains" as const, categoryCode: a.code, priority: 100 })),
 );
 const codes = new Set([...cats.accounts.map((a) => a.code), "8000"]);
 const rowsT = table as [string, number, string, string][];

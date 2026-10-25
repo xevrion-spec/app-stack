@@ -99,7 +99,7 @@ export const CreateRuleBody = z
   })
   .openapi("CreateRule");
 
-export const InvoiceLine = z.object({
+const InvoiceLine = z.object({
   description: z.string().min(1).max(200),
   quantity: z.number().positive(),
   unitPence: z.number().int().nonnegative(),
@@ -184,9 +184,6 @@ export const JobSchema = z
 export const JobEventSchema = z
   .object({ id: z.string(), stage: z.string(), status: z.string(), detail: z.string().nullable(), created_at: z.string() })
   .openapi("JobEvent");
-export const CreateJobBody = z
-  .object({ kind: z.enum(["monthly_books", "vat_quarter", "sa_prep"]).default("monthly_books"), period: z.string().max(20).optional() })
-  .openapi("CreateJob");
 
 export const UploadResult = z
   .object({

@@ -33,13 +33,33 @@ describe("Temporal monthlyClose workflow (real API code in-process, time-skippin
   });
 
   async function tenant(email: string) {
-    const r = await app.request("/v1/tenants", { method: "POST", headers: { "x-dev-user": email, "content-type": "application/json" }, body: JSON.stringify({ name: "WF Co (synthetic)", vatRegistered: true, vatScheme: "standard" }) }, local.env);
+    const r = await app.request(
+      "/v1/tenants",
+      {
+        method: "POST",
+        headers: { "x-dev-user": email, "content-type": "application/json" },
+        body: JSON.stringify({ name: "WF Co (synthetic)", vatRegistered: true, vatScheme: "standard" }),
+      },
+      local.env,
+    );
     expect(r.status).toBe(201);
   }
   async function worker(email: string) {
-    return Worker.create({ connection: env.nativeConnection, taskQueue: TASK_QUEUE, workflowsPath, activities: createActivities({ baseUrl: "http://api.test", devUser: email, fetch: appFetch }) });
+    return Worker.create({
+      connection: env.nativeConnection,
+      taskQueue: TASK_QUEUE,
+      workflowsPath,
+      activities: createActivities({ baseUrl: "http://api.test", devUser: email, fetch: appFetch }),
+    });
   }
-  const input = (csv: string) => ({ csv, periodStart: "2026-07-01", periodEnd: "2026-09-30", processingPoll: "1 second", reviewPoll: "1 hour", reviewTimeout: "72 hours" });
+  const input = (csv: string) => ({
+    csv,
+    periodStart: "2026-07-01",
+    periodEnd: "2026-09-30",
+    processingPoll: "1 second",
+    reviewPoll: "1 hour",
+    reviewTimeout: "72 hours",
+  });
 
   it("clean month: ingests, waits for the pipeline, drafts VAT without human review", async () => {
     await tenant("wf.clean@example.test");
@@ -73,7 +93,13 @@ describe("Temporal monthlyClose workflow (real API code in-process, time-skippin
   it("gives up after the review timeout without drafting VAT (time-skipped 72h)", async () => {
     await tenant("wf.timeout@example.test");
     const w = await worker("wf.timeout@example.test");
-    const res = await w.runUntil(env.client.workflow.execute("monthlyClose", { taskQueue: TASK_QUEUE, workflowId: "wf-timeout", args: [input(CSV.replace("REF 1", "REF 3").replace("99", "77"))] }));
+    const res = await w.runUntil(
+      env.client.workflow.execute("monthlyClose", {
+        taskQueue: TASK_QUEUE,
+        workflowId: "wf-timeout",
+        args: [input(CSV.replace("REF 1", "REF 3").replace("99", "77"))],
+      }),
+    );
     expect(res.stage).toBe("review_timeout");
     expect(res.vat).toBeUndefined();
   }, 60_000);

@@ -8,6 +8,8 @@ const errs = {
   403: errorResponse("Forbidden"),
   404: errorResponse("Not found"),
   409: errorResponse("Conflict"),
+  412: errorResponse("Precondition failed (stale ETag)"),
+  429: errorResponse("Rate limited or quota exceeded"),
 } as const;
 
 type JsonBody<B> = B extends z.ZodTypeAny ? { content: { "application/json": { schema: B } }; required: true } : undefined;
@@ -18,8 +20,8 @@ export function def<
   P extends string,
   R extends z.ZodTypeAny,
   B extends z.ZodTypeAny | undefined = undefined,
-  Q extends z.AnyZodObject | undefined = undefined,
-  Pa extends z.AnyZodObject | undefined = undefined,
+  Q extends z.ZodObject | undefined = undefined,
+  Pa extends z.ZodObject | undefined = undefined,
   St extends 200 | 201 = 200,
 >(o: { method: M; path: P; tag: string; summary: string; body?: B; query?: Q; params?: Pa; response: R; status?: St; raw?: { contentType: string } }) {
   const body = (o.body ? { content: { "application/json": { schema: o.body } }, required: true } : undefined) as JsonBody<B>;

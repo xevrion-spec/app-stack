@@ -15,4 +15,6 @@ const { env } = makeLocalEnv(dataDir, {
   ...(process.env.LLM_BASE_URL ? { LLM_BASE_URL: process.env.LLM_BASE_URL, LLM_API_KEY: process.env.LLM_API_KEY, LLM_MODEL: process.env.LLM_MODEL } : {}),
 });
 const app = createApp();
-serve({ fetch: (req) => app.fetch(req, env), port, hostname: "127.0.0.1" }, (i) => console.log(`autopilot local API on http://127.0.0.1:${i.port} (data: ${dataDir})`));
+serve({ fetch: (req) => app.fetch(req, env), port, hostname: "127.0.0.1" }, (i) =>
+  console.log(`autopilot local API on http://127.0.0.1:${i.port} (data: ${dataDir})`),
+);

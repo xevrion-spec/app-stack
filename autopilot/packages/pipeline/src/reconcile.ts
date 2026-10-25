@@ -37,6 +37,7 @@ export interface ReconcileOptions {
 export const DEFAULT_RECONCILE: ReconcileOptions = { amountTolerancePence: 2, dateWindowDays: 5, minScore: 0.55 };
 
 /** Score = amount closeness (50%) + date closeness (30%) + name similarity (20%). Greedy one-to-one assignment by best score. */
+// eslint-disable-next-line complexity -- known debt (docs/quality.md): split in a follow-up
 export function reconcile(lines: BankLine[], receipts: Receipt[], invoices: InvoiceRef[], opt: ReconcileOptions = DEFAULT_RECONCILE): Match[] {
   const cands: Match[] = [];
   for (const l of lines) {

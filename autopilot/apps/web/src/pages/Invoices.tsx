@@ -9,6 +9,7 @@ const plus30 = () => new Date(Date.now() + 30 * 86_400_000).toISOString().slice(
 const blank = (): Line => ({ description: "", quantity: 1, unitPence: 0, vatRateCode: "STD" });
 const NEXT: Record<string, ("sent" | "paid" | "void")[]> = { draft: ["sent", "void"], sent: ["paid", "void"], paid: [], void: [] };
 
+// eslint-disable-next-line max-lines-per-function -- known debt (docs/quality.md): split in a follow-up
 export function Invoices() {
   const list = useLoad(async () => unwrap(await sdk().GET("/v1/invoices")));
   const [showForm, setShowForm] = useState(false);

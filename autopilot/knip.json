@@ -1,0 +1,77 @@
+{
+  "$schema": "https://unpkg.com/knip@5/schema.json",
+  "ignoreBinaries": [
+    "eslint",
+    "prettier",
+    "vitest",
+    "tsx",
+    "tsc"
+  ],
+  "ignoreDependencies": [
+    "@stryker-mutator/.*",
+    "@vitest/coverage-v8",
+    "eslint",
+    "prettier",
+    "typescript-eslint",
+    "madge",
+    "jsdom"
+  ],
+  "workspaces": {
+    ".": {
+      "entry": [
+        "scripts/*.{ts,mjs}",
+        "vitest*.config.ts",
+        "eslint.config.mjs"
+      ],
+      "project": [
+        "scripts/**"
+      ]
+    },
+    "apps/api": {
+      "entry": [
+        "src/index.ts",
+        "dev/*.ts",
+        "test/**/*.test.ts",
+        "scripts/*.ts"
+      ],
+      "project": [
+        "src/**/*.ts",
+        "dev/**/*.ts",
+        "test/**/*.ts"
+      ]
+    },
+    "apps/web": {
+      "entry": [
+        "src/main.tsx",
+        "test/**/*.test.tsx",
+        "e2e/**/*.ts",
+        "playwright.config.ts"
+      ],
+      "project": [
+        "src/**/*.{ts,tsx}",
+        "test/**",
+        "e2e/**"
+      ]
+    },
+    "packages/*": {
+      "entry": [
+        "src/index.ts",
+        "test/**/*.test.ts"
+      ],
+      "project": [
+        "src/**/*.ts",
+        "test/**/*.ts"
+      ]
+    },
+    "packages/workflows": {
+      "entry": [
+        "src/worker.ts",
+        "test/**/*.test.ts"
+      ],
+      "project": [
+        "src/**/*.ts",
+        "test/**/*.ts"
+      ]
+    }
+  }
+}

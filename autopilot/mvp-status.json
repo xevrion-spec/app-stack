@@ -1,10 +1,10 @@
 {
-  "generated": "2026-10-25 01:23",
-  "branch": "feature/mvp-core",
+  "generated": "2026-10-25 11:05",
+  "branch": "feature/quality-1000",
   "unit_integration": {
-    "passed": 69,
-    "total": 69,
-    "suites": 22
+    "passed": 1612,
+    "total": 1612,
+    "suites": 16
   },
   "e2e": {
     "passed": 10,
@@ -12,10 +12,10 @@
     "flaky": 0
   },
   "coverage": {
-    "lines": 91.0,
-    "branches": 83.1,
-    "functions": 93.3,
-    "statements": 91.0
+    "lines": 95.66,
+    "branches": 86.01,
+    "functions": 95.14,
+    "statements": 93.86
   },
   "evals": {
     "accuracy": 1,
@@ -79,5 +79,34 @@
       "0002"
     ],
     "workers_deployed_with_mvp_code": false
+  },
+  "mutation": {
+    "overall": 89.27,
+    "by_file": {
+      "categorise.ts": 93,
+      "vat.ts": 93.8,
+      "automation.ts": 95.3,
+      "ledger.ts": 84.8,
+      "webhooks.ts": 80.5
+    },
+    "break": 70
+  },
+  "quality_gates": {
+    "typecheck": "pass",
+    "lint_complexity": "pass (9 documented waivers)",
+    "knip": "pass",
+    "madge": "no cycles",
+    "licenses": "69 prod pkgs ok",
+    "audit_prod_high": 0,
+    "gitleaks": "clean",
+    "bundle_gzip_js_kb": 55.1,
+    "lighthouse": "CI only (not run locally)",
+    "e2e": "not re-run this session"
+  },
+  "perf": {
+    "categorise_10k_ms_budget": 10000,
+    "pipeline_10k_ms_budget": 15000,
+    "load_local_read_p95_ms": "~95-106 (16 workers)",
+    "observed_box_ms": "<1000 categorise"
   }
 }

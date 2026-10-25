@@ -12,7 +12,7 @@ export async function categoryKind(db: TenantDb, code: string): Promise<Kind> {
   return r.kind === "income" ? "income" : r.kind === "asset" ? "capital" : "expense";
 }
 
-export function journalStatements(db: TenantDb, j: Journal, actor: string): D1PreparedStatement[] {
+function journalStatements(db: TenantDb, j: Journal, actor: string): D1PreparedStatement[] {
   const jid = newId();
   return [
     db.stmt(

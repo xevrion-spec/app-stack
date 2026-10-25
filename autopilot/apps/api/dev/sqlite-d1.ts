@@ -18,7 +18,11 @@ class Stmt {
     private params: unknown[] = [],
   ) {}
   bind(...p: unknown[]) {
-    return new Stmt(this.db, this.sql, p.map((v) => (typeof v === "boolean" ? (v ? 1 : 0) : v === undefined ? null : v)));
+    return new Stmt(
+      this.db,
+      this.sql,
+      p.map((v) => (typeof v === "boolean" ? (v ? 1 : 0) : v === undefined ? null : v)),
+    );
   }
   private named() {
     return Object.fromEntries(this.params.map((v, i) => [String(i + 1), v]));
@@ -54,7 +58,9 @@ export function migrate(raw: Database.Database) {
   raw.exec("create table if not exists d1_migrations (id integer primary key autoincrement, name text unique, applied_at text default (datetime('now')))");
   const done = new Set((raw.prepare("select name from d1_migrations").all() as { name: string }[]).map((r) => r.name));
   const applied: string[] = [];
-  for (const f of readdirSync(MIGRATIONS_DIR).filter((x) => x.endsWith(".sql")).sort()) {
+  for (const f of readdirSync(MIGRATIONS_DIR)
+    .filter((x) => x.endsWith(".sql"))
+    .sort()) {
     if (done.has(f)) continue;
     raw.transaction(() => {
       raw.exec(readFileSync(join(MIGRATIONS_DIR, f), "utf8"));
@@ -72,7 +78,10 @@ export function makeSqliteD1(path = ":memory:"): { d1: D1Database; raw: Database
   migrate(raw);
   const d1 = {
     prepare: (sql: string) => new Stmt(raw, sql),
-    batch: async (stmts: Stmt[]) => raw.transaction(() => stmts.map((s) => s.runSync()))().map(() => ({ success: true, meta: {} })),
+    batch: async (stmts: Stmt[]) =>
+      raw
+        .transaction(() => stmts.map((s) => s.runSync()))()
+        .map(() => ({ success: true, meta: {} })),
     exec: async (sql: string) => {
       raw.exec(sql);
       return { count: 1, duration: 0 };

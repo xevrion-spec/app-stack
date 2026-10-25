@@ -3,7 +3,8 @@ import { SignJWT, generateKeyPair, createLocalJWKSet, exportJWK } from "jose";
 import { makeEnv, client } from "./harness.js";
 import { __setAccessKeyForTests } from "../src/lib/auth.js";
 
-const TEAM = "example.cloudflareaccess.com", AUD = "test-aud";
+const TEAM = "example.cloudflareaccess.com",
+  AUD = "test-aud";
 
 describe("Cloudflare Access JWT", async () => {
   const { publicKey, privateKey } = await generateKeyPair("RS256");
@@ -11,7 +12,14 @@ describe("Cloudflare Access JWT", async () => {
   __setAccessKeyForTests(createLocalJWKSet({ keys: [jwk] }));
   afterAll(() => __setAccessKeyForTests(null));
   const sign = (claims: Record<string, unknown>, aud = AUD, exp = "5m") =>
-    new SignJWT(claims).setProtectedHeader({ alg: "RS256", kid: "k1" }).setIssuer(`https://${TEAM}`).setAudience(aud).setSubject("sub-1").setIssuedAt().setExpirationTime(exp).sign(privateKey);
+    new SignJWT(claims)
+      .setProtectedHeader({ alg: "RS256", kid: "k1" })
+      .setIssuer(`https://${TEAM}`)
+      .setAudience(aud)
+      .setSubject("sub-1")
+      .setIssuedAt()
+      .setExpirationTime(exp)
+      .sign(privateKey);
   const env = () => makeEnv({ ENVIRONMENT: "production", ACCESS_TEAM_DOMAIN: TEAM, ACCESS_AUD: AUD }).env;
 
   it("accepts a valid token and bootstraps a tenant", async () => {

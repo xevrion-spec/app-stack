@@ -37,3 +37,42 @@ Auth: Cloudflare Access JWT (`Cf-Access-Jwt-Assertion`). Local dev only: `x-dev-
 | GET | `/v1/billing/events` | Outcome/billing events | Billing |
 | GET | `/v1/export/transactions.csv` | Transactions as CSV | Export |
 | GET | `/v1/export/ledger.json` | Journals with lines as JSON | Export |
+| GET | `/v1/events/catalog` | Versioned event catalog | Events |
+| GET | `/v1/events` | Event log (newest first); filter by type or entity.* | Events |
+| GET | `/v1/events/{id}` | One event | Events |
+| GET | `/v1/activity` | Audit timeline (who did what, newest first) | Events |
+| POST | `/v1/webhooks` | Create endpoint (secret returned once) | Webhooks |
+| GET | `/v1/webhooks` | List endpoints | Webhooks |
+| GET | `/v1/webhooks/{id}` | Get endpoint | Webhooks |
+| PATCH | `/v1/webhooks/{id}` | Update endpoint (optimistic concurrency via version) | Webhooks |
+| DELETE | `/v1/webhooks/{id}` | Delete endpoint (soft) | Webhooks |
+| POST | `/v1/webhooks/{id}/rotate-secret` | Rotate signing secret (old one valid for 24h) | Webhooks |
+| GET | `/v1/webhooks/{id}/deliveries` | Delivery log | Webhooks |
+| POST | `/v1/webhooks/{id}/deliveries/{deliveryId}/replay` | Replay a delivery now | Webhooks |
+| POST | `/v1/webhooks/{id}/test` | Send a signed test ping to this endpoint | Webhooks |
+| GET | `/v1/automations/templates` | Starter templates | Automations |
+| POST | `/v1/automations` | Create automation (JSON definition) | Automations |
+| GET | `/v1/automations` | List automations | Automations |
+| POST | `/v1/automations/from-template` | Create from a template | Automations |
+| GET | `/v1/automations/{id}` | Get automation | Automations |
+| PUT | `/v1/automations/{id}` | Replace definition (requires current version) | Automations |
+| DELETE | `/v1/automations/{id}` | Soft-delete | Automations |
+| POST | `/v1/automations/{id}/restore` | Restore a soft-deleted automation | Automations |
+| POST | `/v1/automations/{id}/dry-run` | Test an automation against a stored event or a sample payload (no side effects) | Automations |
+| GET | `/v1/automations/{id}/runs` | Run history | Automations |
+| POST | `/v1/api-keys` | Create a scoped API key (shown once) | API keys |
+| GET | `/v1/api-keys` | List keys (never returns secrets) | API keys |
+| POST | `/v1/api-keys/{id}/rotate` | Rotate: new key now, old key valid 24h | API keys |
+| DELETE | `/v1/api-keys/{id}` | Revoke immediately | API keys |
+| POST | `/v1/triggers` | Create an inbound webhook trigger (secret shown once) | Automations |
+| GET | `/v1/triggers` | List inbound triggers | Automations |
+| DELETE | `/v1/triggers/{id}` | Revoke trigger | Automations |
+| GET | `/v1/search` | Full-text search over transactions and invoices | Search |
+| POST | `/v1/transactions/bulk-categorise` | Categorise up to 200 transactions; partial success, per-item results | Transactions |
+| GET | `/v1/invoices/{id}` | Get invoice (ETag; send If-None-Match for 304) | Invoices |
+| PATCH | `/v1/invoices/{id}` | Edit a draft invoice (If-Match or version required) | Invoices |
+| DELETE | `/v1/invoices/{id}` | Soft-delete a draft or void invoice | Invoices |
+| POST | `/v1/invoices/{id}/restore` | Restore a soft-deleted invoice | Invoices |
+| GET | `/v1/usage` | This month's metered usage vs plan quota | Billing |
+| GET | `/v1/flags` | Feature flags effective for this tenant | Account |
+| GET | `/v1/realtime` | Live event stream (SSE, or WebSocket with Upgrade); ?types=transaction.* | Events |

@@ -1,3 +1,4 @@
+import { Outbox } from "./events.js";
 import {
   categoriseLines,
   reconcile,
@@ -24,7 +25,7 @@ import { auditStmt } from "../lib/audit.js";
 import { log } from "../lib/log.js";
 import { postTransactionJournal } from "./ledger.js";
 
-export function llmFromEnv(env: Env): LlmClient | undefined {
+function llmFromEnv(env: Env): LlmClient | undefined {
   if (!env.LLM_BASE_URL || !env.LLM_API_KEY) return undefined;
   return openAiCompatible(env.LLM_BASE_URL, env.LLM_API_KEY, env.LLM_MODEL ?? "llama-3.3-70b-fp8-fast");
 }
@@ -83,6 +84,7 @@ export async function runPipeline(
   }
 }
 
+// eslint-disable-next-line max-lines-per-function, complexity -- known debt (docs/quality.md): split in a follow-up
 async function runStages(env: Env, tenantId: string, jobId: string, llm: LlmClient | undefined, tr: TraceHandle): Promise<PipelineSummary> {
   const db = new TenantDb(env.DB, tenantId);
   const job = await db.first<{ id: string; status: string }>("select id, status from jobs where tenant_id = ?1 and id = ?2", jobId);
@@ -192,6 +194,7 @@ async function runStages(env: Env, tenantId: string, jobId: string, llm: LlmClie
 
   // draft: write categorisations + journals atomically per transaction
   const writes: D1PreparedStatement[] = [];
+  const outbox = new Outbox(db);
   for (const t of txns) {
     const c = catByLine.get(t.id)!;
     const ms = matches.filter((x) => x.lineId === t.id);
@@ -214,15 +217,40 @@ async function runStages(env: Env, tenantId: string, jobId: string, llm: LlmClie
         m?.kind === "receipt" ? m.refId : null,
       ),
     );
-    if (m?.kind === "invoice")
+    outbox.add(
+      "transaction.categorised",
+      {
+        transactionId: t.id,
+        categoryCode: c.categoryCode,
+        method: c.method,
+        confidence: Math.max(0, Math.min(1, c.confidence)),
+        description: t.description ?? "",
+        amountPence: t.amount_pence,
+      },
+      "pipeline",
+    );
+    if (m?.kind === "invoice") {
       writes.push(db.stmt("update invoices set status = 'paid', paid_transaction_id = ?3 where tenant_id = ?1 and id = ?2 and status = 'sent'", m.refId, t.id));
+      const inv = await db.first<{ number: string; gross_pence: number; status: string }>(
+        "select number, gross_pence, status from invoices where tenant_id = ?1 and id = ?2",
+        m.refId,
+      );
+      if (inv?.status === "sent")
+        outbox.add("invoice.paid", { invoiceId: m.refId, number: inv.number, grossPence: inv.gross_pence, transactionId: t.id }, "pipeline");
+    }
     writes.push(...(await postTransactionJournal(db, t, c.categoryCode, vat, vatCode, "pipeline")));
   }
   for (const e of exceptions.filter((x) => x.severity !== "low" || x.reasonCode === "NO_RECEIPT" || x.reasonCode === "TRANSFER_CHECK")) {
+    const exId = newId();
+    outbox.add(
+      "exception.opened",
+      { exceptionId: exId, reasonCode: e.reasonCode, severity: e.severity, subjectId: e.subjectId ?? null, message: e.message },
+      "pipeline",
+    );
     writes.push(
       db.stmt(
         "insert into exceptions (tenant_id, id, job_id, stage, reason, reason_code, subject_type, subject_id, payload_json) values (?1, ?2, ?3, ?4, ?5, ?6, 'transaction', ?7, ?8)",
-        newId(),
+        exId,
         jobId,
         "qa",
         e.message,
@@ -233,7 +261,7 @@ async function runStages(env: Env, tenantId: string, jobId: string, llm: LlmClie
     );
   }
   if (await begin(db, jobId, "draft")) {
-    writes.push(eventStmt(db, jobId, "draft", "done", { journals: txns.length }));
+    writes.push(eventStmt(db, jobId, "draft", "done", { journals: txns.length }), ...outbox.stmts.splice(0));
     await tr.span(
       "draft",
       { statements: writes.length },
@@ -264,8 +292,14 @@ async function runStages(env: Env, tenantId: string, jobId: string, llm: LlmClie
       ),
       eventStmt(db, jobId, "outcome", "done", { billable }),
       auditStmt(db, "pipeline", "job.processed", jobId, { processed: lines.length, score }),
+      outbox.add(
+        "job.completed",
+        { jobId, status: exceptions.some((e) => e.severity !== "low") ? "needs_review" : "completed", qaScore: score, exceptions: exceptions.length },
+        "pipeline",
+      ) && outbox.stmts.pop()!,
     ]);
   }
+  await outbox.publish(env);
   log("info", "pipeline.done", { tenantId, jobId, processed: lines.length, exceptions: exceptions.length, score });
   return { jobId, processed: lines.length, exceptions: exceptions.length, qaScore: score, billable };
 }

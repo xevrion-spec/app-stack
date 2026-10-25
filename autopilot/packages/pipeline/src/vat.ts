@@ -42,6 +42,7 @@ export interface VatReturnDraft {
 
 const pounds = (p: Pence) => Math.trunc(p / 100) * 100; // boxes 6-9 are whole pounds (verify)
 
+// eslint-disable-next-line complexity -- known debt (docs/quality.md): split in a follow-up
 export function computeVatReturn(
   lines: VatInputLine[],
   opts: { scheme: VatScheme; periodStart: string; periodEnd: string; flatRatePercent?: number | null },

@@ -9,9 +9,14 @@ import { TenantDb, newId, encodeCursor, decodeCursor } from "../lib/db.js";
 import { auditStmt } from "../lib/audit.js";
 import { requireRole } from "../lib/auth.js";
 import { validationHook } from "../lib/route.js";
-import { badRequest, conflict, notFound, tooLarge, unsupported } from "../lib/errors.js";
+import { Outbox } from "../services/events.js";
+import { categoriseTransaction } from "../services/categorise.js";
+import { enforceQuota, meterStmt } from "../services/usage.js";
+import { platform } from "./platform.js";
+import { etagFor, ifMatchFails, ifNoneMatchHits, orderBy, selectFields } from "@xevrion/platform";
+import { AppError, badRequest, conflict, notFound, tooLarge, unsupported } from "../lib/errors.js";
 import { parseBankCsv, sha256Hex } from "../services/csv.js";
-import { postTransactionJournal, categoryKind } from "../services/ledger.js";
+import { categoryKind } from "../services/ledger.js";
 
 export const v1 = new OpenAPIHono<AppEnv>({ defaultHook: validationHook as never });
 type C = Context<AppEnv>;
@@ -43,9 +48,15 @@ async function paged<T extends { created_at: string; id: string }>(
 v1.openapi(def({ method: "get", path: "/me", tag: "Account", summary: "Current principal", response: S.MeSchema }), (c) => c.json(c.get("principal"), 200));
 
 v1.openapi(def({ method: "get", path: "/tenant", tag: "Account", summary: "Current tenant", response: S.TenantSchema }), async (c) => {
-  const t = await scope(c).tenantRowStmt(TENANT_COLS).first<TenantRow>();
+  const t = await scope(c)
+    .tenantRowStmt(TENANT_COLS + ", version")
+    .first<TenantRow & { version: number }>();
   if (!t) throw notFound("Tenant");
-  return c.json(t, 200);
+  const { version, ...rest } = t;
+  const tag = etagFor(t.id, version);
+  c.header("etag", tag);
+  if (ifNoneMatchHits(c.req.header("if-none-match"), tag)) return c.body(null, 304) as never;
+  return c.json(rest, 200);
 });
 
 v1.use("/tenant", async (c, next) => (c.req.method === "PATCH" ? owner(c, next) : next()));
@@ -64,7 +75,12 @@ v1.openapi(
       const cur = await db.tenantRowStmt("flat_rate_percent").first<{ flat_rate_percent: number | null }>();
       if (cur?.flat_rate_percent == null) throw badRequest("flatRatePercent is required for the flat rate scheme");
     }
+    const cur = (await db.tenantRowStmt("id, version").first<{ id: string; version: number }>())!;
+    if (ifMatchFails(c.req.header("if-match"), etagFor(cur.id, cur.version)))
+      throw new AppError(412, "precondition_failed", "Tenant settings changed since you fetched them", { currentVersion: cur.version });
+    f.version = cur.version + 1;
     await db.batch([db.updateTenantStmt(f), auditStmt(db, actor(c), "tenant.updated", db.tenantId, f)]);
+    c.header("etag", etagFor(cur.id, cur.version + 1));
     return c.json((await db.tenantRowStmt(TENANT_COLS).first<TenantRow>())!, 200);
   },
 );
@@ -128,6 +144,8 @@ v1.openapi(
     const key = `${db.tenantId}/statements/${docId}.csv`;
     if ((await scanHook(bytes, ct)) !== "clean") throw badRequest("File rejected by scanner");
     await c.env.DOCS.put(key, bytes, { httpMetadata: { contentType: "text/csv" }, sha256: sha, customMetadata: { tenant: db.tenantId } });
+    await enforceQuota(db, "transactions", parsed.lines.length);
+    const outbox = new Outbox(db);
     let inserted = 0,
       duplicates = 0;
     const stmts: D1PreparedStatement[] = [
@@ -150,10 +168,16 @@ v1.openapi(
         continue;
       }
       inserted++;
+      const txnId = newId();
+      outbox.add(
+        "transaction.created",
+        { transactionId: txnId, jobId, date: l.date, description: l.description, amountPence: l.amountPence, currency: l.currency },
+        actor(c),
+      );
       stmts.push(
         db.stmt(
           "insert or ignore into transactions (tenant_id, id, job_id, source, txn_date, description, amount_pence, currency, document_id, fingerprint, status, original_currency) values (?1, ?2, ?3, 'bank_csv', ?4, ?5, ?6, ?7, ?8, ?9, 'new', ?10)",
-          newId(),
+          txnId,
           jobId,
           l.date,
           l.description,
@@ -165,8 +189,10 @@ v1.openapi(
         ),
       );
     }
-    stmts.push(auditStmt(db, actor(c), "upload.bank_csv", docId, { sha256: sha, inserted, duplicates, rejected: parsed.rejected.length }));
+    stmts.push(auditStmt(db, actor(c), "upload.bank_csv", docId, { sha256: sha, inserted, duplicates, rejected: parsed.rejected.length }), ...outbox.stmts);
+    if (inserted) stmts.push(meterStmt(db, "transactions", inserted));
     await db.batch(stmts);
+    await outbox.publish(c.env);
     if (inserted) await c.env.PIPELINE.send({ jobId, tenantId: db.tenantId });
     else await db.run("update jobs set status = 'completed' where tenant_id = ?1 and id = ?2", jobId);
     return c.json({ documentId: docId, sha256: sha, jobId, inserted, duplicates, rejectedRows: parsed.rejected }, 201);
@@ -230,39 +256,75 @@ v1.openapi(
     path: "/transactions",
     tag: "Transactions",
     summary: "List transactions",
-    query: S.PageQuery.extend({ status: z.string().optional() }),
-    response: S.page(S.TransactionSchema, "TransactionPage"),
+    query: S.PageQuery.extend({
+      status: z.string().max(20).optional(),
+      categoryCode: z.string().max(10).optional(),
+      from: z
+        .string()
+        .regex(/^\d{4}-\d{2}-\d{2}$/)
+        .optional(),
+      to: z
+        .string()
+        .regex(/^\d{4}-\d{2}-\d{2}$/)
+        .optional(),
+      minPence: z.coerce.number().int().optional(),
+      maxPence: z.coerce.number().int().optional(),
+      tag: z.string().max(30).optional(),
+      sort: z.enum(["date", "-date", "amount", "-amount", "created", "-created"]).optional(),
+      fields: z.string().max(300).optional(),
+    }),
+    response: S.page(S.TransactionSchema.partial().extend({ id: z.string() }), "TransactionPage"),
   }),
   async (c) => {
     const q = c.req.valid("query");
+    const db = scope(c);
+    const conds: string[] = [];
+    const params: unknown[] = [];
+    const add = (sql: string, v: unknown) => {
+      params.push(v);
+      conds.push(sql.replace(/\?(?!\d)/, `?${params.length + 1}`));
+    };
+    if (q.status) add("status = ?", q.status);
+    if (q.categoryCode) add("category_code = ?", q.categoryCode);
+    if (q.from) add("txn_date >= ?", q.from);
+    if (q.to) add("txn_date <= ?", q.to);
+    if (q.minPence !== undefined) add("amount_pence >= ?", q.minPence);
+    if (q.maxPence !== undefined) add("amount_pence <= ?", q.maxPence);
+    if (q.tag) add("id in (select transaction_id from transaction_tags where tenant_id = ?1 and tag = ?)", q.tag);
     const base =
       "select id, txn_date, description, amount_pence, currency, status, category_code, confidence, vat_rate_code, vat_pence, document_id, created_at from transactions where tenant_id = ?1" +
-      (q.status ? " and status = ?2" : "");
-    return c.json(await paged<z.infer<typeof S.TransactionSchema>>(scope(c), base, q.status ? [q.status] : [], q.cursor, q.limit), 200);
+      conds.map((x) => ` and ${x}`).join("");
+    const pick = <T extends Record<string, unknown>>(rows: T[]) => rows.map((r) => selectFields(r, q.fields, TXN_FIELDS)) as (Partial<T> & { id: string })[];
+    if (!q.sort || q.sort === "-created") {
+      const p = await paged<z.infer<typeof S.TransactionSchema>>(db, base, params, q.cursor, q.limit);
+      return c.json({ items: pick(p.items), nextCursor: p.nextCursor }, 200);
+    }
+    // Custom sort: offset cursor (stable because ties break on id). Fine for the page sizes a sole trader has.
+    const offset = q.cursor ? Math.max(0, Number(/^o(\d{1,7})$/.exec(q.cursor)?.[1] ?? 0)) : 0;
+    const order = orderBy(q.sort, { date: "txn_date", amount: "amount_pence", created: "created_at" }, "created_at desc, id desc");
+    const rows = await db.all<z.infer<typeof S.TransactionSchema>>(`${base} order by ${order} limit ${q.limit + 1} offset ${offset}`, ...params);
+    return c.json({ items: pick(rows.slice(0, q.limit)), nextCursor: rows.length > q.limit ? `o${offset + q.limit}` : null }, 200);
   },
 );
+const TXN_FIELDS = [
+  "txn_date",
+  "description",
+  "amount_pence",
+  "currency",
+  "status",
+  "category_code",
+  "confidence",
+  "vat_rate_code",
+  "vat_pence",
+  "document_id",
+  "created_at",
+] as const;
 
 async function categoriseTxn(c: C, id: string, categoryCode: string, vatRateCode: string | null, vatPence: number, extra: D1PreparedStatement[] = []) {
   const db = scope(c);
-  const t = await db.first<{ id: string; txn_date: string; description: string | null; amount_pence: number }>(
-    "select id, txn_date, description, amount_pence from transactions where tenant_id = ?1 and id = ?2",
-    id,
-  );
-  if (!t) throw notFound("Transaction");
-  if (!(await db.first("select code from categories where tenant_id = ?1 and code = ?2", categoryCode))) throw badRequest(`Unknown category ${categoryCode}`);
-  if (vatPence > Math.abs(t.amount_pence)) throw badRequest("VAT cannot exceed the transaction amount");
-  await db.batch([
-    db.stmt(
-      "update transactions set category_code = ?3, vat_rate_code = ?4, vat_pence = ?5, confidence = 1, status = 'categorised' where tenant_id = ?1 and id = ?2",
-      id,
-      categoryCode,
-      vatRateCode,
-      vatPence,
-    ),
-    ...(await postTransactionJournal(db, t, categoryCode, vatPence, vatRateCode, actor(c))),
-    auditStmt(db, actor(c), "transaction.categorised", id, { categoryCode, vatRateCode, vatPence }),
-    ...extra,
-  ]);
+  const outbox = new Outbox(db);
+  const t = await categoriseTransaction(db, actor(c), id, categoryCode, vatRateCode, vatPence, { outbox, extra });
+  await outbox.publish(c.env);
   return t;
 }
 
@@ -437,7 +499,7 @@ v1.openapi(
 v1.openapi(def({ method: "get", path: "/invoices", tag: "Invoices", summary: "List invoices", response: z.array(S.InvoiceSchema) }), async (c) =>
   c.json(
     await scope(c).all<z.infer<typeof S.InvoiceSchema>>(
-      "select id, number, customer_name, customer_email, issue_date, due_date, status, net_pence, vat_pence, gross_pence, lines_json from invoices where tenant_id = ?1 order by issue_date desc, number desc",
+      "select id, number, customer_name, customer_email, issue_date, due_date, status, net_pence, vat_pence, gross_pence, lines_json from invoices where tenant_id = ?1 and deleted_at is null order by issue_date desc, number desc",
     ),
     200,
   ),
@@ -469,6 +531,7 @@ v1.openapi(
       "update invoice_sequences set next_value = next_value + 1 where tenant_id = ?1 returning prefix, next_value - 1 as next_value",
     );
     if (!seq) throw badRequest("Invoice numbering not initialised");
+    const outbox = new Outbox(db);
     const id = newId();
     const number = `${seq.prefix}${String(seq.next_value).padStart(4, "0")}`;
     const row = {
@@ -499,7 +562,9 @@ v1.openapi(
         row.lines_json,
       ),
       auditStmt(db, actor(c), "invoice.created", id, { number, gross: net + vat }),
+      outbox.add("invoice.created", { invoiceId: id, number, customerName: row.customer_name, grossPence: net + vat }, actor(c)) && outbox.stmts.pop()!,
     ]);
+    await outbox.publish(c.env);
     return c.json(row, 201);
   },
 );
@@ -518,18 +583,26 @@ v1.openapi(
     const { id } = c.req.valid("param");
     const b = c.req.valid("json");
     const db = scope(c);
-    const inv = await db.first<{ status: string }>("select status from invoices where tenant_id = ?1 and id = ?2", id);
+    const inv = await db.first<{ status: string; number: string; gross_pence: number }>(
+      "select status, number, gross_pence from invoices where tenant_id = ?1 and id = ?2 and deleted_at is null",
+      id,
+    );
     if (!inv) throw notFound("Invoice");
+    const outbox = new Outbox(db);
+    if (b.status === "paid")
+      outbox.add("invoice.paid", { invoiceId: id, number: inv.number, grossPence: inv.gross_pence, transactionId: b.paidTransactionId ?? null }, actor(c));
     if (!TRANSITIONS[inv.status]?.includes(b.status)) throw conflict(`Cannot move invoice from ${inv.status} to ${b.status}`);
     await db.batch([
       db.stmt(
-        "update invoices set status = ?3, paid_transaction_id = coalesce(?4, paid_transaction_id) where tenant_id = ?1 and id = ?2",
+        "update invoices set status = ?3, paid_transaction_id = coalesce(?4, paid_transaction_id), version = version + 1 where tenant_id = ?1 and id = ?2",
         id,
         b.status,
         b.paidTransactionId ?? null,
       ),
       auditStmt(db, actor(c), "invoice.status", id, { from: inv.status, to: b.status }),
+      ...outbox.stmts,
     ]);
+    await outbox.publish(c.env);
     return c.json(
       (await db.first<z.infer<typeof S.InvoiceSchema>>(
         "select id, number, customer_name, customer_email, issue_date, due_date, status, net_pence, vat_pence, gross_pence, lines_json from invoices where tenant_id = ?1 and id = ?2",
@@ -684,6 +757,7 @@ v1.openapi(
     );
     if (!t?.vat_registered) draft.warnings.push("Tenant is not marked VAT registered.");
     const id = newId();
+    const vatOutbox = new Outbox(db);
     await db.batch([
       db.stmt(
         "insert into vat_returns (tenant_id, id, period_start, period_end, boxes_json, status) values (?1, ?2, ?3, ?4, ?5, 'draft')",
@@ -693,7 +767,10 @@ v1.openapi(
         JSON.stringify(draft),
       ),
       auditStmt(db, actor(c), "vat.draft_created", id, { scheme, box5: draft.box5 }),
+      vatOutbox.add("vat_draft.ready", { draftId: id, periodStart: b.periodStart, periodEnd: b.periodEnd, box5Pence: draft.box5 }, actor(c)) &&
+        vatOutbox.stmts.pop()!,
     ]);
+    await vatOutbox.publish(c.env);
     return c.json({ id, ...draft }, 201);
   },
 );
@@ -708,7 +785,7 @@ const SaOut = z
   .object({
     taxYear: z.string(),
     turnoverPence: z.number().int(),
-    expensesByCategory: z.record(z.number().int()),
+    expensesByCategory: z.record(z.string(), z.number().int()),
     allowableExpensesPence: z.number().int(),
     profitPence: z.number().int(),
     tradingAllowanceComparison: z.object({ allowancePence: z.number().nullable(), profitIfAllowanceUsed: z.number().nullable(), betterOption: z.string() }),
@@ -806,9 +883,13 @@ v1.openapi(
       ),
       auditStmt(db, actor(c), `exception.${b.decision}`, id, b),
     ];
+    const exOutbox = new Outbox(db);
+    exOutbox.add("exception.resolved", { exceptionId: id, decision: b.decision, by: actor(c) }, actor(c));
+    resolve.push(...exOutbox.stmts);
     if (b.decision === "override" && ex.subject_type === "transaction" && ex.subject_id) {
       await categoriseTxn(c, ex.subject_id, b.override!.categoryCode, b.override!.vatRateCode ?? null, b.override!.vatPence ?? 0, resolve);
     } else await db.batch(resolve);
+    await exOutbox.publish(c.env);
     return c.json(
       (await db.first<z.infer<typeof S.ExceptionSchema>>(
         "select id, job_id, stage, reason, reason_code, subject_type, subject_id, status, created_at from exceptions where tenant_id = ?1 and id = ?2",
@@ -925,3 +1006,5 @@ v1.openapi(def({ method: "get", path: "/export/ledger.json", tag: "Export", summ
   await db.run("insert into audit_log (tenant_id, id, actor, action, subject) values (?1, ?2, ?3, 'export.ledger_json', null)", newId(), actor(c));
   return c.json({ journals: journals.map((j) => ({ ...j, lines: by.get(j.id) ?? [] })) }, 200);
 });
+
+v1.route("/", platform);

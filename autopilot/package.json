@@ -17,11 +17,31 @@
     "seed": "tsx scripts/seed.ts",
     "local": "node scripts/local.mjs",
     "evals": "tsx scripts/evals.ts",
-    "docs:api": "node scripts/api-docs.mjs"
+    "docs:api": "node scripts/api-docs.mjs",
+    "mutation": "stryker run",
+    "knip": "knip --no-progress",
+    "madge": "madge --circular --extensions ts,tsx apps/api/src apps/web/src packages/pipeline/src packages/platform/src packages/sdk/src packages/workflows/src",
+    "licenses": "node scripts/licenses.mjs",
+    "audit:prod": "npm audit --omit=dev --audit-level=high",
+    "bundle:budget": "node scripts/bundle-budget.mjs",
+    "load": "tsx scripts/load.ts",
+    "quality": "npm run typecheck && npm run lint && npm run coverage && npm run knip && npm run madge && npm run licenses && npm run audit:prod"
   },
   "allowScripts": {
     "better-sqlite3@11.10.0": true,
     "esbuild@0.28.2": true,
     "esbuild@0.21.5": true
+  },
+  "devDependencies": {
+    "@stryker-mutator/core": "^9.6.1",
+    "@stryker-mutator/vitest-runner": "^9.6.1",
+    "@vitest/coverage-v8": "^4.1.12",
+    "jsdom": "^25.0.1",
+    "knip": "^6.43.0",
+    "madge": "^8.0.0",
+    "vitest": "^4.1.12"
+  },
+  "overrides": {
+    "undici": "^7.30.1"
   }
 }

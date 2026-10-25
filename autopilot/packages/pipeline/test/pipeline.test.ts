@@ -1,9 +1,30 @@
 import { describe, expect, it } from "vitest";
 import fc from "fast-check";
 import {
-  parseAmountToPence, vatFromGross, categoriseByRules, categoriseLines, ruleMatches, normaliseDescription, parseLlmCategories, calibrate,
-  reconcile, similarity, detectAnomalies, qaScore, computeVatReturn, vatInvariantsHold, journalForBankLine, validateJournal, trialBalance,
-  LedgerInvariantError, computeSaSummary, TRANSFER, SUSPENSE, type CategoryRule, type BankLine, type VatInputLine,
+  parseAmountToPence,
+  vatFromGross,
+  categoriseByRules,
+  categoriseLines,
+  ruleMatches,
+  normaliseDescription,
+  parseLlmCategories,
+  calibrate,
+  reconcile,
+  similarity,
+  detectAnomalies,
+  qaScore,
+  computeVatReturn,
+  vatInvariantsHold,
+  journalForBankLine,
+  validateJournal,
+  trialBalance,
+  LedgerInvariantError,
+  computeSaSummary,
+  TRANSFER,
+  SUSPENSE,
+  type CategoryRule,
+  type BankLine,
+  type VatInputLine,
 } from "../src/index.js";
 
 const rules: CategoryRule[] = [
@@ -11,19 +32,33 @@ const rules: CategoryRule[] = [
   { id: "r2", pattern: "WHOLESALE", matchType: "contains", categoryCode: "5000", priority: 40 },
   { id: "r3", pattern: "TRAINLINE", matchType: "contains", categoryCode: "6100", priority: 100 },
 ];
-const line = (id: string, description: string, amountPence: number, date = "2026-07-01", currency?: string): BankLine => ({ id, date, description, amountPence, ...(currency ? { currency } : {}) });
+const line = (id: string, description: string, amountPence: number, date = "2026-07-01", currency?: string): BankLine => ({
+  id,
+  date,
+  description,
+  amountPence,
+  ...(currency ? { currency } : {}),
+});
 
 describe("money", () => {
-  it.each([["12.34", 1234], ["-0.5", -50], ["(45.00)", -4500], ["£1,234.5", 123450], ["7", 700]])("parses %s", (s, p) => expect(parseAmountToPence(s)).toBe(p));
+  it.each([
+    ["12.34", 1234],
+    ["-0.5", -50],
+    ["(45.00)", -4500],
+    ["£1,234.5", 123450],
+    ["7", 700],
+  ])("parses %s", (s, p) => expect(parseAmountToPence(s)).toBe(p));
   it("rejects garbage", () => expect(() => parseAmountToPence("12.345")).toThrow());
   it("vat from gross at 20%", () => expect(vatFromGross(12000, 0.2)).toBe(2000));
   it("property: parse(format(p)) round-trips", () =>
     fc.assert(fc.property(fc.integer({ min: -10_000_000, max: 10_000_000 }), (p) => parseAmountToPence((p / 100).toFixed(2)) === p)));
   it("property: vatFromGross never exceeds gross and has same sign", () =>
-    fc.assert(fc.property(fc.integer({ min: -1e8, max: 1e8 }), fc.constantFrom(0, 0.05, 0.2), (g, r) => {
-      const v = vatFromGross(g, r);
-      return Math.abs(v) <= Math.abs(g) && (v === 0 || Math.sign(v) === Math.sign(g));
-    })));
+    fc.assert(
+      fc.property(fc.integer({ min: -1e8, max: 1e8 }), fc.constantFrom(0, 0.05, 0.2), (g, r) => {
+        const v = vatFromGross(g, r);
+        return Math.abs(v) <= Math.abs(g) && (v === 0 || Math.sign(v) === Math.sign(g));
+      }),
+    ));
 });
 
 describe("categorise", () => {
@@ -60,7 +95,11 @@ describe("categorise", () => {
 describe("reconcile", () => {
   it("matches within tolerance and window, one-to-one", () => {
     const m = reconcile(
-      [line("l1", "STAPLES OFFICE", -2399, "2026-07-05"), line("l2", "STAPLES OFFICE", -2399, "2026-07-20"), line("l3", "ACME DESIGN INV-0001", 85000, "2026-07-11")],
+      [
+        line("l1", "STAPLES OFFICE", -2399, "2026-07-05"),
+        line("l2", "STAPLES OFFICE", -2399, "2026-07-20"),
+        line("l3", "ACME DESIGN INV-0001", 85000, "2026-07-11"),
+      ],
       [{ id: "r1", date: "2026-07-04", merchant: "Staples", totalPence: 2400, vatPence: 400 }],
       [{ id: "i1", number: "INV-0001", customerName: "Acme Design", grossPence: 85000, issueDate: "2026-07-10" }],
     );
@@ -78,7 +117,12 @@ describe("reconcile", () => {
 
 describe("anomaly + qa", () => {
   it("flags duplicate, foreign currency and refund", () => {
-    const codes = detectAnomalies([line("a", "SHOP", -500), line("b", "SHOP", -500), line("c", "AMAZON REFUND", 1200), line("d", "AWS", -3000, "2026-07-01", "USD")]).map((e) => e.reasonCode);
+    const codes = detectAnomalies([
+      line("a", "SHOP", -500),
+      line("b", "SHOP", -500),
+      line("c", "AMAZON REFUND", 1200),
+      line("d", "AWS", -3000, "2026-07-01", "USD"),
+    ]).map((e) => e.reasonCode);
     expect(codes).toEqual(expect.arrayContaining(["POSSIBLE_DUPLICATE", "REFUND_CHECK", "FOREIGN_CURRENCY"]));
   });
   it("flags outliers", () => {
@@ -117,17 +161,23 @@ describe("VAT draft", () => {
     expect(() => computeVatReturn(L, { scheme: "flat_rate", ...P })).toThrow();
   });
   it("property: box invariants always hold", () =>
-    fc.assert(fc.property(
-      fc.array(fc.record({
-        id: fc.uuid(), date: fc.constantFrom("2026-07-02", "2026-08-15", "2026-09-30"),
-        grossPence: fc.integer({ min: -5_000_000, max: 5_000_000 }),
-        kind: fc.constantFrom("income", "expense", "transfer", "suspense", "capital") as fc.Arbitrary<VatInputLine["kind"]>,
-        vatRateCode: fc.constantFrom("STD", "RED", "ZERO", "EXEMPT", "OUTSIDE", null),
-        evidencedVatPence: fc.option(fc.integer({ min: 0, max: 100_000 }), { nil: null }),
-      }), { maxLength: 40 }),
-      fc.constantFrom("standard", "cash", "flat_rate") as fc.Arbitrary<"standard" | "cash" | "flat_rate">,
-      (lines, scheme) => vatInvariantsHold(computeVatReturn(lines, { scheme, flatRatePercent: 10, ...P })),
-    )));
+    fc.assert(
+      fc.property(
+        fc.array(
+          fc.record({
+            id: fc.uuid(),
+            date: fc.constantFrom("2026-07-02", "2026-08-15", "2026-09-30"),
+            grossPence: fc.integer({ min: -5_000_000, max: 5_000_000 }),
+            kind: fc.constantFrom("income", "expense", "transfer", "suspense", "capital") as fc.Arbitrary<VatInputLine["kind"]>,
+            vatRateCode: fc.constantFrom("STD", "RED", "ZERO", "EXEMPT", "OUTSIDE", null),
+            evidencedVatPence: fc.option(fc.integer({ min: 0, max: 100_000 }), { nil: null }),
+          }),
+          { maxLength: 40 },
+        ),
+        fc.constantFrom("standard", "cash", "flat_rate") as fc.Arbitrary<"standard" | "cash" | "flat_rate">,
+        (lines, scheme) => vatInvariantsHold(computeVatReturn(lines, { scheme, flatRatePercent: 10, ...P })),
+      ),
+    ));
 });
 
 describe("ledger", () => {
@@ -141,23 +191,64 @@ describe("ledger", () => {
   });
   it("rejects unbalanced / two-sided / negative journals", () => {
     const base = { entryDate: "2026-07-01", memo: "", sourceType: "t", sourceId: "1" };
-    expect(() => validateJournal({ ...base, lines: [{ accountCode: "a", debitPence: 1, creditPence: 0 }, { accountCode: "b", debitPence: 0, creditPence: 2 }] })).toThrow(LedgerInvariantError);
-    expect(() => validateJournal({ ...base, lines: [{ accountCode: "a", debitPence: 1, creditPence: 1 }, { accountCode: "b", debitPence: 0, creditPence: 0 }] })).toThrow(LedgerInvariantError);
-    expect(() => validateJournal({ ...base, lines: [{ accountCode: "a", debitPence: -1, creditPence: 0 }, { accountCode: "b", debitPence: 0, creditPence: -1 }] })).toThrow(LedgerInvariantError);
+    expect(() =>
+      validateJournal({
+        ...base,
+        lines: [
+          { accountCode: "a", debitPence: 1, creditPence: 0 },
+          { accountCode: "b", debitPence: 0, creditPence: 2 },
+        ],
+      }),
+    ).toThrow(LedgerInvariantError);
+    expect(() =>
+      validateJournal({
+        ...base,
+        lines: [
+          { accountCode: "a", debitPence: 1, creditPence: 1 },
+          { accountCode: "b", debitPence: 0, creditPence: 0 },
+        ],
+      }),
+    ).toThrow(LedgerInvariantError);
+    expect(() =>
+      validateJournal({
+        ...base,
+        lines: [
+          { accountCode: "a", debitPence: -1, creditPence: 0 },
+          { accountCode: "b", debitPence: 0, creditPence: -1 },
+        ],
+      }),
+    ).toThrow(LedgerInvariantError);
   });
   it("property: every generated journal balances and trial balance sums to zero", () =>
-    fc.assert(fc.property(
-      fc.array(fc.record({
-        gross: fc.integer({ min: -10_000_000, max: 10_000_000 }).filter((n) => n !== 0),
-        vat: fc.integer({ min: 0, max: 2_000_000 }),
-        kind: fc.constantFrom("income", "expense", "transfer", "suspense", "capital") as fc.Arbitrary<"income" | "expense" | "transfer" | "suspense" | "capital">,
-      }), { minLength: 1, maxLength: 30 }),
-      (rows) => {
-        const js = rows.map((r, i) => journalForBankLine({ id: String(i), date: "2026-07-01", description: "", grossPence: r.gross, categoryCode: "6000", kind: r.kind, vatPence: r.vat }));
-        const tb = trialBalance(js);
-        return [...tb.values()].reduce((a, b) => a + b, 0) === 0;
-      },
-    )));
+    fc.assert(
+      fc.property(
+        fc.array(
+          fc.record({
+            gross: fc.integer({ min: -10_000_000, max: 10_000_000 }).filter((n) => n !== 0),
+            vat: fc.integer({ min: 0, max: 2_000_000 }),
+            kind: fc.constantFrom("income", "expense", "transfer", "suspense", "capital") as fc.Arbitrary<
+              "income" | "expense" | "transfer" | "suspense" | "capital"
+            >,
+          }),
+          { minLength: 1, maxLength: 30 },
+        ),
+        (rows) => {
+          const js = rows.map((r, i) =>
+            journalForBankLine({
+              id: String(i),
+              date: "2026-07-01",
+              description: "",
+              grossPence: r.gross,
+              categoryCode: "6000",
+              kind: r.kind,
+              vatPence: r.vat,
+            }),
+          );
+          const tb = trialBalance(js);
+          return [...tb.values()].reduce((a, b) => a + b, 0) === 0;
+        },
+      ),
+    ));
 });
 
 describe("self assessment draft", () => {

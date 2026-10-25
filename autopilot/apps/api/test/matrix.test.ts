@@ -6,10 +6,18 @@ import { describe, it, expect, beforeAll } from "vitest";
 import { makeEnv, client, BANK_CSV } from "./harness.js";
 import { runPipeline } from "../src/services/pipeline.js";
 
-const A = "owner-a@example.test", B = "owner-b@example.test", R = "reviewer-a@example.test", NOBODY = "nobody@example.test";
+const A = "owner-a@example.test",
+  B = "owner-b@example.test",
+  R = "reviewer-a@example.test",
+  NOBODY = "nobody@example.test";
 type Call = ReturnType<typeof client>;
 const csvH = { "content-type": "text/csv" };
-const inv = { customerName: "Acme Ltd", issueDate: "2026-07-01", dueDate: "2026-07-31", lines: [{ description: "Design", quantity: 1, unitPence: 10000, vatRateCode: "STD" }] };
+const inv = {
+  customerName: "Acme Ltd",
+  issueDate: "2026-07-01",
+  dueDate: "2026-07-31",
+  lines: [{ description: "Design", quantity: 1, unitPence: 10000, vatRateCode: "STD" }],
+};
 
 async function world() {
   const h = makeEnv();
@@ -28,18 +36,43 @@ async function world() {
 }
 
 const ROUTES: [string, string, unknown?][] = [
-  ["GET", "/v1/me"], ["GET", "/v1/tenant"], ["PATCH", "/v1/tenant", { name: "X" }], ["GET", "/v1/users"], ["POST", "/v1/users", { email: "z@x.test", role: "reviewer" }],
-  ["POST", "/v1/uploads/bank-csv"], ["POST", "/v1/uploads/receipt"], ["GET", "/v1/transactions"], ["PATCH", "/v1/transactions/ID", { categoryCode: "6200" }],
-  ["GET", "/v1/categories"], ["POST", "/v1/categories", { code: "6900", name: "Misc", kind: "expense" }], ["GET", "/v1/rules"], ["POST", "/v1/rules", { pattern: "ACME", categoryCode: "6200" }],
-  ["GET", "/v1/ledger/trial-balance"], ["GET", "/v1/ledger/journals"], ["GET", "/v1/invoices"], ["POST", "/v1/invoices", inv], ["POST", "/v1/invoices/ID/status", { status: "sent" }],
-  ["GET", "/v1/invoices/ID/pdf"], ["POST", "/v1/vat/drafts", { periodStart: "2026-07-01", periodEnd: "2026-09-30" }], ["GET", "/v1/vat/drafts"], ["GET", "/v1/sa/summary"],
-  ["GET", "/v1/exceptions"], ["POST", "/v1/exceptions/ID/resolve", { decision: "approve" }], ["GET", "/v1/jobs"], ["GET", "/v1/jobs/ID"], ["POST", "/v1/jobs/ID/rerun"],
-  ["GET", "/v1/billing/events"], ["GET", "/v1/export/transactions.csv"], ["GET", "/v1/export/ledger.json"],
+  ["GET", "/v1/me"],
+  ["GET", "/v1/tenant"],
+  ["PATCH", "/v1/tenant", { name: "X" }],
+  ["GET", "/v1/users"],
+  ["POST", "/v1/users", { email: "z@x.test", role: "reviewer" }],
+  ["POST", "/v1/uploads/bank-csv"],
+  ["POST", "/v1/uploads/receipt"],
+  ["GET", "/v1/transactions"],
+  ["PATCH", "/v1/transactions/ID", { categoryCode: "6200" }],
+  ["GET", "/v1/categories"],
+  ["POST", "/v1/categories", { code: "6900", name: "Misc", kind: "expense" }],
+  ["GET", "/v1/rules"],
+  ["POST", "/v1/rules", { pattern: "ACME", categoryCode: "6200" }],
+  ["GET", "/v1/ledger/trial-balance"],
+  ["GET", "/v1/ledger/journals"],
+  ["GET", "/v1/invoices"],
+  ["POST", "/v1/invoices", inv],
+  ["POST", "/v1/invoices/ID/status", { status: "sent" }],
+  ["GET", "/v1/invoices/ID/pdf"],
+  ["POST", "/v1/vat/drafts", { periodStart: "2026-07-01", periodEnd: "2026-09-30" }],
+  ["GET", "/v1/vat/drafts"],
+  ["GET", "/v1/sa/summary"],
+  ["GET", "/v1/exceptions"],
+  ["POST", "/v1/exceptions/ID/resolve", { decision: "approve" }],
+  ["GET", "/v1/jobs"],
+  ["GET", "/v1/jobs/ID"],
+  ["POST", "/v1/jobs/ID/rerun"],
+  ["GET", "/v1/billing/events"],
+  ["GET", "/v1/export/transactions.csv"],
+  ["GET", "/v1/export/ledger.json"],
 ];
 
 describe("every route requires authentication", () => {
   let call: Call;
-  beforeAll(() => { call = client(makeEnv().env); });
+  beforeAll(() => {
+    call = client(makeEnv().env);
+  });
   it.each(ROUTES)("%s %s -> 401", async (m, p, body) => {
     const r = await call(m, p.replace("ID", "x"), body ? { body } : {});
     expect(r.status).toBe(401);
@@ -49,7 +82,9 @@ describe("every route requires authentication", () => {
 
 describe("authenticated user without membership", () => {
   let call: Call;
-  beforeAll(() => { call = client(makeEnv().env); });
+  beforeAll(() => {
+    call = client(makeEnv().env);
+  });
   it.each(ROUTES)("%s %s -> 403 no_membership", async (m, p, body) => {
     const r = await call(m, p.replace("ID", "x"), { user: NOBODY, ...(body ? { body } : {}) });
     expect(r.status).toBe(403);
@@ -59,11 +94,24 @@ describe("authenticated user without membership", () => {
 
 describe("roles", () => {
   let w: Awaited<ReturnType<typeof world>>;
-  beforeAll(async () => { w = await world(); });
-  const fill = (p: string) => p.replace("/transactions/ID", `/transactions/${w.txnId}`).replace("/invoices/ID", `/invoices/${w.invoiceId}`).replace("/exceptions/ID", `/exceptions/${w.exId}`).replace("/jobs/ID", `/jobs/${w.jobId}`);
+  beforeAll(async () => {
+    w = await world();
+  });
+  const fill = (p: string) =>
+    p
+      .replace("/transactions/ID", `/transactions/${w.txnId}`)
+      .replace("/invoices/ID", `/invoices/${w.invoiceId}`)
+      .replace("/exceptions/ID", `/exceptions/${w.exId}`)
+      .replace("/jobs/ID", `/jobs/${w.jobId}`);
   const OWNER_ONLY: [string, string, unknown?][] = [
-    ["PATCH", "/v1/tenant", { name: "Hacked" }], ["GET", "/v1/users"], ["POST", "/v1/users", { email: "evil@x.test", role: "owner" }], ["POST", "/v1/uploads/bank-csv"],
-    ["POST", "/v1/uploads/receipt"], ["POST", "/v1/categories", { code: "6901", name: "X", kind: "expense" }], ["POST", "/v1/invoices", inv], ["POST", "/v1/invoices/ID/status", { status: "void" }],
+    ["PATCH", "/v1/tenant", { name: "Hacked" }],
+    ["GET", "/v1/users"],
+    ["POST", "/v1/users", { email: "evil@x.test", role: "owner" }],
+    ["POST", "/v1/uploads/bank-csv"],
+    ["POST", "/v1/uploads/receipt"],
+    ["POST", "/v1/categories", { code: "6901", name: "X", kind: "expense" }],
+    ["POST", "/v1/invoices", inv],
+    ["POST", "/v1/invoices/ID/status", { status: "void" }],
     ["GET", "/v1/invoices/ID/pdf"],
   ];
   it.each(OWNER_ONLY)("reviewer cannot %s %s", async (m, p, body) => {
@@ -71,36 +119,81 @@ describe("roles", () => {
     expect(r.status).toBe(403);
     expect(r.json.error.code).toBe("forbidden");
   });
-  const REVIEWER_OK: [string, string][] = [["GET", "/v1/me"], ["GET", "/v1/tenant"], ["GET", "/v1/transactions"], ["GET", "/v1/categories"], ["GET", "/v1/rules"], ["GET", "/v1/ledger/trial-balance"], ["GET", "/v1/ledger/journals"], ["GET", "/v1/invoices"], ["GET", "/v1/vat/drafts"], ["GET", "/v1/sa/summary"], ["GET", "/v1/exceptions"], ["GET", "/v1/jobs"], ["GET", "/v1/jobs/ID"], ["GET", "/v1/export/ledger.json"]];
+  const REVIEWER_OK: [string, string][] = [
+    ["GET", "/v1/me"],
+    ["GET", "/v1/tenant"],
+    ["GET", "/v1/transactions"],
+    ["GET", "/v1/categories"],
+    ["GET", "/v1/rules"],
+    ["GET", "/v1/ledger/trial-balance"],
+    ["GET", "/v1/ledger/journals"],
+    ["GET", "/v1/invoices"],
+    ["GET", "/v1/vat/drafts"],
+    ["GET", "/v1/sa/summary"],
+    ["GET", "/v1/exceptions"],
+    ["GET", "/v1/jobs"],
+    ["GET", "/v1/jobs/ID"],
+    ["GET", "/v1/export/ledger.json"],
+  ];
   it.each(REVIEWER_OK)("reviewer can %s %s", async (m, p) => expect((await w.call(m, fill(p), { user: R })).status).toBe(200));
   it("reviewer sees role=reviewer on /me", async () => expect((await w.call("GET", "/v1/me", { user: R })).json.role).toBe("reviewer"));
-  it("reviewer can categorise a transaction", async () => expect((await w.call("PATCH", `/v1/transactions/${w.txnId}`, { user: R, body: { categoryCode: "6200" } })).status).toBe(200));
+  it("reviewer can categorise a transaction", async () =>
+    expect((await w.call("PATCH", `/v1/transactions/${w.txnId}`, { user: R, body: { categoryCode: "6200" } })).status).toBe(200));
 });
 
 describe("tenant isolation (B attacks A's resources)", () => {
   let w: Awaited<ReturnType<typeof world>>;
-  beforeAll(async () => { w = await world(); });
-  it.each([
-    ["PATCH", "txn", { categoryCode: "6200" }], ["POST", "invoice-status", { status: "void" }], ["GET", "invoice-pdf"], ["POST", "exception", { decision: "approve" }], ["GET", "job"], ["POST", "rerun"],
-  ] as [string, "txn" | "invoice-status" | "invoice-pdf" | "exception" | "job" | "rerun", unknown?][])("%s %s -> 404 and A's data unchanged", async (m, what, body) => {
-    const path = { txn: `/v1/transactions/${w.txnId}`, "invoice-status": `/v1/invoices/${w.invoiceId}/status`, "invoice-pdf": `/v1/invoices/${w.invoiceId}/pdf`, exception: `/v1/exceptions/${w.exId}/resolve`, job: `/v1/jobs/${w.jobId}`, rerun: `/v1/jobs/${w.jobId}/rerun` }[what];
-    const r = await w.call(m, path, { user: B, ...(body ? { body } : {}) });
-    expect(r.status).toBe(404);
-    const inv2 = (await w.call("GET", "/v1/invoices", { user: A })).json.find((i: { id: string }) => i.id === w.invoiceId);
-    expect(inv2.status).not.toBe("void");
+  beforeAll(async () => {
+    w = await world();
   });
-  it.each(["/v1/transactions", "/v1/invoices", "/v1/exceptions", "/v1/jobs", "/v1/ledger/journals", "/v1/vat/drafts", "/v1/billing/events", "/v1/export/transactions.csv", "/v1/export/ledger.json", "/v1/users", "/v1/rules"])(
-    "B's %s never contains A's rows", async (p) => {
-      const r = await w.call("GET", p, { user: B });
-      expect(r.status).toBe(200);
-      for (const t of w.txns) expect(r.text).not.toContain(t.id);
-      expect(r.text).not.toContain(w.invoiceId);
-      expect(r.text).not.toContain(R);
-    });
+  it.each([
+    ["PATCH", "txn", { categoryCode: "6200" }],
+    ["POST", "invoice-status", { status: "void" }],
+    ["GET", "invoice-pdf"],
+    ["POST", "exception", { decision: "approve" }],
+    ["GET", "job"],
+    ["POST", "rerun"],
+  ] as [string, "txn" | "invoice-status" | "invoice-pdf" | "exception" | "job" | "rerun", unknown?][])(
+    "%s %s -> 404 and A's data unchanged",
+    async (m, what, body) => {
+      const path = {
+        txn: `/v1/transactions/${w.txnId}`,
+        "invoice-status": `/v1/invoices/${w.invoiceId}/status`,
+        "invoice-pdf": `/v1/invoices/${w.invoiceId}/pdf`,
+        exception: `/v1/exceptions/${w.exId}/resolve`,
+        job: `/v1/jobs/${w.jobId}`,
+        rerun: `/v1/jobs/${w.jobId}/rerun`,
+      }[what];
+      const r = await w.call(m, path, { user: B, ...(body ? { body } : {}) });
+      expect(r.status).toBe(404);
+      const inv2 = (await w.call("GET", "/v1/invoices", { user: A })).json.find((i: { id: string }) => i.id === w.invoiceId);
+      expect(inv2.status).not.toBe("void");
+    },
+  );
+  it.each([
+    "/v1/transactions",
+    "/v1/invoices",
+    "/v1/exceptions",
+    "/v1/jobs",
+    "/v1/ledger/journals",
+    "/v1/vat/drafts",
+    "/v1/billing/events",
+    "/v1/export/transactions.csv",
+    "/v1/export/ledger.json",
+    "/v1/users",
+    "/v1/rules",
+  ])("B's %s never contains A's rows", async (p) => {
+    const r = await w.call("GET", p, { user: B });
+    expect(r.status).toBe(200);
+    for (const t of w.txns) expect(r.text).not.toContain(t.id);
+    expect(r.text).not.toContain(w.invoiceId);
+    expect(r.text).not.toContain(R);
+  });
   it.each(["tenant-of-a", "' or 1=1 --", ""])("x-tenant-id %j for a non-member tenant is refused", async (tid) => {
     const target = tid === "tenant-of-a" ? (await w.call("GET", "/v1/me", { user: A })).json.tenantId : tid;
     const r = await w.call("GET", "/v1/transactions", { user: B, headers: { "x-tenant-id": target } });
-    if (tid === "") expect(r.status).toBe(200); // empty header = default membership
+    if (tid === "")
+      expect(r.status).toBe(200); // empty header = default membership
     else expect(r.status).toBe(403);
   });
   it("a rule created by B never categorises A's lines", async () => {
@@ -113,34 +206,73 @@ describe("tenant isolation (B attacks A's resources)", () => {
 
 describe("validation", () => {
   let w: Awaited<ReturnType<typeof world>>;
-  beforeAll(async () => { w = await world(); });
+  beforeAll(async () => {
+    w = await world();
+  });
   it.each([
-    ["POST", "/v1/tenants", { name: "" }], ["POST", "/v1/tenants", { name: "x".repeat(121) }], ["POST", "/v1/tenants", { name: "X", vatScheme: "made_up" }],
-    ["POST", "/v1/tenants", { name: "X", flatRatePercent: 0 }], ["POST", "/v1/tenants", { name: "X", flatRatePercent: 100 }], ["PATCH", "/v1/tenant", { vatRegistered: "yes" }],
-    ["POST", "/v1/users", { email: "not-an-email", role: "reviewer" }], ["POST", "/v1/users", { email: "a@b.test", role: "admin" }], ["POST", "/v1/users", { email: "a@b.test", role: "reviewer", displayName: "x".repeat(81) }],
-    ["PATCH", "/v1/transactions/TXN", {}], ["PATCH", "/v1/transactions/TXN", { categoryCode: "" }], ["PATCH", "/v1/transactions/TXN", { categoryCode: "6200", vatRateCode: "HIGH" }],
-    ["PATCH", "/v1/transactions/TXN", { categoryCode: "6200", vatPence: -1 }], ["PATCH", "/v1/transactions/TXN", { categoryCode: "6200", vatPence: 1.5 }],
-    ["POST", "/v1/categories", { code: "12", name: "X", kind: "expense" }], ["POST", "/v1/categories", { code: "abcd", name: "X", kind: "expense" }], ["POST", "/v1/categories", { code: "6902", name: "X", kind: "weird" }],
-    ["POST", "/v1/rules", { pattern: "A", categoryCode: "6200" }], ["POST", "/v1/rules", { pattern: "ACME", categoryCode: "6200", matchType: "glob" }], ["POST", "/v1/rules", { pattern: "ACME", categoryCode: "6200", priority: 1001 }],
-    ["POST", "/v1/invoices", { ...inv, lines: [] }], ["POST", "/v1/invoices", { ...inv, issueDate: "01/07/2026" }], ["POST", "/v1/invoices", { ...inv, customerName: "" }],
-    ["POST", "/v1/invoices", { ...inv, customerEmail: "nope" }], ["POST", "/v1/invoices", { ...inv, lines: [{ ...inv.lines[0], quantity: 0 }] }], ["POST", "/v1/invoices", { ...inv, lines: [{ ...inv.lines[0], unitPence: -1 }] }],
-    ["POST", "/v1/invoices", { ...inv, lines: Array(101).fill(inv.lines[0]) }, "101 lines"], ["POST", "/v1/invoices/INV/status", { status: "draft" }],
-    ["POST", "/v1/vat/drafts", { periodStart: "2026-07-01" }], ["POST", "/v1/vat/drafts", { periodStart: "July", periodEnd: "2026-09-30" }], ["POST", "/v1/vat/drafts", { periodStart: "2026-07-01", periodEnd: "2026-09-30", scheme: "annual" }],
-    ["POST", "/v1/exceptions/EX/resolve", { decision: "explode" }], ["GET", "/v1/transactions?limit=0"], ["GET", "/v1/transactions?limit=201"], ["GET", "/v1/transactions?limit=abc"],
-    ["GET", "/v1/jobs?limit=-5"], ["GET", "/v1/sa/summary?taxYearStart=2026"],
+    ["POST", "/v1/tenants", { name: "" }],
+    ["POST", "/v1/tenants", { name: "x".repeat(121) }],
+    ["POST", "/v1/tenants", { name: "X", vatScheme: "made_up" }],
+    ["POST", "/v1/tenants", { name: "X", flatRatePercent: 0 }],
+    ["POST", "/v1/tenants", { name: "X", flatRatePercent: 100 }],
+    ["PATCH", "/v1/tenant", { vatRegistered: "yes" }],
+    ["POST", "/v1/users", { email: "not-an-email", role: "reviewer" }],
+    ["POST", "/v1/users", { email: "a@b.test", role: "admin" }],
+    ["POST", "/v1/users", { email: "a@b.test", role: "reviewer", displayName: "x".repeat(81) }],
+    ["PATCH", "/v1/transactions/TXN", {}],
+    ["PATCH", "/v1/transactions/TXN", { categoryCode: "" }],
+    ["PATCH", "/v1/transactions/TXN", { categoryCode: "6200", vatRateCode: "HIGH" }],
+    ["PATCH", "/v1/transactions/TXN", { categoryCode: "6200", vatPence: -1 }],
+    ["PATCH", "/v1/transactions/TXN", { categoryCode: "6200", vatPence: 1.5 }],
+    ["POST", "/v1/categories", { code: "12", name: "X", kind: "expense" }],
+    ["POST", "/v1/categories", { code: "abcd", name: "X", kind: "expense" }],
+    ["POST", "/v1/categories", { code: "6902", name: "X", kind: "weird" }],
+    ["POST", "/v1/rules", { pattern: "A", categoryCode: "6200" }],
+    ["POST", "/v1/rules", { pattern: "ACME", categoryCode: "6200", matchType: "glob" }],
+    ["POST", "/v1/rules", { pattern: "ACME", categoryCode: "6200", priority: 1001 }],
+    ["POST", "/v1/invoices", { ...inv, lines: [] }],
+    ["POST", "/v1/invoices", { ...inv, issueDate: "01/07/2026" }],
+    ["POST", "/v1/invoices", { ...inv, customerName: "" }],
+    ["POST", "/v1/invoices", { ...inv, customerEmail: "nope" }],
+    ["POST", "/v1/invoices", { ...inv, lines: [{ ...inv.lines[0], quantity: 0 }] }],
+    ["POST", "/v1/invoices", { ...inv, lines: [{ ...inv.lines[0], unitPence: -1 }] }],
+    ["POST", "/v1/invoices", { ...inv, lines: Array(101).fill(inv.lines[0]) }, "101 lines"],
+    ["POST", "/v1/invoices/INV/status", { status: "draft" }],
+    ["POST", "/v1/vat/drafts", { periodStart: "2026-07-01" }],
+    ["POST", "/v1/vat/drafts", { periodStart: "July", periodEnd: "2026-09-30" }],
+    ["POST", "/v1/vat/drafts", { periodStart: "2026-07-01", periodEnd: "2026-09-30", scheme: "annual" }],
+    ["POST", "/v1/exceptions/EX/resolve", { decision: "explode" }],
+    ["GET", "/v1/transactions?limit=0"],
+    ["GET", "/v1/transactions?limit=201"],
+    ["GET", "/v1/transactions?limit=abc"],
+    ["GET", "/v1/jobs?limit=-5"],
+    ["GET", "/v1/sa/summary?taxYearStart=2026"],
   ] as [string, string, unknown?, string?][])("%s %s -> 400 (case %#)", async (m, p, body) => {
-    const r = await w.call(m, p.replace("TXN", w.txnId).replace("INV", w.invoiceId).replace("EX", w.exId), { user: A, ...(body !== undefined ? { body } : {}) });
+    const r = await w.call(m, p.replace("TXN", w.txnId).replace("INV", w.invoiceId).replace("EX", w.exId), {
+      user: A,
+      ...(body !== undefined ? { body } : {}),
+    });
     expect(r.status).toBe(400);
     expect(["validation_failed", "bad_request"]).toContain(r.json.error.code);
     expect(r.json.error.requestId).toBeTruthy();
   });
-  it.each([["not json", "{nope"], ["array", "[]"], ["null", "null"]])("malformed JSON body (%s) -> 400", async (_n, raw) => {
+  it.each([
+    ["not json", "{nope"],
+    ["array", "[]"],
+    ["null", "null"],
+  ])("malformed JSON body (%s) -> 400", async (_n, raw) => {
     const r = await w.call("POST", "/v1/invoices", { user: A, raw, headers: { "content-type": "application/json" } });
     expect(r.status).toBe(400);
   });
   it.each(["/v1/transactions/nope", "/v1/invoices/nope/status", "/v1/exceptions/nope/resolve", "/v1/jobs/nope"])("unknown id on %s -> 404", async (p) => {
     const m = p.endsWith("/nope") && !p.includes("transactions") ? "GET" : p.includes("transactions") ? "PATCH" : "POST";
-    const body = p.includes("transactions") ? { categoryCode: "6200" } : p.includes("status") ? { status: "sent" } : p.includes("resolve") ? { decision: "approve" } : undefined;
+    const body = p.includes("transactions")
+      ? { categoryCode: "6200" }
+      : p.includes("status")
+        ? { status: "sent" }
+        : p.includes("resolve")
+          ? { decision: "approve" }
+          : undefined;
     expect((await w.call(m, p, { user: A, ...(body ? { body } : {}) })).status).toBe(404);
   });
   it("categorising to a category that does not exist is rejected", async () => {
@@ -155,13 +287,19 @@ describe("validation", () => {
 
 describe("uploads: limits, content types, checksums, duplicates", () => {
   let w: Awaited<ReturnType<typeof world>>;
-  beforeAll(async () => { w = await world(); });
+  beforeAll(async () => {
+    w = await world();
+  });
   it.each(["application/json", "image/png", "text/html", "application/octet-stream"])("bank csv with content-type %j -> 415", async (ct) => {
     const r = await w.call("POST", "/v1/uploads/bank-csv", { user: A, raw: BANK_CSV, headers: ct ? { "content-type": ct } : {} });
     expect(r.status).toBe(415);
   });
   it.each(["text/csv", "text/plain", "application/csv", "text/csv; charset=utf-8"])("accepts %s", async (ct) => {
-    const r = await w.call("POST", "/v1/uploads/bank-csv", { user: A, raw: `Date,Description,Amount\n01/01/2026,CT ${ct},1.00`, headers: { "content-type": ct } });
+    const r = await w.call("POST", "/v1/uploads/bank-csv", {
+      user: A,
+      raw: `Date,Description,Amount\n01/01/2026,CT ${ct},1.00`,
+      headers: { "content-type": ct },
+    });
     expect(r.status).toBe(201);
   });
   it("rejects > 2 MB with 413", async () => {
@@ -196,13 +334,18 @@ describe("uploads: limits, content types, checksums, duplicates", () => {
     const r = await w.call("POST", "/v1/uploads/bank-csv", { user: A, raw: "Date,Description,Amount\n03/03/2026,OK,1\n31/02/2026,BAD,1", headers: csvH });
     expect(r.json.rejectedRows).toEqual([{ row: 3, error: expect.stringMatching(/invalid date/) }]);
   });
-  it.each([["header only", "Date,Description,Amount"], ["no columns", "foo,bar\n1,2"], ["unterminated", 'Date,Description,Amount\n01/01/2026,"x,1']])("bad CSV (%s) -> 400", async (_n, raw) =>
-    expect((await w.call("POST", "/v1/uploads/bank-csv", { user: A, raw, headers: csvH })).status).toBe(400));
+  it.each([
+    ["header only", "Date,Description,Amount"],
+    ["no columns", "foo,bar\n1,2"],
+    ["unterminated", 'Date,Description,Amount\n01/01/2026,"x,1'],
+  ])("bad CSV (%s) -> 400", async (_n, raw) => expect((await w.call("POST", "/v1/uploads/bank-csv", { user: A, raw, headers: csvH })).status).toBe(400));
 });
 
 describe("idempotency", () => {
   let w: Awaited<ReturnType<typeof world>>;
-  beforeAll(async () => { w = await world(); });
+  beforeAll(async () => {
+    w = await world();
+  });
   it("same key + same body replays the first response and creates one invoice", async () => {
     const h = { "idempotency-key": "k-inv-1" };
     const a = await w.call("POST", "/v1/invoices", { user: A, body: inv, headers: h });
@@ -232,7 +375,8 @@ describe("idempotency", () => {
     expect((await w.call("POST", "/v1/invoices", { user: A, body: { ...inv, lines: [] }, headers: h })).status).toBe(400);
     expect((await w.call("POST", "/v1/invoices", { user: A, body: inv, headers: h })).status).toBe(201);
   });
-  it("over-long key -> 400", async () => expect((await w.call("POST", "/v1/invoices", { user: A, body: inv, headers: { "idempotency-key": "k".repeat(129) } })).status).toBe(400));
+  it("over-long key -> 400", async () =>
+    expect((await w.call("POST", "/v1/invoices", { user: A, body: inv, headers: { "idempotency-key": "k".repeat(129) } })).status).toBe(400));
   it("invoice numbers stay unique and sequential under repeated creates", async () => {
     const nums = [];
     for (let i = 0; i < 5; i++) nums.push((await w.call("POST", "/v1/invoices", { user: A, body: inv })).json.number);
@@ -243,7 +387,9 @@ describe("idempotency", () => {
 
 describe("pagination", () => {
   let w: Awaited<ReturnType<typeof world>>;
-  beforeAll(async () => { w = await world(); });
+  beforeAll(async () => {
+    w = await world();
+  });
   it.each([1, 2, 3, 5, 11, 50])("limit=%i walks all transactions exactly once", async (limit) => {
     const seen: string[] = [];
     let cursor: string | null = null;
@@ -271,15 +417,27 @@ describe("pagination", () => {
 
 describe("audit log", () => {
   let w: Awaited<ReturnType<typeof world>>;
-  beforeAll(async () => { w = await world(); });
+  beforeAll(async () => {
+    w = await world();
+  });
   const audit = (action: string) => w.raw.prepare("select actor, subject from audit_log where action = ?").all(action) as { actor: string; subject: string }[];
   it.each([
     ["tenant.created", async () => {}],
     ["upload.bank_csv", async () => {}],
     ["invoice.created", async () => {}],
     ["user.created", async () => {}],
-    ["export.transactions_csv", async () => { await w.call("GET", "/v1/export/transactions.csv", { user: A }); }],
-    ["transaction.categorised", async () => { await w.call("PATCH", `/v1/transactions/${w.txnId}`, { user: R, body: { categoryCode: "6200" } }); }],
+    [
+      "export.transactions_csv",
+      async () => {
+        await w.call("GET", "/v1/export/transactions.csv", { user: A });
+      },
+    ],
+    [
+      "transaction.categorised",
+      async () => {
+        await w.call("PATCH", `/v1/transactions/${w.txnId}`, { user: R, body: { categoryCode: "6200" } });
+      },
+    ],
   ] as [string, () => Promise<void>][])("%s is audited with the actor", async (action, act) => {
     await act();
     const rows = audit(action);
@@ -294,8 +452,26 @@ describe("audit log", () => {
 
 describe("security inputs", () => {
   let w: Awaited<ReturnType<typeof world>>;
-  beforeAll(async () => { w = await world(); });
-  const NASTY = ["'; drop table transactions; --", "\" or \"1\"=\"1", "1; delete from users", "<script>alert(1)</script>", "<img src=x onerror=alert(1)>", "javascript:alert(1)", "=HYPERLINK(\"http://evil\",\"x\")", "+SUM(1+1)", "-2+3", "@cmd", "\u0000null", "😀 émoji ü", "../../etc/passwd", "${7*7}", "{{7*7}}"];
+  beforeAll(async () => {
+    w = await world();
+  });
+  const NASTY = [
+    "'; drop table transactions; --",
+    '" or "1"="1',
+    "1; delete from users",
+    "<script>alert(1)</script>",
+    "<img src=x onerror=alert(1)>",
+    "javascript:alert(1)",
+    '=HYPERLINK("http://evil","x")',
+    "+SUM(1+1)",
+    "-2+3",
+    "@cmd",
+    "\u0000null",
+    "😀 émoji ü",
+    "../../etc/passwd",
+    "${7*7}",
+    "{{7*7}}",
+  ];
   it.each(NASTY)("description %j is stored verbatim, data intact", async (s) => {
     const desc = s.replace(/"/g, "'").replace(/,/g, " ");
     const r = await w.call("POST", "/v1/uploads/bank-csv", { user: A, raw: `Date,Description,Amount\n09/09/2026,"${desc}",-1.23`, headers: csvH });

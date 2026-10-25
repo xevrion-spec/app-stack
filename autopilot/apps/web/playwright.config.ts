@@ -14,7 +14,21 @@ export default defineConfig({
     { name: "mobile", use: { ...devices["Pixel 7"] } },
   ],
   webServer: [
-    { command: "npx tsx apps/api/dev/local-server.ts", cwd: "../..", url: "http://127.0.0.1:8787/health", env: { AUTOPILOT_DATA_DIR: dataDir, PORT: "8787" }, reuseExistingServer: false, timeout: 60_000 },
-    { command: "npx vite --config apps/web/vite.config.ts", cwd: "../..", url: "http://127.0.0.1:5173", env: { VITE_API_BASE: "http://127.0.0.1:8787" }, reuseExistingServer: false, timeout: 60_000 },
+    {
+      command: "npx tsx apps/api/dev/local-server.ts",
+      cwd: "../..",
+      url: "http://127.0.0.1:8787/health",
+      env: { AUTOPILOT_DATA_DIR: dataDir, PORT: "8787" },
+      reuseExistingServer: false,
+      timeout: 60_000,
+    },
+    {
+      command: "npx vite --config apps/web/vite.config.ts",
+      cwd: "../..",
+      url: "http://127.0.0.1:5173",
+      env: { VITE_API_BASE: "http://127.0.0.1:8787" },
+      reuseExistingServer: false,
+      timeout: 60_000,
+    },
   ],
 });
