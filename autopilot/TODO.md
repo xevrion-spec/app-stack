@@ -9,6 +9,7 @@ Branch: feature/value-max (from feature/quality-1000). Roadmap + status: docs/va
 - Reliability: MAINTENANCE=1 write freeze; docs/disaster-recovery.md (D1 Time Travel, R2, outbox replay).
 - Gates: 2,218 tests; coverage 96.42% stmts / 89.07% branches; Playwright+axe 19 passed / 1 skipped; Lighthouse perf 100, a11y 100, best practices 96, SEO 82; npm audit 0; gitleaks clean; knip/madge clean; web bundle 61.1 KB; Worker 368 KB gzip.
 - Mutation: importers.ts first scoped run 66.42% (below 70 break). TODO: kill the dedupe/normalise survivors.
+- Benchmark: docs/competitive-benchmark.md — Autopilot today 2.7/10 (17th of 17), 6–12 month potential 6.3 (about 6th). Gating items: HMRC MTD recognition and an FCA-authorised AISP partner.
 - TODO: WAF hard rate limit; nightly D1 export to R2 + timed restore drill; external pentest; web CSP without unsafe-inline; SEO 82 (meta description).
 
 ## Done (this commit)
