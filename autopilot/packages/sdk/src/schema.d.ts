@@ -14940,7 +14940,7 @@ export interface paths {
                 content: {
                     "application/json": {
                         name: string;
-                        scopes: ("transactions:read" | "transactions:write" | "invoices:read" | "invoices:write" | "reports:read" | "automations:write" | "webhooks:write" | "events:read" | "reviews:read" | "reviews:write" | "reviews:decide" | "reviews:audit")[];
+                        scopes: ("transactions:read" | "transactions:write" | "invoices:read" | "invoices:write" | "reports:read" | "automations:write" | "webhooks:write" | "events:read" | "reviews:read" | "reviews:write" | "reviews:decide" | "reviews:audit" | "scim:write")[];
                         expiresInDays?: number;
                         projectId?: string;
                         allowedCidrs?: string[];

@@ -17,6 +17,7 @@ export const SCOPES = [
   "reviews:write",
   "reviews:decide",
   "reviews:audit",
+  "scim:write",
 ] as const;
 export type Scope = (typeof SCOPES)[number];
 const KEY_RE = /^ap_(live|test)_([a-z0-9]{8})_([A-Za-z0-9_-]{32,})$/;

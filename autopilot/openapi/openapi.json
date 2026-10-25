@@ -24245,7 +24245,8 @@
                         "reviews:read",
                         "reviews:write",
                         "reviews:decide",
-                        "reviews:audit"
+                        "reviews:audit",
+                        "scim:write"
                       ]
                     },
                     "minItems": 1
