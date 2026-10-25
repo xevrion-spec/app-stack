@@ -15,7 +15,8 @@ Current branch: feature/practice-copilot (from feature/harden). Goal: UK account
       Tests: contract (18) + API (6). Suite 2,510 passed / 1 skipped; coverage 96.59/88.6.
 - [x] M6 ops: metering + 429 caps (placeholders), 5 indexes (EXPLAIN-checked), perf budgets (25 clients/2k txns, PERF=1 250k; NOT a 500-client load test), automated backup/restore drill with audit-chain re-verify, CSP without unsafe-inline (no nonce needed), importers mutation 66.7%→93.2%, ASVS/DR/perf docs, ADR 0028. Fixed a latent readCsv fuzz-oracle flake. Coverage 96.64% statements / 88.82% branches, 2,526 tests.
   - Open: real D1 Time Travel restore rehearsal and a k6 load test against a deployed env (both need a deploy, so blocked); scanHook is still a stub.
-- [ ] M7 web: practice console + client portal screens, axe, Playwright.
+- [x] M7 web: Practice console (#/practice: create a firm, client list with health/backlog/unverified deadline, add client, invite a portal contact with the MOCK code shown to staff, usage vs placeholder caps, honest integration catalogue) and Client portal (#/portal: separate auth, single-use code → 8h session in sessionStorage, no staff chrome; document requests + upload, answer queries, accept an engagement letter by sha256). Playwright e2e practice→portal on desktop and mobile with axe on 3 screens; full e2e suite 22 (21 passed, 1 pre-existing mobile skip). Bundle 63.3 KB of 80 KB gzip. Fixed: integration names rendered blank; client table overflowed on mobile (now table-wrap).
+  - Open: the e2e doesn't cover portal upload, query answer or letter acceptance (they're API-tested only); there are no staff screens yet for engagements, document requests or working papers.
 - [ ] M8 docs + honest benchmark rescore + Notion.
       Ship: box `bash /tmp/ship.sh "msg"` → CopyFromBox /tmp/ship.tgz → PC apply-ship.ps1.
 

@@ -17,6 +17,8 @@ import { Team } from "./pages/Team";
 import { Banking } from "./pages/Banking";
 import { Privacy } from "./pages/Privacy";
 import { Ops } from "./pages/Ops";
+import { Practice } from "./pages/Practice";
+import { Portal } from "./pages/Portal";
 import { CommandPalette, type Command } from "./CommandPalette";
 import { t, type MessageKey } from "./i18n";
 import { applyTheme, getTheme, nextTheme, type Theme } from "./theme";
@@ -31,6 +33,7 @@ const ROUTES = [
   ["reports", "nav.reports"],
   ["vat", "nav.vat"],
   ["assistant", "nav.assistant"],
+  ["practice", "nav.practice"],
   ["team", "nav.team"],
   ["banking", "nav.banking"],
   ["privacy", "nav.privacy"],
@@ -41,6 +44,9 @@ const ROUTES = [
 /** Pages an owner sees but a reviewer/accountant does not (the API enforces this too). */
 const OWNER_ONLY = new Set<string>(["banking", "privacy"]);
 type Route = (typeof ROUTES)[number][0];
+
+/** The client portal has its own auth and never shows the staff navigation. */
+const isPortal = () => location.hash.replace(/^#\/?/, "").startsWith("portal");
 
 function readHash(): { route: Route; arg: string | null } {
   const [r, arg] = location.hash.replace(/^#\/?/, "").split("/");
@@ -54,6 +60,7 @@ type Session =
 export function App() {
   const [session, setSession] = useState<Session>({ state: "loading" });
   const [{ route, arg }, setLoc] = useState(readHash);
+  const [portal, setPortal] = useState(isPortal);
   const main = useRef<HTMLElement>(null);
   const [theme, setTheme] = useState<Theme>(getTheme);
   useEffect(() => applyTheme(theme), [theme]);
@@ -70,7 +77,10 @@ export function App() {
   }, []);
   useEffect(() => {
     void refresh();
-    const onHash = () => setLoc(readHash());
+    const onHash = () => {
+      setLoc(readHash());
+      setPortal(isPortal());
+    };
     addEventListener("hashchange", onHash);
     return () => removeEventListener("hashchange", onHash);
   }, [refresh]);
@@ -84,7 +94,8 @@ export function App() {
   };
 
   let body: React.ReactNode;
-  if (session.state === "loading") body = <Loading show />;
+  if (portal) body = <Portal />;
+  else if (session.state === "loading") body = <Loading show />;
   else if (session.state === "signed_out") body = <SignIn onSignedIn={refresh} />;
   else if (session.state === "onboarding") body = <Onboarding onCreated={refresh} />;
   else if (session.state === "error") body = <ErrorNote error={session.error} />;
@@ -106,6 +117,7 @@ export function App() {
       banking: <Banking />,
       privacy: <Privacy />,
       ops: <Ops />,
+      practice: <Practice />,
     }[route];
   }
   const visible = ROUTES.filter(([k]) => session.state !== "ready" || session.me.role === "owner" || !OWNER_ONLY.has(k));
@@ -120,7 +132,7 @@ export function App() {
       </a>
       <header className="topbar">
         <span className="brand">Autopilot</span>
-        {session.state === "ready" ? (
+        {session.state === "ready" && !portal ? (
           <nav aria-label="Main">
             <ul>
               {visible.map(([k, key]) => (
@@ -142,7 +154,7 @@ export function App() {
         >
           {theme === "dark" ? "☾" : theme === "light" ? "☀" : "◐"}
         </button>
-        {session.state === "ready" ? (
+        {session.state === "ready" && !portal ? (
           <button
             type="button"
             className="link kbd"
@@ -152,7 +164,7 @@ export function App() {
             Ctrl K
           </button>
         ) : null}
-        {session.state === "ready" ? (
+        {session.state === "ready" && !portal ? (
           <span className="who">
             {session.me.email} · {session.me.role}
             {!isProd ? (
@@ -174,7 +186,7 @@ export function App() {
         {body}
       </main>
       <footer className="foot muted">{t("footer")}</footer>
-      {session.state === "ready" ? <CommandPalette commands={commands} /> : null}
+      {session.state === "ready" && !portal ? <CommandPalette commands={commands} /> : null}
     </>
   );
 }

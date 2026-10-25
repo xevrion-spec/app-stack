@@ -3,7 +3,7 @@ import { createSdk, type Schemas } from "@xevrion/sdk";
 export type { Schemas };
 const PROD_HOST = "app.xevrion.co.uk";
 export const isProd = typeof location !== "undefined" && location.hostname === PROD_HOST;
-const API_BASE: string = import.meta.env.VITE_API_BASE ?? (isProd ? "https://api.xevrion.co.uk" : "http://127.0.0.1:8787");
+export const apiBase: string = import.meta.env.VITE_apiBase ?? (isProd ? "https://api.xevrion.co.uk" : "http://127.0.0.1:8787");
 
 const DEV_KEY = "autopilot.devUser";
 export const devUser = {
@@ -14,7 +14,7 @@ export const devUser = {
 /** One SDK per identity. In production the Cloudflare Access cookie authenticates; in dev, x-dev-user does. */
 export function sdk() {
   const u = devUser.get();
-  return createSdk({ baseUrl: API_BASE, ...(u ? { devUser: u } : {}) });
+  return createSdk({ baseUrl: apiBase, ...(u ? { devUser: u } : {}) });
 }
 
 export class ApiError extends Error {
@@ -43,7 +43,7 @@ export async function raw(path: string, init: RequestInit = {}) {
   const u = devUser.get();
   if (u) headers.set("x-dev-user", u);
   if (init.method && init.method !== "GET") headers.set("idempotency-key", crypto.randomUUID());
-  const res = await fetch(API_BASE + path, { ...init, headers, credentials: "include" });
+  const res = await fetch(apiBase + path, { ...init, headers, credentials: "include" });
   if (!res.ok) {
     const j = (await res.json().catch(() => null)) as { error?: { code?: string; message?: string; requestId?: string } } | null;
     throw new ApiError(res.status, j?.error?.code ?? "http_error", j?.error?.message ?? `Request failed (${res.status})`, j?.error?.requestId);

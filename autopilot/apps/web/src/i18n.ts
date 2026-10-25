@@ -15,6 +15,7 @@ const enGB = {
   "nav.banking": "Bank feeds",
   "nav.privacy": "Privacy",
   "nav.ops": "Ops",
+  "nav.practice": "Practice",
   "nav.start": "Get started",
   "nav.jobs": "Jobs",
   "nav.settings": "Settings",
