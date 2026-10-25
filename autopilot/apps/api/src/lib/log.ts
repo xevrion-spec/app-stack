@@ -1,7 +1,7 @@
 /** Structured JSON logs (picked up by Workers Logs / observability). Never log secrets or document contents. */
 const SENSITIVE_KEY = /secret|token|password|authorization|cookie|api_?key|key_hash/i;
 /** Defence in depth: masks credential-looking values even if a caller passes them by mistake (e.g. inside an error string). */
-export function redact(s: string): string {
+function redact(s: string): string {
   return s
     .replace(/\bap_(live|test)_[A-Za-z0-9_-]+/g, "ap_$1_[redacted]")
     .replace(/\bBearer\s+[A-Za-z0-9._~+/=-]+/gi, "Bearer [redacted]")
