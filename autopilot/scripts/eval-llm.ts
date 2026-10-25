@@ -22,7 +22,7 @@ const rules: CategoryRule[] = cats.accounts.flatMap((a) =>
     .filter((k) => k.trim().length >= 2)
     .map((k, i) => ({ id: `${a.code}-${i}`, pattern: k.trim().toUpperCase(), matchType: "contains" as const, categoryCode: a.code, priority: 100 })),
 );
-const codes = new Set([...cats.accounts.map((a) => a.code), "8000"]);
+const codes = new Map([...cats.accounts.map((a) => [a.code, a.name] as [string, string]), ["8000", "Owner drawings / transfers"]]);
 const toLine = (c: Case, i: number): BankLine => ({ id: `h${i}`, date: "2026-07-01", description: c.desc, amountPence: c.pence });
 const cases = all.filter((c, i) => !categoriseByRules(toLine(c, i), rules));
 const excluded = all.length - cases.length;

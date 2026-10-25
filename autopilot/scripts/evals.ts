@@ -37,7 +37,7 @@ const rules: CategoryRule[] = cats.accounts.flatMap((a) =>
     .filter((k) => k.trim().length >= 2)
     .map((k, i) => ({ id: `${a.code}-${i}`, pattern: k.trim().toUpperCase(), matchType: "contains" as const, categoryCode: a.code, priority: 100 })),
 );
-const codes = new Set([...cats.accounts.map((a) => a.code), "8000"]);
+const codes = new Map([...cats.accounts.map((a) => [a.code, a.name] as [string, string]), ["8000", "Owner drawings / transfers"]]);
 const llm = process.env.LLM_BASE_URL ? openAiCompatible(process.env.LLM_BASE_URL, process.env.LLM_API_KEY ?? "", process.env.LLM_MODEL ?? "auto") : undefined;
 const tracer = tracerFromEnv(process.env);
 

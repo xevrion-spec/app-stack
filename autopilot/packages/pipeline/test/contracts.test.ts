@@ -159,7 +159,24 @@ describe("categoriseLines: LLM path, exceptions and ordering", () => {
       { lineId: "x", categoryCode: "4000", confidence: 0.5, method: "llm" },
       { lineId: "y", categoryCode: "7100", confidence: 0.85, method: "llm" },
     ]);
-    expect(r.exceptions).toEqual([{ reasonCode: "LOW_CONFIDENCE", severity: "medium", subjectId: "x", message: "Confidence 0.5" }]);
+    // Every LLM decision goes to a human, even at the calibrated ceiling (guardrail added after a real FreeLLMAPI eval).
+    expect(r.exceptions).toEqual([
+      { reasonCode: "LOW_CONFIDENCE", severity: "medium", subjectId: "x", message: "AI suggestion (confidence 0.5): needs human approval" },
+      { reasonCode: "LOW_CONFIDENCE", severity: "medium", subjectId: "y", message: "AI suggestion (confidence 0.85): needs human approval" },
+    ]);
+  });
+  it("names the accounts in the prompt when a code→name map is given", async () => {
+    const m = llm("[]");
+    await categoriseLines(
+      [line("x", "AAA")],
+      rules,
+      new Map([
+        ["6100", "Travel"],
+        ["9999", "Suspense"],
+      ]),
+      m,
+    );
+    expect(m.prompts[0]).toContain("Allowed account codes: 6100 (Travel), 9999 (Suspense).");
   });
   it("a disallowed code from the LLM becomes suspense; a missing index falls back", async () => {
     const m = llm('[{"i":0,"code":"1234","confidence":0.99}]');

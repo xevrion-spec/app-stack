@@ -117,7 +117,7 @@ async function runStages(env: Env, tenantId: string, jobId: string, llm: LlmClie
     vatRateCode: r.vat_rate_code,
     priority: r.priority,
   }));
-  const codes = new Set((await db.all<{ code: string }>("select code from categories where tenant_id = ?1")).map((c) => c.code));
+  const codes = new Map((await db.all<{ code: string; name: string }>("select code, name from categories where tenant_id = ?1")).map((c) => [c.code, c.name]));
   const cat = await tr.span(
     "categorise",
     { lines: lines.length, rules: rules.length, llm: !!llm },

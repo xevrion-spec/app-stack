@@ -144,6 +144,10 @@ export function calibrate(raw: number, method: Categorisation["method"]): number
   return Math.min(raw, 0.5);
 }
 
+/** "6100 (Travel), 6400 (Software)" when names are known: bare codes made a real model guess meanings (eval 2026-10-25). */
+const codeList = (codes: Set<string> | Map<string, string>) =>
+  codes instanceof Map ? [...codes].map(([c, n]) => `${c} (${n})`).join(", ") : [...codes].join(", ");
+
 export interface CategoriseResult {
   items: Categorisation[];
   exceptions: ExceptionItem[];
@@ -152,7 +156,7 @@ export interface CategoriseResult {
 export async function categoriseLines(
   lines: BankLine[],
   rules: CategoryRule[],
-  allowedCodes: Set<string>,
+  allowedCodes: Set<string> | Map<string, string>,
   llm?: LlmClient,
   reviewThreshold = 0.85,
 ): Promise<CategoriseResult> {
@@ -168,7 +172,7 @@ export async function categoriseLines(
     let parsed: ReturnType<typeof parseLlmCategories> = null;
     if (llm) {
       const prompt =
-        `You are a UK bookkeeping assistant. Allowed account codes: ${[...allowedCodes].join(", ")}. ` +
+        `You are a UK bookkeeping assistant. Allowed account codes: ${codeList(allowedCodes)}. ` +
         `Use ${SUSPENSE} if unsure. Reply ONLY with a JSON array of {"i":number,"code":string,"confidence":number}.\n` +
         JSON.stringify(unknown.map((l, i) => ({ i, desc: l.description, pence: l.amountPence })));
       try {
@@ -188,6 +192,14 @@ export async function categoriseLines(
   for (const it of items) {
     if (it.categoryCode === SUSPENSE)
       exceptions.push({ reasonCode: "UNKNOWN_CATEGORY", severity: "medium", subjectId: it.lineId, message: "Could not categorise" });
+    else if (it.method === "llm")
+      // Guardrail: an LLM suggestion is never final. A real FreeLLMAPI eval let a prompt-injected line through at 0.85.
+      exceptions.push({
+        reasonCode: "LOW_CONFIDENCE",
+        severity: "medium",
+        subjectId: it.lineId,
+        message: `AI suggestion (confidence ${it.confidence}): needs human approval`,
+      });
     else if (it.confidence < reviewThreshold)
       exceptions.push({ reasonCode: "LOW_CONFIDENCE", severity: "medium", subjectId: it.lineId, message: `Confidence ${it.confidence}` });
     else if (it.categoryCode === TRANSFER)
