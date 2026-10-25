@@ -129,6 +129,7 @@ const SCOPE_RULES: [RegExp, "GET" | "WRITE" | "*", Scope][] = [
   [/^\/v1\/books\/(imports|mileage-trips|rules)(\/|$)/, "WRITE", "transactions:write"],
   [/^\/v1\/books\/calculators(\/|$)/, "WRITE", "reports:read"],
   [/^\/v1\/books(\/|$)/, "GET", "reports:read"],
+  [/^\/v1\/extract(\/|$)/, "WRITE", "transactions:write"],
   [/^\/v1\/(automations|triggers)(\/|$)/, "*", "automations:write"],
   [/^\/v1\/webhooks(\/|$)/, "*", "webhooks:write"],
   [/^\/v1\/(events|activity|realtime)(\/|$)/, "GET", "events:read"],

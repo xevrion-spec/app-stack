@@ -30,13 +30,13 @@ const Unverified = { verified: z.literal(false), notice: z.string() };
 const Json = z.record(z.string(), z.unknown());
 
 // ---------- data access ----------
-async function chart(db: TenantDb): Promise<B.Account[]> {
+export async function chart(db: TenantDb): Promise<B.Account[]> {
   const rows = await db.all<{ code: string; name: string; kind: B.AccountType; sa_box: string | null }>(
     "select code, name, kind, sa_box from categories where tenant_id = ?1",
   );
   return rows.map((r) => ({ code: r.code, name: r.name, type: r.kind, ...(r.sa_box ? { sa103: r.sa_box } : {}) }));
 }
-async function ledger(db: TenantDb, to: string): Promise<B.LedgerLine[]> {
+export async function ledger(db: TenantDb, to: string): Promise<B.LedgerLine[]> {
   const rows = await db.all<{ journal_id: string; entry_date: string; account_code: string; debit_pence: number; credit_pence: number }>(
     "select l.journal_id, j.entry_date, l.account_code, l.debit_pence, l.credit_pence from journal_lines l join journals j on j.id = l.journal_id and j.tenant_id = l.tenant_id where l.tenant_id = ?1 and j.entry_date <= ?2",
     to,

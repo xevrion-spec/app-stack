@@ -15,6 +15,7 @@ import { enforceQuota, meterStmt } from "../services/usage.js";
 import { platform } from "./platform.js";
 import { books } from "./books.js";
 import { invoicing } from "./invoicing.js";
+import { compliance } from "./compliance.js";
 import { etagFor, ifMatchFails, ifNoneMatchHits, orderBy, selectFields } from "@xevrion/platform";
 import { AppError, badRequest, conflict, notFound, tooLarge, unsupported } from "../lib/errors.js";
 import { parseBankCsv, sha256Hex } from "../services/csv.js";
@@ -1029,3 +1030,4 @@ v1.openapi(def({ method: "get", path: "/export/ledger.json", tag: "Export", summ
 v1.route("/", platform);
 v1.route("/books", books);
 v1.route("/", invoicing);
+v1.route("/", compliance);

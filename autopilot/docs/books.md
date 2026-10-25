@@ -34,3 +34,8 @@ Migration `0005_books.sql` (additive): `category_corrections`, `mileage_trips`, 
 - `GET /receivables/aged`, `POST /receivables/reminders/run`: emits `invoice.reminder_due`. Only the latest due reminder fires, never a backlog, and each fires once.
 - `POST/GET /recurring-invoices`, `POST /recurring-invoices/run`: issues drafts. Catch-up is capped at 12, a run is idempotent per period, and the schedule ends at `endDate`.
 Migration `0006_invoicing.sql` (additive). ADR 0017.
+
+## Extraction and MTD (V4, mock providers)
+- `POST /extract/text`: `TextReceiptExtractor` (deterministic: vendor, date, total, VAT including "VAT 20% £2.00", currency, number, confidence, `needsReview`).
+- `GET /mtd/obligations?taxYear`, `POST /mtd/quarterly-updates/preview`, `POST /mtd/quarterly-updates` (`confirm:true`, owner), `GET /mtd/submissions`. **Mock gateway only** (ADR 0018).
+- `BankFeed` interface + `MockBankFeed` (contract-tested; no routes or live provider yet).

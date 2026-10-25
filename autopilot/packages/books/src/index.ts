@@ -12,3 +12,4 @@ export * from "./deadlines.js";
 export * from "./rates.js";
 export * from "./spikes.js";
 export * from "./invoicing.js";
+export * from "./providers.js";

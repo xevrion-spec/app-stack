@@ -20,9 +20,9 @@ nothing sends email, posts, submits to HMRC or connects to a bank. External prov
 | 11 | SA + VAT deadline calendar, payments on account, reminders as **events** only | 5 | S | M | ✅ lib + API | V2 |
 | 12 | Invoicing: credit notes, partial payments, recurring invoices, overdue reminders as events | 5 | M | L | ✅ (aged debtors too) | V3 |
 | 13 | Payment links (interface + mock provider), multi-currency invoices with an FX-rates interface (ECB-style mock) | 4 | M | M | ✅ interfaces + mock adapters + contract tests | V3 |
-| 14 | MTD-ready data model (obligations, quarterly updates, submissions) + HMRC adapter interface + **mock** HMRC | 5 | L | H | 🟡 planned | V4 |
-| 15 | Receipt/invoice OCR & extraction: pluggable extractor (LLM-vision via FreeLLMAPI if supported, deterministic text parser, mock) | 5 | M | M | 🟡 planned | V4 |
-| 16 | Bank feed abstraction (Open Banking provider interface + mock; no live provider) | 4 | M | H | 🟡 planned | V4 |
+| 14 | MTD-ready data model (obligations, quarterly updates, submissions) + HMRC adapter interface + **mock** HMRC | 5 | L | H | ✅ mock gateway + confirm-gated API | V4 |
+| 15 | Receipt/invoice OCR & extraction: pluggable extractor (LLM-vision via FreeLLMAPI if supported, deterministic text parser, mock) | 5 | M | M | ✅ deterministic text extractor + mock + contract tests (no image OCR) | V4 |
+| 16 | Bank feed abstraction (Open Banking provider interface + mock; no live provider) | 4 | M | H | 🟡 interface + mock + contract tests (no routes) | V4 |
 | 17 | Accountant/bookkeeper role, comments on any record, approval workflow (period close sign-off) | 4 | M | M | ⏳ | V5 |
 | 18 | Multi-business (one user, several tenants; switcher) | 3 | S | M | ⏳ | V5 |
 | 19 | Document vault with retention policy; UK GDPR DSAR export, erasure (with statutory-retention holds), consent log, audit export | 4 | M | H | ⏳ | V5 |
