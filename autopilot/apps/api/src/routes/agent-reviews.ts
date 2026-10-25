@@ -21,7 +21,7 @@ import { randomToken } from "@xevrion/platform";
 
 type C = Context<AppEnv>;
 export const agentReviews = new OpenAPIHono<AppEnv>({ defaultHook: validationHook });
-const scope = (c: C) => new TenantDb(c.env.DB, c.get("principal").tenantId);
+export const scope = (c: C) => new TenantDb(c.env.DB, c.get("principal").tenantId);
 const actor = (c: C) => c.get("principal").email;
 const now = () => new Date().toISOString();
 const ENVS = ["development", "staging", "production"] as const;
@@ -99,7 +99,7 @@ agentReviews.openapi(
 );
 
 /** The project an API key is bound to (null = tenant-wide key or a human). */
-async function boundProject(c: C): Promise<string | null> {
+export async function boundProject(c: C): Promise<string | null> {
   const k = c.get("principal").apiKey;
   if (!k) return null;
   return (await scope(c).first<{ project_id: string | null }>("select project_id from api_keys where tenant_id = ?1 and id = ?2", k.id))?.project_id ?? null;

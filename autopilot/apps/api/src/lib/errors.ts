@@ -23,7 +23,9 @@ export type ErrorCode =
   | "already_escalated"
   | "not_requester"
   | "not_in_group"
-  | "unsafe_policy";
+  | "unsafe_policy"
+  | "not_final"
+  | "receipts_unconfigured";
 
 export class AppError extends Error {
   constructor(

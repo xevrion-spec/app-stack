@@ -8,6 +8,7 @@ import * as R from "@xevrion/agent-review";
 import type { Env } from "../env.js";
 import { TenantDb, newId } from "../lib/db.js";
 import { auditStmt } from "../lib/audit.js";
+import { appendStmts, payloadSha, type PendingEntry } from "./agent-review-ledger.js";
 import { AppError, badRequest, conflict, notFound } from "../lib/errors.js";
 import { Outbox } from "./events.js";
 import { sha256Hex } from "./csv.js";
@@ -49,9 +50,11 @@ export type RequestRow = {
   min_approvals: number | null;
   guardrails_json: string | null;
   callback_url: string | null;
+  chain_seq: number;
+  chain_head: string | null;
 };
 export const COLS =
-  "id, project_id, action, payload_json, current_payload_json, context_json, risk, confidence, status, required_approvals, snapshot_json, requester, external_id, tags_json, request_sha, deadline_at, decided_at, version, created_at, updated_at, policy_version, policy_rule_id, route_outcome, review_group, escalate_at, escalate_to_group, min_approvals, guardrails_json, callback_url";
+  "id, project_id, action, payload_json, current_payload_json, context_json, risk, confidence, status, required_approvals, snapshot_json, requester, external_id, tags_json, request_sha, deadline_at, decided_at, version, created_at, updated_at, policy_version, policy_rule_id, route_outcome, review_group, escalate_at, escalate_to_group, min_approvals, guardrails_json, callback_url, chain_seq, chain_head";
 export type DecisionRow = { id: string; reviewer: string; decision: R.Decision; reason: string | null; payload_version: number; created_at: string };
 
 /** The group that may decide right now: the escalation group once escalated, else the routed group (null = anyone with the role). */
@@ -179,6 +182,8 @@ function buildRow({ id, projectId, actor, body, snap, routing, policyVersion, de
     min_approvals: body.minApprovals ?? null,
     guardrails_json: JSON.stringify(routing.guardrails),
     callback_url: body.callbackUrl ?? null,
+    chain_seq: 0,
+    chain_head: null,
   };
 }
 
@@ -219,6 +224,40 @@ function assertCallbackUrl(env: Env, url: string | undefined): void {
   if (!check.ok) throw badRequest(`callbackUrl rejected: ${check.reason}`);
 }
 
+/** Ledger entries for a new request: "requested" plus, when policy decided it, the policy's own decision. */
+async function creationEntries(row: RequestRow, actor: string, policyVersion: number, routing: R.Routing, status: R.Status): Promise<PendingEntry[]> {
+  const t = row.created_at;
+  const entries: PendingEntry[] = [
+    {
+      kind: "requested",
+      actor,
+      at: t,
+      data: {
+        projectId: row.project_id,
+        action: row.action,
+        risk: row.risk,
+        confidence: row.confidence,
+        payloadSha256: await payloadSha(row.payload_json),
+        contextSha256: row.context_json ? await payloadSha(row.context_json) : null,
+        requiredApprovals: row.required_approvals,
+        deadlineAt: row.deadline_at,
+        policyVersion,
+        ruleId: row.policy_rule_id,
+        routing: row.route_outcome,
+        guardrails: JSON.parse(row.guardrails_json ?? "[]") as unknown,
+      },
+    },
+  ];
+  if (routing.outcome !== "human")
+    entries.push({
+      kind: "decided",
+      actor: `policy:v${policyVersion}:${routing.ruleId ?? "default"}`,
+      at: t,
+      data: { decision: status === "approved" ? "approve" : "reject", payloadVersion: 1, status },
+    });
+  return entries;
+}
+
 export async function createReview(
   env: Env,
   db: TenantDb,
@@ -256,6 +295,10 @@ export async function createReview(
   const policyActor = `policy:v${policy.version}:${routing.ruleId ?? "default"}`;
   if (auto) snap = R.apply(snap, { type: "decide", decision: routing.outcome === "auto_approve" ? "approve" : "reject", reviewer: policyActor });
   const row = buildRow({ id, projectId, actor, body, snap, routing, policyVersion: policy.version, deadline, sha, t, auto });
+  const entries = await creationEntries(row, actor, policy.version, routing, snap.status);
+  const chain = await appendStmts(db, id, { seq: 0, head: null }, entries);
+  row.chain_seq = chain.seq;
+  row.chain_head = chain.head;
   const outbox = new Outbox(db);
   outbox.add(
     "review.requested",
@@ -274,8 +317,8 @@ export async function createReview(
     db.stmt(
       `insert into review_requests (tenant_id, id, project_id, action, payload_json, current_payload_json, context_json, risk, confidence, status, required_approvals,
          snapshot_json, requester, external_id, tags_json, idempotency_key, request_sha, deadline_at, decided_at, version, created_at, updated_at,
-         policy_version, policy_rule_id, route_outcome, review_group, escalate_at, escalate_to_group, min_approvals, guardrails_json, callback_url)
-       values (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11, ?12, ?13, ?14, ?15, ?16, ?17, ?18, ?19, 1, ?20, ?20, ?21, ?22, ?23, ?24, ?25, ?26, ?27, ?28, ?29)`,
+         policy_version, policy_rule_id, route_outcome, review_group, escalate_at, escalate_to_group, min_approvals, guardrails_json, callback_url, chain_seq, chain_head)
+       values (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11, ?12, ?13, ?14, ?15, ?16, ?17, ?18, ?19, 1, ?20, ?20, ?21, ?22, ?23, ?24, ?25, ?26, ?27, ?28, ?29, ?30, ?31)`,
       id,
       projectId,
       row.action,
@@ -304,7 +347,10 @@ export async function createReview(
       row.min_approvals,
       row.guardrails_json,
       row.callback_url,
+      row.chain_seq,
+      row.chain_head,
     ),
+    ...chain.stmts,
     auditStmt(db, actor, "review.requested", id, {
       projectId,
       action: row.action,
@@ -332,6 +378,20 @@ export async function createReview(
 }
 
 // ---------------- transitions ----------------
+const KIND: Record<R.ReviewEvent["type"], R.LedgerKind> = { decide: "decided", expire: "expired", cancel: "cancelled" };
+function ledgerEntry(
+  ev: R.ReviewEvent,
+  opts: { actor: string; reason?: string | undefined },
+  snap: R.Snapshot,
+  at: string,
+  editedSha: string | null,
+): PendingEntry {
+  const data: Record<string, unknown> = { status: snap.status, payloadVersion: snap.payloadVersion };
+  if (ev.type === "decide") data.decision = ev.decision;
+  if (opts.reason) data.reasonLength = opts.reason.length; // reason text stays in review_decisions (it may hold personal data); the chain stays content-free
+  if (editedSha) data.payloadSha256 = editedSha;
+  return { kind: KIND[ev.type], actor: ev.type === "decide" ? ev.reviewer : opts.actor, at, data };
+}
 const STATUS_FOR: Record<R.TransitionErrorCode, number> = {
   already_final: 409,
   duplicate_decision: 409,
@@ -378,10 +438,15 @@ export async function transition(
     version: r.version + 1,
     updated_at: t,
   };
+  const chain = await appendStmts(db, r.id, { seq: r.chain_seq, head: r.chain_head }, [
+    ledgerEntry(ev, opts, snap, t, isEdit ? await payloadSha(payload) : null),
+  ]);
+  next.chain_seq = chain.seq;
+  next.chain_head = chain.head;
   const outbox = new Outbox(db);
   const stmts: D1PreparedStatement[] = [
     db.stmt(
-      "update review_requests set status = ?3, snapshot_json = ?4, current_payload_json = ?5, decided_at = ?6, version = version + 1, updated_at = ?7 where tenant_id = ?1 and id = ?2 and version = ?8",
+      "update review_requests set status = ?3, snapshot_json = ?4, current_payload_json = ?5, decided_at = ?6, version = version + 1, updated_at = ?7, chain_seq = ?9, chain_head = ?10 where tenant_id = ?1 and id = ?2 and version = ?8",
       r.id,
       next.status,
       next.snapshot_json,
@@ -389,7 +454,10 @@ export async function transition(
       next.decided_at,
       t,
       r.version,
+      chain.seq,
+      chain.head,
     ),
+    ...chain.stmts,
   ];
   if (ev.type === "decide") {
     stmts.push(
@@ -436,7 +504,11 @@ export async function transition(
     ...outbox.stmts.splice(0),
     auditStmt(db, opts.actor, `review.${ev.type === "decide" ? ev.decision : ev.type}`, r.id, { status: snap.status, payloadVersion: snap.payloadVersion }),
   );
-  const res = await db.batch(stmts);
+  // The ledger's unique (request, seq) makes a racing loser's whole batch roll back, so no orphan decision/event/audit rows commit.
+  const res = await db.batch(stmts).catch((e: unknown) => {
+    if (/UNIQUE|constraint/i.test(String(e))) throw new AppError(409, "version_conflict", "The request changed concurrently; reload and retry");
+    throw e;
+  });
   if (!res[0]) throw new AppError(409, "version_conflict", "The request changed concurrently; reload and retry");
   await outbox.publish(env);
   return next;

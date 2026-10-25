@@ -21,6 +21,10 @@ export interface Env {
   REALTIME?: DurableObjectNamespace;
   /** Comma-separated hosts allowed over plain http for webhooks (dev only, e.g. 127.0.0.1). */
   WEBHOOK_DEV_HTTP_HOSTS?: string;
+  /** Secret: Ed25519 private JWK (with kid) that signs agent-review decision receipts. Receipts return 503 when unset. */
+  RECEIPT_SIGNING_JWK?: string;
+  /** Public JWKs (JSON array) of retired receipt keys, still published so old receipts keep verifying after rotation. */
+  RECEIPT_RETIRED_PUBLIC_JWKS?: string;
   /** Requests per minute per principal (default 600). */
   RATE_LIMIT_PER_MINUTE?: string;
   /** Requests per minute per API key (default 120). */
