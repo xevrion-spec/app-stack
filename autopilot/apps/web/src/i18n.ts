@@ -4,6 +4,8 @@
  */
 const enGB = {
   "nav.review": "Review queue",
+  "nav.agentReviews": "Agent reviews",
+  "nav.agents": "Agent console",
   "nav.transactions": "Transactions",
   "nav.upload": "Upload",
   "nav.invoices": "Invoices",

@@ -10,6 +10,8 @@ test("no serious or critical axe violations on any page", async ({ page }) => {
   for (const r of [
     "start",
     "review",
+    "agent-reviews",
+    "agents",
     "transactions",
     "upload",
     "invoices",

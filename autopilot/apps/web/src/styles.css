@@ -566,3 +566,145 @@ button.danger {
   gap: 0.3rem;
   margin-right: 0.8rem;
 }
+/* ---------- agent review screens ---------- */
+.b-pending,
+.b-escalated,
+.b-high,
+.b-canary {
+  background: #fef3c7;
+  color: #92400e;
+}
+.b-approved,
+.b-active,
+.b-succeeded,
+.b-low {
+  background: #dcfce7;
+  color: #166534;
+}
+.b-rejected,
+.b-critical,
+.b-dead,
+.b-expired {
+  background: #fee2e2;
+  color: #991b1b;
+}
+.card.selected {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 1px var(--accent);
+}
+.link.block,
+label.block {
+  display: block;
+  width: 100%;
+  text-align: left;
+}
+label.block textarea,
+label.block input {
+  display: block;
+  width: 100%;
+  margin-top: 4px;
+  font:
+    13px/1.4 ui-monospace,
+    SFMono-Regular,
+    Menlo,
+    Consolas,
+    monospace;
+}
+.small {
+  font-size: 13px;
+}
+.kv {
+  display: grid;
+  grid-template-columns: max-content 1fr;
+  gap: 4px 14px;
+  margin: 0 0 12px;
+}
+.kv dt {
+  color: var(--muted);
+}
+.kv dd {
+  margin: 0;
+}
+.code {
+  background: var(--bg);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  padding: 10px;
+  overflow: auto;
+  font:
+    13px/1.45 ui-monospace,
+    SFMono-Regular,
+    Menlo,
+    Consolas,
+    monospace;
+  white-space: pre;
+}
+table.diff {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 14px;
+}
+table.diff th,
+table.diff td {
+  text-align: left;
+  border-bottom: 1px solid var(--line);
+  padding: 4px 6px;
+  vertical-align: top;
+}
+table.diff tr.changed td:last-child {
+  background: #fef3c7;
+  color: #78350f;
+}
+table.diff tr.changed th::before {
+  content: "✎ ";
+}
+.history {
+  padding-left: 18px;
+  font-size: 14px;
+}
+.note.inline {
+  display: inline;
+  padding: 0 6px;
+  margin: 0 0 0 6px;
+}
+.error.small {
+  color: var(--err);
+  display: block;
+}
+kbd {
+  font:
+    11px ui-monospace,
+    monospace;
+  border: 1px solid currentColor;
+  border-radius: 4px;
+  padding: 0 4px;
+  margin-left: 4px;
+  opacity: 0.8;
+}
+ul.plain {
+  list-style: none;
+  padding: 0;
+}
+ul.plain > li {
+  padding: 6px 0;
+  border-bottom: 1px solid var(--line);
+}
+/* Long agent payloads must wrap inside the card on small screens, never overlap the decision buttons. */
+.split > *,
+.detail,
+.kv dd {
+  min-width: 0;
+}
+.detail {
+  overflow-wrap: anywhere;
+}
+table.diff {
+  table-layout: fixed;
+}
+table.diff code {
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+.code {
+  max-width: 100%;
+}

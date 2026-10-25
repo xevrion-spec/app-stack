@@ -19,6 +19,8 @@ import { Privacy } from "./pages/Privacy";
 import { Ops } from "./pages/Ops";
 import { Practice } from "./pages/Practice";
 import { Portal } from "./pages/Portal";
+import { AgentReviews } from "./pages/AgentReviews";
+import { AgentConsole } from "./pages/AgentConsole";
 import { CommandPalette, type Command } from "./CommandPalette";
 import { t, type MessageKey } from "./i18n";
 import { applyTheme, getTheme, nextTheme, type Theme } from "./theme";
@@ -26,6 +28,8 @@ import { applyTheme, getTheme, nextTheme, type Theme } from "./theme";
 const ROUTES = [
   ["start", "nav.start"],
   ["review", "nav.review"],
+  ["agent-reviews", "nav.agentReviews"],
+  ["agents", "nav.agents"],
   ["transactions", "nav.transactions"],
   ["upload", "nav.upload"],
   ["invoices", "nav.invoices"],
@@ -42,7 +46,7 @@ const ROUTES = [
   ["settings", "nav.settings"],
 ] as const satisfies readonly (readonly [string, MessageKey])[];
 /** Pages an owner sees but a reviewer/accountant does not (the API enforces this too). */
-const OWNER_ONLY = new Set<string>(["banking", "privacy"]);
+const OWNER_ONLY = new Set<string>(["banking", "privacy", "agents"]);
 type Route = (typeof ROUTES)[number][0];
 
 /** The client portal has its own auth and never shows the staff navigation. */
@@ -118,6 +122,8 @@ export function App() {
       privacy: <Privacy />,
       ops: <Ops />,
       practice: <Practice clientId={arg} />,
+      "agent-reviews": <AgentReviews role={role} selected={arg} onSelect={(id) => go("agent-reviews", id)} />,
+      agents: <AgentConsole />,
     }[route];
   }
   const visible = ROUTES.filter(([k]) => session.state !== "ready" || session.me.role === "owner" || !OWNER_ONLY.has(k));
