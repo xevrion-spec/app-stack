@@ -17,7 +17,7 @@ Current branch: feature/practice-copilot (from feature/harden). Goal: UK account
   - Open: real D1 Time Travel restore rehearsal and a k6 load test against a deployed env (both need a deploy, so blocked); scanHook is still a stub.
 - [x] M7 web: Practice console (#/practice: create a firm, client list with health/backlog/unverified deadline, add client, invite a portal contact with the MOCK code shown to staff, usage vs placeholder caps, honest integration catalogue) and Client portal (#/portal: separate auth, single-use code → 8h session in sessionStorage, no staff chrome; document requests + upload, answer queries, accept an engagement letter by sha256). Playwright e2e practice→portal on desktop and mobile with axe on 3 screens; full e2e suite 22 (21 passed, 1 pre-existing mobile skip). Bundle 63.3 KB of 80 KB gzip. Fixed: integration names rendered blank; client table overflowed on mobile (now table-wrap).
   - Open: the e2e doesn't cover portal upload, query answer or letter acceptance (they're API-tested only); there are no staff screens yet for engagements, document requests or working papers.
-- [ ] M8 docs + honest benchmark rescore + Notion.
+- [x] M8: docs/practice-benchmark.md, a practice rubric with 10 competitors and dated sources. Autopilot today scores 3.1/10 on the practice rubric and 2.8 on the old sole-trader rubric (was 2.7). With the real-world steps it would reach about 6.1. Notion benchmark page updated.
       Ship: box `bash /tmp/ship.sh "msg"` → CopyFromBox /tmp/ship.tgz → PC apply-ship.ps1.
 
 Previous branch: feature/value-max (from feature/quality-1000). Roadmap + status: docs/value-roadmap.md. Constraints: synthetic data, no deploys, no emails/posts, no secrets, no PR, never main.
