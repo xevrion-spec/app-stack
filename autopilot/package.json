@@ -20,7 +20,7 @@
     "docs:api": "node scripts/api-docs.mjs",
     "mutation": "stryker run",
     "knip": "knip --no-progress",
-    "madge": "madge --circular --extensions ts,tsx apps/api/src apps/web/src packages/pipeline/src packages/platform/src packages/sdk/src packages/workflows/src",
+    "madge": "madge --circular --extensions ts,tsx apps/api/src apps/web/src packages/books/src packages/pipeline/src packages/platform/src packages/sdk/src packages/workflows/src",
     "licenses": "node scripts/licenses.mjs",
     "audit:prod": "npm audit --omit=dev --audit-level=high",
     "bundle:budget": "node scripts/bundle-budget.mjs",

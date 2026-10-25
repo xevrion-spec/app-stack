@@ -9,6 +9,14 @@ Branch: feature/value-max (from feature/quality-1000). Roadmap + status: docs/va
 - D: docs/platform.md, docs/quality.md, ADRs 0010-0014, examples/, usage→billing_events rollup in cron sweep.
 - Upgrades: zod 4 + @hono/zod-openapi 1.x (fixes high advisory), vitest 4, vite 7, wrangler 4.152, undici override.
 
+## V1/V2 (books library) — done
+- packages/books: OFX/QIF/MT940/CSV importers, Xero/QuickBooks/FreshBooks imports, duplicates, recurring, learning rules,
+  P&L/balance sheet/cash flow/tax summary, cash forecast + runway, mileage/home-office/AIA calculators, tax-pot estimate,
+  SA/VAT/MTD deadline calendar. 91 tests (unit/property/golden); Stryker on tax/calculators/duplicates 92.1%.
+- Fixed: income-tax bands now on taxable income (basic band width was too wide); FITID duplicate match no longer requires same amount.
+- Rates: packages/domain-uk-tax/uk-rates.unverified.json (verified:false). ADR 0015, docs/books.md.
+- Next: API endpoints + migrations (tenant learned rules, recurring, reports, forecast, deadlines), then V3 invoicing.
+
 ## Remaining
 (done on feature/value-max M0: Playwright 10/10 after upgrades; Lighthouse 100 perf / 100 a11y / 96 best practices on all pages; mutation ledger 91.9, webhooks 93.0)
 4. Pay down complexity waivers (docs/quality.md list), starting with pipeline runStages.
