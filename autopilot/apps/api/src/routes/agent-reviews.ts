@@ -678,6 +678,19 @@ agentReviews.openapi(
   },
 );
 
+// Plain Hono handler (streaming body), documented in the OpenAPI registry so SDKs and contract tests see it.
+agentReviews.openAPIRegistry.registerPath(
+  def({
+    method: "get",
+    path: "/agent-reviews/{id}/stream",
+    tag: "Agent review",
+    summary: "Server-sent events: `review` on every state change, then `end` (reason final | timeout). maxSeconds 1..55 (default 55); reconnect to continue.",
+    params: IdParam,
+    query: z.object({ maxSeconds: z.coerce.number().int().min(1).max(55).optional() }),
+    response: z.string(),
+    raw: { contentType: "text/event-stream" },
+  }),
+);
 agentReviews.get("/agent-reviews/:id/stream", async (c) => {
   const db = scope(c);
   const bound = await boundProject(c);
