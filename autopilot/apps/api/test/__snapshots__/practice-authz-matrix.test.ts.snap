@@ -251,6 +251,17 @@ exports[`practice authz matrix over every /v1/practice operation > GET /v1/pract
 }
 `;
 
+exports[`practice authz matrix over every /v1/practice operation > GET /v1/practice/integrations 1`] = `
+{
+  "manager": 200,
+  "otherFirm": 200,
+  "partner": 200,
+  "preparer": 200,
+  "readonly": 200,
+  "reviewer": 200,
+}
+`;
+
 exports[`practice authz matrix over every /v1/practice operation > GET /v1/practice/qa 1`] = `
 {
   "manager": 200,
@@ -526,6 +537,17 @@ exports[`practice authz matrix over every /v1/practice operation > POST /v1/prac
 }
 `;
 
+exports[`practice authz matrix over every /v1/practice operation > POST /v1/practice/clients/{id}/integrations/{provider}/sync 1`] = `
+{
+  "manager": 400,
+  "otherFirm": 400,
+  "partner": 400,
+  "preparer": 403,
+  "readonly": 403,
+  "reviewer": 403,
+}
+`;
+
 exports[`practice authz matrix over every /v1/practice operation > POST /v1/practice/clients/{id}/portal-users 1`] = `
 {
   "manager": 400,
@@ -682,9 +704,9 @@ exports[`practice authz matrix over every /v1/practice operation > POST /v1/prac
 
 exports[`practice authz matrix over every /v1/practice operation > POST /v1/practice/rules/{id}/{action} 1`] = `
 {
-  "manager": 400,
-  "otherFirm": 400,
-  "partner": 400,
+  "manager": 404,
+  "otherFirm": 404,
+  "partner": 404,
   "preparer": 403,
   "readonly": 403,
   "reviewer": 403,

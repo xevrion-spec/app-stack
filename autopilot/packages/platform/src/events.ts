@@ -131,6 +131,11 @@ export const EVENT_CATALOG = {
     description: "A working paper snapshot was signed off by a reviewer (four-eyes)",
     schema: z.object({ workingPaperId: id, periodEnd: z.string(), snapshotSha256: z.string(), by: z.string() }),
   },
+  "integration.synced": {
+    version: 1,
+    description: "A ledger integration sync imported transactions for a client (mock adapters until providers are live)",
+    schema: z.object({ provider: z.string(), mode: z.enum(["mock", "live"]), jobId: id.nullable(), inserted: z.number(), duplicates: z.number() }),
+  },
 } as const;
 
 export type EventType = keyof typeof EVENT_CATALOG;

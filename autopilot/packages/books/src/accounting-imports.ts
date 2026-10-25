@@ -5,7 +5,7 @@
 import { parseAmountToPence } from "@xevrion/pipeline";
 import { readCsv, type ImportedLine } from "./importers.js";
 
-export type AccountingSource = "xero" | "quickbooks" | "freshbooks";
+export type AccountingSource = "xero" | "quickbooks" | "freshbooks" | "freeagent";
 export interface AccountingLine extends ImportedLine {
   sourceCategory?: string;
 }
@@ -29,6 +29,13 @@ const PROFILES: Record<
     category: ["account", "category", "split"],
     ref: ["num", "no.", "ref no."],
   },
+  freeagent: {
+    date: ["dated on", "date"],
+    desc: ["description", "explanation"],
+    amount: ["gross value", "amount"],
+    category: ["category"],
+    ref: ["bank transaction id", "reference"],
+  },
   freshbooks: {
     date: ["date"],
     desc: ["description", "merchant", "vendor", "client"],
@@ -42,6 +49,7 @@ export function detectAccountingSource(header: string[]): AccountingSource | nul
   const h = header.map((x) => x.trim().toLowerCase());
   if (h.includes("account code") || (h.includes("contact") && h.includes("reference"))) return "xero";
   if (h.includes("memo/description") || h.includes("split") || (h.includes("debit") && h.includes("credit") && h.includes("num"))) return "quickbooks";
+  if (h.includes("dated on") || h.includes("gross value")) return "freeagent";
   if (h.includes("merchant") || h.includes("vendor") || h.includes("grand total")) return "freshbooks";
   return null;
 }
@@ -69,7 +77,7 @@ export function parseAccountingExport(
   if (!rows.length) throw new Error("empty file");
   const header = rows[0]!.map((x) => x.trim().toLowerCase());
   const src = source ?? detectAccountingSource(header);
-  if (!src) throw new Error("unrecognised export: expected a Xero, QuickBooks or FreshBooks CSV");
+  if (!src) throw new Error("unrecognised export: expected a Xero, QuickBooks, FreeAgent or FreshBooks CSV");
   const p = PROFILES[src];
   const col = (names?: string[]) => (names ? (names.map((n) => header.indexOf(n)).find((i) => i >= 0) ?? -1) : -1);
   const [cDate, cDesc, cAmt, cDr, cCr, cCat, cRef] = [col(p.date), col(p.desc), col(p.amount), col(p.debit), col(p.credit), col(p.category), col(p.ref)];

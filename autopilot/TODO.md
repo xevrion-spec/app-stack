@@ -11,7 +11,8 @@ Current branch: feature/practice-copilot (from feature/harden). Goal: UK account
       Tests: practice-onboard (13) + matrix extended (practice ops x roles x other firm, portal ops x anon/staff/api key, cross-client portal). Suite 2,435 passed / 1 skipped; coverage 96.43/88.44.
 - [x] M4 intelligence (ADR 0026, migration 0014): firm/client learned rules with provenance (firm-wide needs 2+ clients), suggestions with reason codes, anomalies (duplicate, missing receipt, unusual VAT, round sum, weekend) + audited dismissals, accuracy harness (/practice/eval), drift alerts, practice assistant (rules routing + mock LLM intent router, scoped, cited). Fixed: missing-receipt must ignore bank-statement document_id.
       Tests: books intelligence (19) + practice-intel (5 API) + matrix extended. Suite 2,481 passed / 1 skipped; coverage 96.54/88.31.
-- [ ] M5 integrations: Xero/QBO/FreeAgent read adapters (mock) + CSV importers, PM/e-sign interfaces, MTD mock HMRC, Open Banking interface, events, API docs.
+- [x] M5 integrations (ADR 0027): Xero/QBO/FreeAgent mappers + mock read adapters + per-client sync via real ingest; FreeAgent CSV importer (real); PM + e-sign interfaces/mocks; MTD VAT box validation + fraud headers + sandbox config + mock HMRC adapter; Open Banking consent interface + mock; integration.synced event; honest catalogue endpoint; docs/api-reference.md regenerated with practice/portal auth notes.
+      Tests: contract (18) + API (6). Suite 2,510 passed / 1 skipped; coverage 96.59/88.6.
 - [ ] M6 ops: perf 500×5k, indexes, load, quotas/metering, SLOs, backup drill, ASVS, importers mutation 70+, CSP nonce.
 - [ ] M7 web: practice console + client portal screens, axe, Playwright.
 - [ ] M8 docs + honest benchmark rescore + Notion.

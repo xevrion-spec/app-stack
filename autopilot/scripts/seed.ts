@@ -16,7 +16,15 @@ env.PIPELINE = { send: async () => {} } as never; // seed runs the pipeline sync
 const app = createApp();
 
 async function call(user: string, method: string, path: string, body?: unknown, ct = "application/json") {
-  const res = await app.request(path, { method, headers: { "x-dev-user": user, "content-type": ct }, ...(body !== undefined ? { body: typeof body === "string" ? body : JSON.stringify(body) } : {}) }, env);
+  const res = await app.request(
+    path,
+    {
+      method,
+      headers: { "x-dev-user": user, "content-type": ct },
+      ...(body !== undefined ? { body: typeof body === "string" ? body : JSON.stringify(body) } : {}),
+    },
+    env,
+  );
   const json = (await res.json().catch(() => null)) as Record<string, unknown> | null;
   if (res.status >= 300) throw new Error(`${method} ${path} -> ${res.status} ${JSON.stringify(json)}`);
   return json!;
@@ -47,7 +55,12 @@ if (exists) {
   await call(OWNER, "POST", "/v1/users", { email: "demo.reviewer@example.test", role: "reviewer", displayName: "Demo Reviewer" });
   const up = await call(OWNER, "POST", "/v1/uploads/bank-csv", SEED_CSV, "text/csv");
   const sum = await runPipeline(env, t.id as string, up.jobId as string, undefined);
-  const inv = { customerName: "Acme Design Ltd (synthetic)", issueDate: "2026-07-02", dueDate: "2026-08-01", lines: [{ description: "Brand refresh", quantity: 1, unitPence: 70833, vatRateCode: "STD" }] };
+  const inv = {
+    customerName: "Acme Design Ltd (synthetic)",
+    issueDate: "2026-07-02",
+    dueDate: "2026-08-01",
+    lines: [{ description: "Brand refresh", quantity: 1, unitPence: 70833, vatRateCode: "STD" }],
+  };
   const i1 = await call(OWNER, "POST", "/v1/invoices", inv);
   await call(OWNER, "POST", `/v1/invoices/${i1.id}/status`, { status: "sent" });
   await call(OWNER, "POST", "/v1/invoices", { ...inv, issueDate: "2026-08-10", dueDate: "2026-09-09" });

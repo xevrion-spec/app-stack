@@ -62,6 +62,7 @@ describe("event catalog", () => {
       "engagement.accepted",
       "exception.opened",
       "exception.resolved",
+      "integration.synced",
       "invoice.created",
       "invoice.credit_note_issued",
       "invoice.paid",
