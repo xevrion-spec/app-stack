@@ -11,6 +11,7 @@ coverage/
 node_modules/
 .local/
 .stryker-tmp/
+.stryker-tmp-books/
 reports/
 lighthouse/
 .lighthouseci/

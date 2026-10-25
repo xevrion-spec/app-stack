@@ -136,3 +136,114 @@ describe("ImageOcr contract (MockOcr)", () => {
     await expect(ocr.recognise({ bytes: new Uint8Array(), contentType: "text/html" })).rejects.toThrow(RangeError);
   });
 });
+
+describe("TextReceiptExtractor: precise field rules (mutation-hardening)", () => {
+  const x = new TextReceiptExtractor();
+  const ex = (t: string) => x.extract({ text: t });
+  it.each([
+    ["Date 2026-03-09", "2026-03-09"],
+    ["on 9/3/26", "2026-03-09"],
+    ["on 09.03.2026", "2026-03-09"],
+    ["on 9-3-99", "2099-03-09"],
+    ["on 9/3/100", null], // 3-digit year is not < 100 → year 100 (out of range for our use but valid date) handled below
+  ])("date %s", async (t, want) => {
+    const d = (await ex(`Shop\n${t}\nTotal £1.00`)).date;
+    if (want === null) expect(d).toBe("0100-03-09");
+    else expect(d).toBe(want);
+  });
+  it("two-digit years map to 20xx exactly", async () => expect((await ex("Shop\n01/02/05\nTotal £1.00")).date).toBe("2005-02-01"));
+  it.each(["jan", "feb", "mar", "apr", "may", "jun", "jul", "aug", "sep", "oct", "nov", "dec"].map((m, i) => [m, i + 1]))("long month %s", async (m, n) =>
+    expect((await ex(`Shop\n3rd ${m} 2026\nTotal £1.00`)).date).toBe(`2026-${String(n).padStart(2, "0")}-03`),
+  );
+  it("long dates accept full month names, missing ordinal and multiple spaces", async () => {
+    expect((await ex("Shop\n21  September 2026\nTotal £1.00")).date).toBe("2026-09-21");
+    expect((await ex("Shop\n1st March, 2026\nTotal £1.00")).date).toBe("2026-03-01");
+  });
+  it("rejects impossible calendar dates", async () => {
+    expect((await ex("Shop\n2026-02-30\nTotal £1.00")).date).toBeNull();
+    expect((await ex("Shop\n31/04/2026\nTotal £1.00")).date).toBeNull();
+    expect((await ex("Shop\n2026-13-01\nTotal £1.00")).date).toBeNull();
+  });
+  it("ISO wins over UK when both are present; 1-digit ISO parts are not ISO", async () => {
+    expect((await ex("Shop\n2026-01-02 and 03/04/2026\nTotal £1.00")).date).toBe("2026-01-02");
+    expect((await ex("Shop\n2026-1-02\nTotal £1.00")).date).toBeNull();
+  });
+  it("vendor is the first line with 3+ letters that is not a label; CRs are stripped", async () => {
+    const r = await ex("12\r\nRECEIPT\r\nTax invoice\r\n  Bob's Café  \r\nTotal £3.50");
+    expect(r.vendor).toBe("Bob's Café");
+    expect((await ex("ab\n12\nTotal £3.50")).vendor).toBeNull();
+  });
+  it.each([
+    ["Invoice No: INV-2026-7", "INV-2026-7"],
+    ["Invoice number 12345", "12345"],
+    ["INV#A1B2", "A1B2"],
+    ["Receipt: R-1", "R-1"],
+    ["Invoice    #    XYZ99", "XYZ99"],
+  ])("invoice number %s", async (line, want) => expect((await ex(`Shop\n${line}\nTotal £1.00`)).invoiceNumber).toBe(want));
+  it("confidence and review thresholds", async () => {
+    const full = await ex("Shop Ltd\nDate 2026-01-01\nVAT £1.00\nTotal £6.00");
+    expect(full).toMatchObject({ confidence: 0.81, needsReview: false, fields: { total: 0.9, date: 0.85, vendor: 0.6, vat: 0.8 } });
+    const noVat = await ex("Shop Ltd\nDate 2026-01-01\nTotal £6.00");
+    expect(noVat).toMatchObject({ confidence: 0.71, needsReview: true, vatPence: null });
+    const noTotal = await ex("Shop Ltd\nDate 2026-01-01\nVAT £1.00");
+    expect(noTotal).toMatchObject({ totalPence: null, needsReview: true, fields: { total: 0, vat: 0 } });
+  });
+  it("VAT equal to total is sane; VAT above total is dropped", async () => {
+    expect((await ex("Shop\nVAT £6.00\nTotal £6.00")).vatPence).toBe(600);
+    const bad = await ex("Shop\nVAT £7.00\nTotal £6.00");
+    expect(bad.vatPence).toBeNull();
+    expect(bad.fields.vat).toBe(0);
+  });
+  it("total prefers the last labelled amount", async () => expect((await ex("Shop\nSubtotal £5.00\nTotal £6.00\nAmount due £7.25")).totalPence).toBe(725));
+});
+
+describe("mock adapters: exact behaviour (mutation-hardening)", () => {
+  it("MockExtractor returns its fixed synthetic extraction", async () => {
+    const m = new MockExtractor();
+    expect(m.name).toBe("mock");
+    expect(await m.extract({ text: "" })).toMatchObject({
+      vendor: "Synthetic Supplies Ltd",
+      date: "2026-07-01",
+      invoiceNumber: "MOCK-1",
+      fields: { total: 1, date: 1, vendor: 1, vat: 1 },
+      needsReview: false,
+    });
+  });
+  it("MockMtdGateway: names, quarter boundaries, validation and sequential submission ids", async () => {
+    const g = new MockMtdGateway(() => new Date("2026-08-01T00:00:00Z"));
+    expect(g.name).toBe("mock-hmrc");
+    const ob = await g.obligations("2026-27");
+    expect(ob.map((o) => [o.start, o.end])).toEqual([
+      ["2026-04-06", "2026-07-05"],
+      ["2026-07-06", "2026-10-05"],
+      ["2026-10-06", "2027-01-05"],
+      ["2027-01-06", "2027-04-05"],
+    ]);
+    for (const bad of ["2026", "x2026-27", "2026-27x"]) await expect(g.obligations(bad)).rejects.toThrow("taxYear must look like 2026-27");
+    const u = buildQuarterlyUpdate("2026-27-Q1", 1000, {});
+    for (const bad of ["x2026-27-Q1", "2026-27-Q1x", "2026-27-Q5"])
+      await expect(g.submitQuarterlyUpdate({ ...u, periodKey: bad })).rejects.toThrow("unknown periodKey");
+    expect((await g.submitQuarterlyUpdate(u)).submissionId).toBe("mock-2026-27-Q1-1");
+    expect((await g.submitQuarterlyUpdate({ ...u, periodKey: "2026-27-Q2" })).submissionId).toBe("mock-2026-27-Q2-2");
+    await expect(g.submitQuarterlyUpdate(u)).rejects.toThrow("period already submitted");
+  });
+  it("MockBankFeed: exact rows, 3-day cadence, inclusive end, 500 cap", async () => {
+    const f = new MockBankFeed();
+    expect(f.name).toBe("mock-openbanking");
+    expect(await f.accounts()).toEqual([{ id: "mock-acc-1", name: "Synthetic Business Current", currency: "GBP" }]);
+    const rows = await f.transactions("mock-acc-1", "2026-01-01", "2026-01-07");
+    expect(rows).toEqual([
+      { id: "mock-2026-01-01-0", accountId: "mock-acc-1", date: "2026-01-01", description: "SYNTHETIC CLIENT PAYMENT", amountPence: 150000 },
+      { id: "mock-2026-01-04-1", accountId: "mock-acc-1", date: "2026-01-04", description: "SYNTHETIC SOFTWARE SUB", amountPence: -1999 },
+      { id: "mock-2026-01-07-2", accountId: "mock-acc-1", date: "2026-01-07", description: "SYNTHETIC FUEL", amountPence: -4500 },
+    ]);
+    expect((await f.transactions("mock-acc-1", "2026-01-01", "2026-01-10")).at(-1)).toMatchObject({
+      id: "mock-2026-01-10-0",
+      description: "SYNTHETIC CLIENT PAYMENT",
+    });
+    expect(await f.transactions("mock-acc-1", "2000-01-01", "2030-01-01")).toHaveLength(500);
+    await expect(f.transactions("other", "2026-01-01", "2026-01-02")).rejects.toThrow("unknown account");
+  });
+  it("MockOcr error names the content type", async () =>
+    expect(new MockOcr().recognise({ bytes: new Uint8Array(), contentType: "text/x" })).rejects.toThrow("unsupported content type text/x"));
+});

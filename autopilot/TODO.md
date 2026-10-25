@@ -25,6 +25,7 @@ Branch: feature/value-max (from feature/quality-1000). Roadmap + status: docs/va
 - V5: accountant role + four-eyes period close (locks period), comments + @mentions, notifications centre + prefs,
   memberships (multi-business), plan entitlements + seats, GDPR (DSAR, erasure w/ retention holds, consents, export).
   Migration 0008, ADR 0019/0020. Not done: web UI for these, document vault retention job, cost model.
+- Mutation: scoped run (stryker.books.config.mjs) on invoicing/spikes/assistant/providers = 88.02% (providers 68% → 97% after hardening tests). Full nightly config not re-run here (~2.5 h+ on the box); last full score 89.3%.
 - V7b web: command palette, dark/light/system theme, i18n scaffold (en-GB + pseudo), screens for onboarding, receivables, reports, assistant, team/close, bank feeds, privacy, ops; RTL + Playwright/axe (19 e2e). ADR 0023. Fixed: reviewers could not see onboarding; reviewers can now read aged debtors.
 - V7a: daily scheduler (recurring drafts, reminder events, retention dry-run), MockOcr + /extract/documents/{id}, bank-feed routes (mock), ops summary + operator overview, migration 0009, ADR 0022, cost-model.md, slo.md.
 - Flaky API test found (1 in 25 runs): consent 'latest wins' ordered by random UUID within the same second; fixed with rowid ordering + deterministic regression test.
