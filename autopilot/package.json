@@ -6,8 +6,19 @@
     "packages/*"
   ],
   "scripts": {
-    "lint": "npm run -ws --if-present lint",
-    "test": "npm run -ws --if-present test",
-    "typecheck": "npm run -ws --if-present typecheck"
+    "typecheck": "npm run -ws --if-present typecheck",
+    "lint": "eslint . && prettier --check \"apps/**/src/**/*.{ts,tsx}\" \"packages/**/src/**/*.ts\"",
+    "format": "prettier --write \"apps/**/src/**/*.{ts,tsx}\" \"packages/**/src/**/*.ts\"",
+    "test": "vitest run",
+    "coverage": "vitest run --coverage",
+    "openapi": "npm run openapi -w apps/api && npm run generate -w packages/sdk",
+    "openapi:check": "npm run openapi && git diff --exit-code -- openapi packages/sdk/src/schema.d.ts",
+    "seed": "tsx scripts/seed.ts",
+    "local": "node scripts/local.mjs"
+  },
+  "allowScripts": {
+    "better-sqlite3@11.10.0": true,
+    "esbuild@0.28.2": true,
+    "esbuild@0.21.5": true
   }
 }

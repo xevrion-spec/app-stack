@@ -3,20 +3,32 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "dev": "wrangler dev",
-    "deploy": "wrangler deploy",
-    "typecheck": "tsc --noEmit",
-    "test": "node --test test/stages.test.mjs",
-    "lint": "tsc --noEmit",
+    "dev": "wrangler dev --local",
+    "typecheck": "tsc --noEmit -p .",
+    "test": "vitest run --root ../.. apps/api",
+    "openapi": "tsx scripts/openapi.ts",
     "db:migrate:local": "wrangler d1 migrations apply autopilot-db --local",
     "db:migrate:remote": "wrangler d1 migrations apply autopilot-db --remote"
   },
   "dependencies": {
-    "hono": "^4.6.0"
+    "@hono/zod-openapi": "^0.18.4",
+    "@xevrion/pipeline": "*",
+    "hono": "^4.13.13",
+    "jose": "^5.10.0",
+    "zod": "^3.25.76"
   },
   "devDependencies": {
-    "wrangler": "^4.0.0",
-    "typescript": "^5.6.0",
-    "@cloudflare/workers-types": "^4.20240000.0"
+    "@cloudflare/workers-types": "^4.20260702.1",
+    "@types/better-sqlite3": "^9.6.0",
+    "@vitest/coverage-v8": "^2.1.9",
+    "better-sqlite3": "^11.10.0",
+    "eslint": "^9.39.5",
+    "fast-check": "^3.23.2",
+    "prettier": "^3.9.10",
+    "tsx": "^4.23.15",
+    "typescript": "^5.9.3",
+    "typescript-eslint": "^8.72.0",
+    "vitest": "^2.1.9",
+    "wrangler": "^4.0.0"
   }
 }

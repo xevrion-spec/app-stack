@@ -8,6 +8,8 @@ routes = [{ pattern = "api.xevrion.co.uk", custom_domain = true }]
 [vars]
 ENVIRONMENT = "production"
 ALLOWED_ORIGINS = "https://app.xevrion.co.uk"
+ACCESS_TEAM_DOMAIN = "" # set to <team>.cloudflareaccess.com before deploy
+ACCESS_AUD = ""         # Access application AUD tag; production rejects requests when unset
 
 [[d1_databases]]
 binding = "DB"
@@ -32,6 +34,13 @@ queue = "autopilot-pipeline"
 max_batch_size = 10
 max_retries = 3
 dead_letter_queue = "autopilot-pipeline-dlq"
+
+# DLQ consumer: marks jobs failed and raises a JOB_FAILED exception (see src/queue.ts).
+# The queue autopilot-pipeline-dlq must exist before the next (manual) deploy.
+[[queues.consumers]]
+queue = "autopilot-pipeline-dlq"
+max_batch_size = 10
+max_retries = 1
 
 [observability]
 enabled = true
