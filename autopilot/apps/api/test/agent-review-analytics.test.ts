@@ -80,3 +80,34 @@ describe("D3 reviewer analytics + D4 auto-approve suggestions", () => {
     expect(r.json.draft.rules.map((x: { id: string }) => x.id)).toEqual(["suggested-low-email-send", "keep"]);
   });
 });
+
+describe("D6 cost / latency / outcome analytics", () => {
+  it("summarises per action with customer-supplied cost inputs; owner-only; validates inputs", async () => {
+    const s = await setup();
+    const doc = { rules: [{ id: "auto", when: { action: "noop.*", risk: ["low"], minConfidence: 0.9 }, then: { outcome: "auto_approve" } }] };
+    const pol = await s.call("POST", `/v1/review-projects/${s.projectId}/policies`, { user: A, body: { document: doc } });
+    await s.call("POST", `/v1/review-projects/${s.projectId}/policies/${pol.json.version}/activate`, { user: A, body: { force: true } });
+    for (let i = 0; i < 3; i++) await s.create({ action: "noop.x", confidence: 0.95 });
+    await s.decide(await s.create({}), R1, "approve");
+    await s.decide(await s.create({}), R1, "reject");
+    await s.create({});
+    const base = "/v1/agent-review/analytics/outcomes";
+    const r = await s.call("GET", `${base}?hourlyCost=60&minutesPerDecision=3&currency=GBP`, { user: A });
+    expect(r.status).toBe(200);
+    expect(r.json.currency).toBe("GBP");
+    expect(r.json.total).toMatchObject({ requests: 6, humanDecisions: 2, autoDecidedRate: 0.5, estimatedHumanCost: 6 });
+    expect(r.json.byAction.map((x: { action: string }) => x.action)).toEqual(["email.send", "noop.x"]);
+    // policy auto-decisions are not people: D3 must not list them as reviewers
+    const revs = (await s.call("GET", "/v1/agent-review/analytics/reviewers", { user: A })).json.reviewers.map((x: { reviewer: string }) => x.reviewer);
+    expect(revs).toEqual([R1]);
+    expect(r.json.byAction[0].outcomes).toMatchObject({ approved: 1, rejected: 1, pending: 1 });
+    expect(r.json.byAction[0].decisionLatency.p50Seconds).toBeGreaterThanOrEqual(0);
+    const nocost = (await s.call("GET", `${base}?currency=GBP`, { user: A })).json;
+    expect(nocost.currency).toBeNull();
+    expect(nocost.total.estimatedHumanCost).toBeNull();
+    expect((await s.call("GET", `${base}?projectId=nope`, { user: A })).json.total).toBeNull();
+    expect((await s.call("GET", `${base}?currency=pounds`, { user: A })).status).toBe(400);
+    expect((await s.call("GET", `${base}?hourlyCost=-1`, { user: A })).status).toBe(400);
+    expect((await s.call("GET", base, { user: R1 })).status).toBe(403);
+  });
+});

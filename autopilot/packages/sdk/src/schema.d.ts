@@ -26453,6 +26453,111 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/v1/agent-review/analytics/outcomes": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Cost, latency and outcome analytics per action (cost only from your own reviewer-cost inputs) */
+        get: {
+            parameters: {
+                query?: {
+                    days?: number;
+                    projectId?: string;
+                    hourlyCost?: number | null;
+                    minutesPerDecision?: number | null;
+                    currency?: string;
+                };
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["AgentReviewOutcomes"];
+                    };
+                };
+                /** @description Bad request */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Error"];
+                    };
+                };
+                /** @description Unauthenticated */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Error"];
+                    };
+                };
+                /** @description Forbidden */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Error"];
+                    };
+                };
+                /** @description Not found */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Error"];
+                    };
+                };
+                /** @description Conflict */
+                409: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Error"];
+                    };
+                };
+                /** @description Precondition failed (stale ETag) */
+                412: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Error"];
+                    };
+                };
+                /** @description Rate limited or quota exceeded */
+                429: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Error"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/v1/agent-review/audit-sink": {
         parameters: {
             query?: never;
@@ -28625,6 +28730,31 @@ export interface components {
                 [key: string]: unknown;
             };
         };
+        AgentReviewOutcomes: {
+            from: string;
+            truncated: boolean;
+            currency: string | null;
+            total: components["schemas"]["AgentReviewActionOutcomes"];
+            byAction: components["schemas"]["AgentReviewActionOutcomes"][];
+        };
+        AgentReviewActionOutcomes: {
+            action: string;
+            requests: number;
+            outcomes: {
+                [key: string]: number;
+            };
+            autoDecidedRate: number;
+            escalationRate: number;
+            expiryRate: number;
+            humanDecisions: number;
+            decisionLatency: {
+                p50Seconds: number | null;
+                p90Seconds: number | null;
+                p99Seconds: number | null;
+            };
+            estimatedHumanCost: number | null;
+            estimatedCostAvoided: number | null;
+        } | null;
         AuditSink: {
             url: string;
             /** @enum {string} */

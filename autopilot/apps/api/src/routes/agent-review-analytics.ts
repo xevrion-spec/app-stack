@@ -114,3 +114,57 @@ agentReviewAnalytics.openapi(
     );
   },
 );
+
+const Latency = z.object({ p50Seconds: z.number().nullable(), p90Seconds: z.number().nullable(), p99Seconds: z.number().nullable() });
+const ActionOut = z
+  .object({
+    action: z.string(),
+    requests: z.number().int(),
+    outcomes: z.record(z.string(), z.number().int()),
+    autoDecidedRate: z.number(),
+    escalationRate: z.number(),
+    expiryRate: z.number(),
+    humanDecisions: z.number().int(),
+    decisionLatency: Latency,
+    estimatedHumanCost: z.number().nullable(),
+    estimatedCostAvoided: z.number().nullable(),
+  })
+  .openapi("AgentReviewActionOutcomes");
+const OutcomesOut = z
+  .object({ from: z.string(), truncated: z.boolean(), currency: z.string().nullable(), total: ActionOut.nullable(), byAction: z.array(ActionOut) })
+  .openapi("AgentReviewOutcomes");
+
+agentReviewAnalytics.openapi(
+  def({
+    method: "get",
+    path: "/agent-review/analytics/outcomes",
+    tag: "Agent review",
+    summary: "Cost, latency and outcome analytics per action (cost only from your own reviewer-cost inputs)",
+    query: z.object({
+      days: Days,
+      projectId: z.string().max(64).optional(),
+      hourlyCost: z.coerce.number().min(0).max(10_000).optional(),
+      minutesPerDecision: z.coerce.number().min(0).max(600).optional(),
+      currency: z
+        .string()
+        .regex(/^[A-Z]{3}$/)
+        .optional(),
+    }),
+    response: OutcomesOut,
+  }),
+  async (c) => {
+    const { days, projectId, hourlyCost, minutesPerDecision, currency } = c.req.valid("query");
+    const from = A.since(days);
+    const rows = await A.requestFacts(scope(c), from, projectId ?? null);
+    const costed = hourlyCost !== undefined && minutesPerDecision !== undefined;
+    return c.json(
+      {
+        from,
+        truncated: rows.length >= A.MAX_ROWS,
+        currency: costed ? (currency ?? null) : null,
+        ...R.outcomeSummary(rows, costed ? { hourlyCost, minutesPerDecision } : {}),
+      },
+      200,
+    );
+  },
+);

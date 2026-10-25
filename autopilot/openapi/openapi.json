@@ -3569,6 +3569,123 @@
           "rule"
         ]
       },
+      "AgentReviewOutcomes": {
+        "type": "object",
+        "properties": {
+          "from": {
+            "type": "string"
+          },
+          "truncated": {
+            "type": "boolean"
+          },
+          "currency": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "total": {
+            "$ref": "#/components/schemas/AgentReviewActionOutcomes"
+          },
+          "byAction": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/AgentReviewActionOutcomes"
+            }
+          }
+        },
+        "required": [
+          "from",
+          "truncated",
+          "currency",
+          "total",
+          "byAction"
+        ]
+      },
+      "AgentReviewActionOutcomes": {
+        "type": [
+          "object",
+          "null"
+        ],
+        "properties": {
+          "action": {
+            "type": "string"
+          },
+          "requests": {
+            "type": "integer"
+          },
+          "outcomes": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "integer"
+            }
+          },
+          "autoDecidedRate": {
+            "type": "number"
+          },
+          "escalationRate": {
+            "type": "number"
+          },
+          "expiryRate": {
+            "type": "number"
+          },
+          "humanDecisions": {
+            "type": "integer"
+          },
+          "decisionLatency": {
+            "type": "object",
+            "properties": {
+              "p50Seconds": {
+                "type": [
+                  "number",
+                  "null"
+                ]
+              },
+              "p90Seconds": {
+                "type": [
+                  "number",
+                  "null"
+                ]
+              },
+              "p99Seconds": {
+                "type": [
+                  "number",
+                  "null"
+                ]
+              }
+            },
+            "required": [
+              "p50Seconds",
+              "p90Seconds",
+              "p99Seconds"
+            ]
+          },
+          "estimatedHumanCost": {
+            "type": [
+              "number",
+              "null"
+            ]
+          },
+          "estimatedCostAvoided": {
+            "type": [
+              "number",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "action",
+          "requests",
+          "outcomes",
+          "autoDecidedRate",
+          "escalationRate",
+          "expiryRate",
+          "humanDecisions",
+          "decisionLatency",
+          "estimatedHumanCost",
+          "estimatedCostAvoided"
+        ]
+      },
       "AuditSink": {
         "type": "object",
         "properties": {
@@ -38657,6 +38774,158 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/AutoApproveSuggestions"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthenticated",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "412": {
+            "description": "Precondition failed (stale ETag)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Rate limited or quota exceeded",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/agent-review/analytics/outcomes": {
+      "get": {
+        "tags": [
+          "Agent review"
+        ],
+        "summary": "Cost, latency and outcome analytics per action (cost only from your own reviewer-cost inputs)",
+        "security": [
+          {
+            "accessJwt": []
+          }
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 365,
+              "default": 30
+            },
+            "required": false,
+            "name": "days",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "maxLength": 64
+            },
+            "required": false,
+            "name": "projectId",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": [
+                "number",
+                "null"
+              ],
+              "minimum": 0,
+              "maximum": 10000
+            },
+            "required": false,
+            "name": "hourlyCost",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": [
+                "number",
+                "null"
+              ],
+              "minimum": 0,
+              "maximum": 600
+            },
+            "required": false,
+            "name": "minutesPerDecision",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "pattern": "^[A-Z]{3}$"
+            },
+            "required": false,
+            "name": "currency",
+            "in": "query"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AgentReviewOutcomes"
                 }
               }
             }
