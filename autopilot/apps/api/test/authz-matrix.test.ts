@@ -61,6 +61,7 @@ describe("authz matrix over every OpenAPI operation", () => {
   it("covers the whole spec", () => expect(OPS.length).toBeGreaterThanOrEqual(130));
   it.each(OPS)("%s %s: anonymous is 401, non-member never succeeds, nothing 5xx, no leaks", async (m, p) => {
     if (p === "/v1/tenants") return; // sign-up endpoint: any authenticated identity may create a business
+    if (p === "/v1/portal/session") return; // portal sign-in: exchanges a magic token, covered by practice-authz-matrix
     const anon = await send(m, p);
     expect(anon.status).toBe(401);
     const nob = await send(m, p, NOBODY);

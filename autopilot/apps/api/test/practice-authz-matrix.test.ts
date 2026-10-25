@@ -45,9 +45,25 @@ beforeAll(async () => {
   await call("POST", "/v1/practice/tasks/generate", { user: ROLES.manager, body: { month: "2026-10" } });
   void tt;
   ids.task = (await call("GET", "/v1/practice/tasks", { user: ROLES.manager })).json.items?.[0]?.id ?? "none";
+  const LETTER = "Engagement letter for the authz matrix (synthetic).";
+  ids.engagement = (
+    await call("POST", `/v1/practice/clients/${ids.client}/engagements`, {
+      user: ROLES.manager,
+      body: { services: ["bookkeeping"], feeSummary: "x", letterText: LETTER },
+    })
+  ).json.id;
+  ids.authorisation = (await call("POST", `/v1/practice/clients/${ids.client}/authorisations`, { user: ROLES.manager, body: { kind: "mtd_vat" } })).json.id;
+  await call("POST", `/v1/practice/clients/${ids.client}/document-requests`, { user: ROLES.manager, body: { titles: ["Matrix doc"] } });
+  ids.docreq = (await call("GET", "/v1/practice/document-requests", { user: ROLES.manager })).json.items[0].id;
+  const inv = (await call("POST", `/v1/practice/clients/${ids.client}/portal-users`, { user: ROLES.manager, body: { email: "client@a.test" } })).json;
+  ids.portalUser = inv.portalUser.id;
+  ids.paper = (
+    await call("POST", `/v1/practice/clients/${ids.client}/working-papers`, { user: ROLES.manager, body: { kind: "trial_balance", periodEnd: "2026-12-31" } })
+  ).json.id;
 });
 it("fixture ids exist", () => {
-  for (const k of ["client", "txn", "checklist", "query", "task"]) expect(ids[k], k).toMatch(/^[\w-]{6,}$/);
+  for (const k of ["client", "txn", "checklist", "query", "task", "engagement", "authorisation", "docreq", "portalUser", "paper"])
+    expect(ids[k], k).toMatch(/^[\w-]{6,}$/);
   expect(ids.txn).not.toBe("none");
   expect(ids.task).not.toBe("none");
 });
@@ -64,6 +80,7 @@ function concrete(m: string, p: string) {
     .replace("{clientId}", ids.client!)
     .replace("{transactionId}", ids.txn!)
     .replace("{idx}", "0")
+    .replace("{action}", "confirm")
     .replace("{email}", byPath.staff!)
     .replace("{id}", byPath[seg] ?? "nonexistent");
 }
@@ -71,7 +88,7 @@ const send = (m: string, p: string, user?: string) =>
   call(m, concrete(m, p), { ...(user ? { user } : {}), ...(m === "GET" || m === "DELETE" ? {} : { body: {} }) });
 
 describe("practice authz matrix over every /v1/practice operation", () => {
-  it("covers every practice operation", () => expect(OPS.length).toBeGreaterThanOrEqual(40));
+  it("covers every practice operation", () => expect(OPS.length).toBeGreaterThanOrEqual(60));
   it.each(OPS)("%s %s", async (m, p) => {
     const anon = await send(m, p);
     expect(anon.status).toBe(401);
@@ -94,7 +111,7 @@ describe("practice authz matrix over every /v1/practice operation", () => {
     outcome.otherFirm = other.status;
     expect(other.status).toBeLessThan(500);
     const body = JSON.stringify(other.json ?? "");
-    for (const v of [ids.client!, ids.checklist!, ids.query!, "Secret Client A", ROLES.manager]) expect(body).not.toContain(v);
+    for (const v of [ids.client!, ids.checklist!, ids.query!, ids.engagement!, ids.paper!, "Secret Client A", ROLES.manager]) expect(body).not.toContain(v);
     if (/\{(id|clientId)\}/.test(p) && p !== "/v1/practice/staff/{email}") expect(other.status).toBeGreaterThanOrEqual(400);
     expect(outcome).toMatchSnapshot();
   });
@@ -114,6 +131,15 @@ describe("cross-firm writes with VALID bodies never touch firm A", () => {
     ["POST", `/v1/practice/checklists/${ids.checklist}/items/0`, { done: true }],
     ["POST", `/v1/practice/checklists/${ids.checklist}/complete`, {}],
     ["POST", `/v1/practice/queries/${ids.query}/close`, {}],
+    ["POST", `/v1/practice/clients/${ids.client}/engagements`, { services: ["bookkeeping"], feeSummary: "x", letterText: "Cross-firm probe letter text" }],
+    ["POST", `/v1/practice/engagements/${ids.engagement}/send`, {}],
+    ["POST", `/v1/practice/authorisations/${ids.authorisation}/revoke`, {}],
+    ["POST", `/v1/practice/clients/${ids.client}/document-requests`, { titles: ["Cross-firm probe"] }],
+    ["POST", `/v1/practice/document-requests/${ids.docreq}/waive`, {}],
+    ["POST", `/v1/practice/clients/${ids.client}/portal-users`, { email: "attacker@b.test" }],
+    ["POST", `/v1/practice/portal-users/${ids.portalUser}/revoke`, {}],
+    ["POST", `/v1/practice/clients/${ids.client}/working-papers`, { kind: "trial_balance", periodEnd: "2026-12-31" }],
+    ["POST", `/v1/practice/working-papers/${ids.paper}/sign-off`, {}],
     ["POST", `/v1/practice/bulk`, { action: "set_status", clientIds: [ids.client], status: "archived" }],
   ];
   it("each is refused or a no-op, and firm A's state is unchanged", async () => {
@@ -130,5 +156,45 @@ describe("cross-firm writes with VALID bodies never touch firm A", () => {
     expect(q.some((x: { question: string }) => x.question === "Cross-firm probe")).toBe(false);
     expect((await call("GET", "/v1/practice/time", { user: ROLES.partner })).json.totalMinutes).toBe(0);
     expect((await call("GET", "/v1/practice/billing/records", { user: ROLES.partner })).json.items).toEqual([]);
+  });
+});
+
+describe("portal matrix: every /v1/portal operation", () => {
+  const PORTAL = Object.entries(spec.paths)
+    .filter(([p]) => p.startsWith("/v1/portal/"))
+    .flatMap(([p, ms]) => Object.keys(ms).map((m) => [m.toUpperCase(), p] as const));
+  it("covers the portal", () => expect(PORTAL.length).toBeGreaterThanOrEqual(9));
+  it.each(PORTAL)("%s %s: anonymous, staff and dev identities are 401; another client's ids are 404", async (m, p) => {
+    const path = p.replace("{id}", "x");
+    const opts = m === "GET" ? {} : { body: {} };
+    if (p === "/v1/portal/session") {
+      expect((await call(m, path, { body: { token: "pm_" + "a".repeat(43) } })).status).toBe(401);
+      return;
+    }
+    expect((await call(m, path, opts)).status).toBe(401);
+    expect((await call(m, path, { ...opts, user: ROLES.partner })).status).toBe(401);
+    expect((await call(m, path, { ...opts, headers: { authorization: "Bearer ap_test_abcdefgh_x" } })).status).toBe(401);
+  });
+  it("a firm-B client session never reaches firm A's objects", async () => {
+    await call("POST", "/v1/practices", { user: OTHER, body: { name: "Firm B" } });
+    const tb = (await call("POST", "/v1/practice/clients", { user: OTHER, body: { name: "B client" } })).json.tenantId;
+    const inv = (await call("POST", `/v1/practice/clients/${tb}/portal-users`, { user: OTHER, body: { email: "c@b.test" } })).json;
+    const s = (await call("POST", "/v1/portal/session", { body: { token: inv.magicToken } })).json.sessionToken;
+    const auth = { authorization: `Bearer ${s}` };
+    expect((await call("POST", `/v1/portal/queries/${ids.query}/answer`, { headers: auth, body: { answer: "x" } })).status).toBe(404);
+    expect((await call("POST", `/v1/portal/engagements/${ids.engagement}/accept`, { headers: auth, body: { letterSha256: "a".repeat(64) } })).status).toBe(404);
+    expect(
+      (
+        await call("POST", `/v1/portal/document-requests/${ids.docreq}/upload`, {
+          headers: { ...auth, "content-type": "application/pdf" },
+          raw: new Uint8Array([1]),
+        })
+      ).status,
+    ).toBe(404);
+    for (const p of ["/v1/portal/queries", "/v1/portal/document-requests", "/v1/portal/engagements", "/v1/portal/me"]) {
+      const r = await call("GET", p, { headers: auth });
+      expect(r.status).toBe(200);
+      expect(JSON.stringify(r.json)).not.toMatch(/Secret Client A|Matrix doc|What is this payment/);
+    }
   });
 });

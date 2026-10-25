@@ -6,8 +6,12 @@ import { noReadonlyWrites, practicePrincipal } from "../lib/practice.js";
 import { rateLimit } from "../lib/ratelimit.js";
 import { practice } from "./practice.js";
 import { work } from "./practice-work.js";
+import { onboard } from "./practice-onboard.js";
+import { portal } from "./portal.js";
 
 export const practiceApi = new OpenAPIHono<AppEnv>({ defaultHook: validationHook as never });
 for (const path of ["/practice", "/practice/*"]) practiceApi.use(path, practicePrincipal, noReadonlyWrites, rateLimit);
 practiceApi.route("/", practice);
 practiceApi.route("/", work);
+practiceApi.route("/", onboard);
+practiceApi.route("/", portal);

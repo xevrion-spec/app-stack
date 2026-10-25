@@ -4,4 +4,6 @@ useDefault = true
 [allowlist]
 description = "Synthetic test fixtures and example placeholders only"
 paths = ['''autopilot/apps/api/test/.*''', '''autopilot/packages/.*/test/.*''', '''autopilot/evals/.*''', '''package-lock\.json''']
-regexes = ['''whsec_test_[A-Za-z0-9]+''', '''ap_test_[a-z0-9]{8}_[A-Za-z0-9_-]+''', '''example\.(test|com)''']
+regexes = ['''whsec_test_[A-Za-z0-9]+''', '''ap_test_[a-z0-9]{8}_[A-Za-z0-9_-]+''', '''example\.(test|com)''',
+  # perf-guards.test.ts log-redaction fixture: a fake key the test asserts is redacted (not a credential)
+  '''ap_live_abcdef123''']

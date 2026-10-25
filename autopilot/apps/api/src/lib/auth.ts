@@ -25,6 +25,8 @@ export const __setAccessKeyForTests = (k: JWTVerifyGetKey | null) => {
  * In development/test only, `x-dev-user` (email) is accepted so the app can run locally without Access.
  */
 export const identity: MiddlewareHandler<AppEnv> = async (c, next) => {
+  // The client portal has its own session auth (routes/portal.ts) and never accepts staff identities.
+  if (c.req.path.startsWith("/v1/portal/")) return next();
   const env = c.env;
   const auth = c.req.header("authorization");
   if (auth?.startsWith("Bearer ap_")) return apiKeyAuth(c, auth.slice(7), next);

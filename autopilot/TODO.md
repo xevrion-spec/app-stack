@@ -7,7 +7,8 @@ Current branch: feature/practice-copilot (from feature/harden). Goal: UK account
 - [x] M1 firm model: practices, staff roles, clients, assignments, isolation, dashboards (health/workload/review ageing/deadlines/WIP), bulk preview+confirm. ADR 0024.
 - [x] M2 workflow: review queue + SLA + claims, bulk approve with thresholds, auto-approve rules (floor 0.9), QA sampling, close checklists + templates, client queries, task templates, time, billing records, per-client bank CSV import.
       Tests: practice-api (24), practice-lib (7), books practice (15), practice-authz-matrix (44). Full suite 2,362 passed / 1 skipped; coverage 96.32/88.3.
-- [ ] M3 onboarding/engagement: engagement letter + 64-8-style authorisation records, document requests, portal API (mock magic link), upload checklist, client audit export, working papers + sign-off snapshots. (Hash-chained audit already done in M1.)
+- [x] M3 onboarding/engagement (ADR 0025, migration 0013): engagement letters (hash frozen; client accepts by hash), authorisation records (data only, masked refs), document requests + templates, client portal (/v1/portal: mock magic link returned to staff → session; queries answer, uploads, engagement accept), per-client audit export JSON/CSV + chain verify, working papers (TB/bank rec/VAT rec) with immutable four-eyes sign-off.
+      Tests: practice-onboard (13) + matrix extended (practice ops x roles x other firm, portal ops x anon/staff/api key, cross-client portal). Suite 2,435 passed / 1 skipped; coverage 96.43/88.44.
 - [ ] M4 intelligence: per-practice learning, anomalies, reason codes, eval harness, drift, practice assistant.
 - [ ] M5 integrations: Xero/QBO/FreeAgent read adapters (mock) + CSV importers, PM/e-sign interfaces, MTD mock HMRC, Open Banking interface, events, API docs.
 - [ ] M6 ops: perf 500×5k, indexes, load, quotas/metering, SLOs, backup drill, ASVS, importers mutation 70+, CSP nonce.

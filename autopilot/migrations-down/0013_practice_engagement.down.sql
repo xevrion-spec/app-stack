@@ -1,0 +1,11 @@
+-- Manual, confirmed rollback only.
+drop trigger if exists working_papers_no_delete;
+drop trigger if exists working_papers_snapshot_fixed;
+drop trigger if exists working_papers_immutable;
+drop table if exists working_papers;
+drop table if exists portal_tokens;
+drop table if exists portal_users;
+drop table if exists document_requests;
+drop table if exists authorisations;
+drop trigger if exists engagements_frozen;
+drop table if exists engagements;
