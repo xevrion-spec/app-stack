@@ -862,7 +862,9 @@ platform.openapi(
   async (c) => {
     const db = scope(c);
     const { id } = c.req.valid("param");
-    const n = await db.run("update api_keys set revoked_at = strftime('%Y-%m-%dT%H:%M:%fZ','now') where tenant_id = ?1 and id = ?2", id);
+    // Stamp with the same (isolate) clock that apiKeyAuth compares against: SQLite/D1 'now' can run ahead of it
+    // (measured up to 2 ms on Windows), which left a just-revoked key usable for that window.
+    const n = await db.run("update api_keys set revoked_at = ?3 where tenant_id = ?1 and id = ?2", id, new Date().toISOString());
     if (!n) throw notFound("API key");
     await db.run("insert into audit_log (tenant_id, id, actor, action, subject) values (?1, ?2, ?3, 'api_key.revoked', ?4)", newId(), actor(c), id);
     return c.json(kOut((await db.first<KRow>(`select ${K_COLS} from api_keys where tenant_id = ?1 and id = ?2`, id))!), 200);
