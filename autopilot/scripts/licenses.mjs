@@ -25,7 +25,7 @@ const ROOTS = ["node_modules", ...["apps", "packages"].flatMap((d) => (existsSyn
 const seen = new Map();
 (function walk(deps = {}) {
   for (const [name, d] of Object.entries(deps)) {
-    if (seen.has(name)) continue;
+    if (seen.has(name) || d.extraneous) continue; // npm 10 lists extraneous (not depended-on) optional binaries, e.g. @img/sharp-wasm32
     if (!d.version) {
       walk(d.dependencies);
       continue;

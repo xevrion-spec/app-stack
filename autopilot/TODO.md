@@ -17,6 +17,9 @@ Branch: feature/value-max (from feature/quality-1000). Roadmap + status: docs/va
 - Rates: packages/domain-uk-tax/uk-rates.unverified.json (verified:false). ADR 0015, docs/books.md.
 - Next: API endpoints + migrations (tenant learned rules, recurring, reports, forecast, deadlines), then V3 invoicing.
 
+- Fixed flaky property test: merchantKey was not idempotent ("SO0"); fixed root cause (strip non-letters before noise words).
+- CI: licence gate failed under npm 10 (extraneous @img/sharp-wasm32 listed); script now skips extraneous. gitleaks clean on full history.
+
 ## Remaining
 (done on feature/value-max M0: Playwright 10/10 after upgrades; Lighthouse 100 perf / 100 a11y / 96 best practices on all pages; mutation ledger 91.9, webhooks 93.0)
 4. Pay down complexity waivers (docs/quality.md list), starting with pipeline runStages.
