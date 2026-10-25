@@ -40,7 +40,7 @@ export interface EventsMessage {
 }
 export type QueueMessage = PipelineMessage | EventsMessage;
 
-export type Role = "owner" | "reviewer";
+export type Role = "owner" | "reviewer" | "accountant";
 export interface Principal {
   userId: string;
   tenantId: string;

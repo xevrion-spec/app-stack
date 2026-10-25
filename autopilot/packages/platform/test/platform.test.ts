@@ -562,3 +562,21 @@ describe("feature flags and quotas", () => {
     expect(quotaCheck(p, m, used, add).allowed).toBe(ok),
   );
 });
+
+import { hasFeature, PLAN_FEATURES, FEATURES, PLAN_SEATS } from "../src/flags.js";
+describe("plan entitlements", () => {
+  it("free is minimal, pro and trial have everything, unknown plans fall back to free", () => {
+    expect(hasFeature("free", "forecast")).toBe(true);
+    expect(hasFeature("free", "mtd")).toBe(false);
+    expect(hasFeature("starter", "recurring_invoices")).toBe(true);
+    expect(hasFeature("starter", "mtd")).toBe(false);
+    for (const f of FEATURES) expect(hasFeature("pro", f) && hasFeature("trial", f)).toBe(true);
+    expect(hasFeature("nope", "mtd")).toBe(false);
+    expect(hasFeature(null, "forecast")).toBe(true);
+  });
+  it("plans are nested (each higher plan includes the lower)", () => {
+    const order = ["free", "starter", "pro"];
+    for (let i = 1; i < order.length; i++) for (const f of PLAN_FEATURES[order[i - 1]!]!) expect(PLAN_FEATURES[order[i]!]).toContain(f);
+    expect(PLAN_SEATS.free).toBeLessThan(PLAN_SEATS.starter!);
+  });
+});

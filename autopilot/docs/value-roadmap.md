@@ -23,17 +23,17 @@ nothing sends email, posts, submits to HMRC or connects to a bank. External prov
 | 14 | MTD-ready data model (obligations, quarterly updates, submissions) + HMRC adapter interface + **mock** HMRC | 5 | L | H | ✅ mock gateway + confirm-gated API | V4 |
 | 15 | Receipt/invoice OCR & extraction: pluggable extractor (LLM-vision via FreeLLMAPI if supported, deterministic text parser, mock) | 5 | M | M | ✅ deterministic text extractor + mock + contract tests (no image OCR) | V4 |
 | 16 | Bank feed abstraction (Open Banking provider interface + mock; no live provider) | 4 | M | H | 🟡 interface + mock + contract tests (no routes) | V4 |
-| 17 | Accountant/bookkeeper role, comments on any record, approval workflow (period close sign-off) | 4 | M | M | ⏳ | V5 |
-| 18 | Multi-business (one user, several tenants; switcher) | 3 | S | M | ⏳ | V5 |
-| 19 | Document vault with retention policy; UK GDPR DSAR export, erasure (with statutory-retention holds), consent log, audit export | 4 | M | H | ⏳ | V5 |
-| 20 | In-app notifications centre (from events; read/unread; preferences) | 4 | S | L | ⏳ | V5 |
-| 21 | Plans and entitlements (feature gates + quotas per plan) | 3 | S | L | ⏳ | V5 |
+| 17 | Accountant/bookkeeper role, comments on any record, approval workflow (period close sign-off) | 4 | M | M | ✅ accountant role, comments, four-eyes close + lock | V5 |
+| 18 | Multi-business (one user, several tenants; switcher) | 3 | S | M | ✅ memberships + x-tenant-id switch (no web switcher yet) | V5 |
+| 19 | Document vault with retention policy; UK GDPR DSAR export, erasure (with statutory-retention holds), consent log, audit export | 4 | M | H | ✅ DSAR, erasure with holds, consent log, export (no document vault/R2 retention job) | V5 |
+| 20 | In-app notifications centre (from events; read/unread; preferences) | 4 | S | L | ✅ API (no web UI yet) | V5 |
+| 21 | Plans and entitlements (feature gates + quotas per plan) | 3 | S | L | ✅ features + seats (plan names/prices = Henry) | V5 |
 | 22 | “Ask your books” assistant grounded in the ledger with citations (tools over reports; LLM via Dify/FreeLLMAPI; deterministic fallback) | 5 | M | M | ⏳ | V6 |
 | 23 | Onboarding checklist and sample-data mode | 4 | S | L | ⏳ | V6 |
 | 24 | Web: command palette, keyboard shortcuts, dark mode, i18n scaffold, accessibility polish | 3 | M | L | ⏳ | V7 |
 | 25 | Web: webhooks / API keys / automations UI; public API docs page | 3 | M | L | ⏳ | V7 |
 | 26 | Admin/ops console (tenants, jobs, DLQ, webhook health, usage) | 3 | M | M | ⏳ | V7 |
-| 27 | Per-tenant usage and cost metering (existing counters + cost model) | 3 | S | L | ⏳ | V5 |
+| 27 | Per-tenant usage and cost metering (existing counters + cost model) | 3 | S | L | 🟡 counters + rollup exist; cost model not done | V5 |
 | 28 | SLOs and error budgets (doc + burn-rate maths + health metrics) | 3 | S | L | ⏳ | V7 |
 | 29 | Search (existing FTS) across all entities | 3 | S | L | ✅ (transactions, invoices, exceptions) | — |
 | 30 | Webhooks, automations, API keys, realtime | 4 | — | — | ✅ | quality-1000 |

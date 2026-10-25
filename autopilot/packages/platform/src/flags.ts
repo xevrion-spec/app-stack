@@ -44,3 +44,29 @@ export function quotaCheck(plan: string | null, metric: string, used: number, ad
   const limit = (PLAN_QUOTAS[plan ?? "free"] ?? PLAN_QUOTAS.free!)[metric] ?? Infinity;
   return { allowed: used + adding <= limit, limit, remaining: Math.max(0, limit - used - (used + adding <= limit ? adding : 0)) };
 }
+
+/** Feature entitlements per plan (prices/plan names are Henry's decision; see docs/value-roadmap.md). Trial shows everything. */
+export const FEATURES = [
+  "imports_advanced",
+  "recurring_invoices",
+  "multi_currency",
+  "payment_links",
+  "mtd",
+  "forecast",
+  "assistant",
+  "accountant_seats",
+  "webhooks",
+  "api_keys",
+] as const;
+export type Feature = (typeof FEATURES)[number];
+export const PLAN_FEATURES: Record<string, readonly Feature[]> = {
+  free: ["forecast"],
+  starter: ["forecast", "imports_advanced", "recurring_invoices", "payment_links", "assistant"],
+  pro: FEATURES,
+  trial: FEATURES,
+};
+export function hasFeature(plan: string | null, f: Feature): boolean {
+  return (PLAN_FEATURES[plan ?? "free"] ?? PLAN_FEATURES.free!).includes(f);
+}
+/** Seats: accountant/reviewer users allowed per plan (owners are unlimited). */
+export const PLAN_SEATS: Record<string, number> = { free: 1, starter: 3, pro: 10, trial: 10 };

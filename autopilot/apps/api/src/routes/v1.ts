@@ -16,7 +16,9 @@ import { platform } from "./platform.js";
 import { books } from "./books.js";
 import { invoicing } from "./invoicing.js";
 import { compliance } from "./compliance.js";
-import { etagFor, ifMatchFails, ifNoneMatchHits, orderBy, selectFields } from "@xevrion/platform";
+import { collab, assertPeriodOpen } from "./collab.js";
+import { privacy } from "./privacy.js";
+import { etagFor, ifMatchFails, ifNoneMatchHits, orderBy, selectFields, PLAN_SEATS } from "@xevrion/platform";
 import { AppError, badRequest, conflict, notFound, tooLarge, unsupported } from "../lib/errors.js";
 import { parseBankCsv, sha256Hex } from "../services/csv.js";
 import { categoryKind } from "../services/ledger.js";
@@ -100,6 +102,13 @@ v1.openapi(
     const id = newId();
     const email = b.email.toLowerCase();
     if (await db.first("select id from users where tenant_id = ?1 and email = ?2", email)) throw conflict("User already exists");
+    if (b.role !== "owner") {
+      const plan = (await db.tenantRowStmt("plan").first<{ plan: string | null }>())?.plan ?? "free";
+      const seats = PLAN_SEATS[plan] ?? PLAN_SEATS.free!;
+      const used = (await db.first<{ n: number }>("select count(*) n from users where tenant_id = ?1 and role != 'owner'"))?.n ?? 0;
+      if (used >= seats)
+        throw new AppError(429, "quota_exceeded", `Your plan includes ${seats} reviewer/accountant seat(s)`, { metric: "seats", limit: seats });
+    }
     await db.batch([
       db.stmt("insert into users (tenant_id, id, email, role, display_name) values (?1, ?2, ?3, ?4, ?5)", id, email, b.role, b.displayName ?? null),
       auditStmt(db, actor(c), "user.created", id, { email, role: b.role }),
@@ -351,6 +360,7 @@ v1.openapi(
       id,
     );
     if (!t) throw notFound("Transaction");
+    await assertPeriodOpen(db, id);
     const extra =
       b.createRule && t.description
         ? [
@@ -1031,3 +1041,5 @@ v1.route("/", platform);
 v1.route("/books", books);
 v1.route("/", invoicing);
 v1.route("/", compliance);
+v1.route("/", collab);
+v1.route("/", privacy);

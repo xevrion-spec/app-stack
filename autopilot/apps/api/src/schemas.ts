@@ -38,7 +38,7 @@ export const UpdateTenantBody = CreateTenantBody.partial().openapi("UpdateTenant
 
 export const UserSchema = z.object({ id: z.string(), email: z.string(), role: z.string(), display_name: z.string().nullable() }).openapi("User");
 export const CreateUserBody = z
-  .object({ email: z.string().email(), role: z.enum(["owner", "reviewer"]), displayName: z.string().max(80).optional() })
+  .object({ email: z.string().email(), role: z.enum(["owner", "reviewer", "accountant"]), displayName: z.string().max(80).optional() })
   .openapi("CreateUser");
 export const MeSchema = z.object({ userId: z.string(), tenantId: z.string(), email: z.string(), role: z.string() }).openapi("Me");
 

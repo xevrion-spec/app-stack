@@ -41,7 +41,7 @@ export function Settings({ role }: { role: string }) {
     const f = new FormData(form);
     setError(null);
     try {
-      const u = unwrap(await sdk().POST("/v1/users", { body: { email: String(f.get("email")), role: String(f.get("role")) as "reviewer" } }));
+      const u = unwrap(await sdk().POST("/v1/users", { body: { email: String(f.get("email")), role: String(f.get("role")) as "reviewer" | "accountant" } }));
       users.setData((l) => [...(l ?? []), u]);
       form.reset();
       setSaved(`Added ${u.email} (no email is sent; they sign in through Cloudflare Access).`);
@@ -103,7 +103,8 @@ export function Settings({ role }: { role: string }) {
             <label>
               Role
               <select name="role" defaultValue="reviewer">
-                <option value="reviewer">Accountant / reviewer</option>
+                <option value="reviewer">Reviewer</option>
+                <option value="accountant">Accountant (can sign off period closes)</option>
                 <option value="owner">Owner</option>
               </select>
             </label>

@@ -11,6 +11,7 @@ import { TenantDb, newId } from "../lib/db.js";
 import { auditStmt } from "../lib/audit.js";
 import { badRequest, conflict, tooLarge } from "../lib/errors.js";
 import { def, validationHook } from "../lib/route.js";
+import { requireFeature } from "../lib/entitlements.js";
 import { chart, ledger } from "./books.js";
 
 type C = Context<AppEnv>;
@@ -25,7 +26,7 @@ export const __setComplianceProviders = (p: { extractor?: B.DocumentExtractor; g
 
 export const compliance = new OpenAPIHono<AppEnv>({ defaultHook: validationHook as never });
 compliance.use("/extract/*", requireRole("owner", "reviewer"));
-compliance.use("/mtd/*", requireRole("owner"));
+compliance.use("/mtd/*", requireRole("owner"), requireFeature("mtd"));
 
 const ExtractionOut = z
   .object({

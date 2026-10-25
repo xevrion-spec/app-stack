@@ -63,14 +63,21 @@ export const principal: MiddlewareHandler<AppEnv> = async (c, next) => {
       .results ?? [];
   const row = wanted ? rows.find((r) => r.tenant_id === wanted) : rows[0];
   if (!row) throw rows.length ? forbidden("Not a member of that tenant") : new AppError(403, "no_membership", "No tenant membership for this user");
-  const p: Principal = { userId: row.id, tenantId: row.tenant_id, email, role: (row.role === "owner" ? "owner" : "reviewer") as Role };
+  const p: Principal = {
+    userId: row.id,
+    tenantId: row.tenant_id,
+    email,
+    role: (row.role === "owner" || row.role === "accountant" ? row.role : "reviewer") as Role,
+  };
   c.set("principal", p);
   return next();
 };
 
 export function requireRole(...roles: Role[]): MiddlewareHandler<AppEnv> {
   return async (c, next) => {
-    if (!roles.includes(c.get("principal").role)) throw forbidden();
+    const r = c.get("principal").role;
+    // An accountant can do everything a reviewer can, plus accountant-only actions (period close sign-off).
+    if (!roles.includes(r) && !(r === "accountant" && roles.includes("reviewer"))) throw forbidden();
     return next();
   };
 }

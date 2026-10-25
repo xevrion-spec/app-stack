@@ -22,6 +22,9 @@ Branch: feature/value-max (from feature/quality-1000). Roadmap + status: docs/va
   Note: cron wiring for recurring/reminder runs is not done yet (endpoints exist; sweep is cross-tenant and needs care).
 - V4: DocumentExtractor (TextReceiptExtractor + mock), MtdGateway (mock only; preview + confirm-gated submit, sandbox rows),
   BankFeed (mock, contract-tested). Migration 0007, ADR 0018. Image OCR / LLM-vision adapter not done (needs provider choice).
+- V5: accountant role + four-eyes period close (locks period), comments + @mentions, notifications centre + prefs,
+  memberships (multi-business), plan entitlements + seats, GDPR (DSAR, erasure w/ retention holds, consents, export).
+  Migration 0008, ADR 0019/0020. Not done: web UI for these, document vault retention job, cost model.
 - Next: V4 extraction/MTD mock, V5 accountant/GDPR/notifications/plans, V6 assistant, V7 web/admin/SLOs.
 
 - Fixed flaky property test: merchantKey was not idempotent ("SO0"); fixed root cause (strip non-letters before noise words).

@@ -12,6 +12,7 @@ import { TenantDb, newId } from "../lib/db.js";
 import { auditStmt } from "../lib/audit.js";
 import { badRequest, conflict, notFound } from "../lib/errors.js";
 import { def, IdParam, validationHook } from "../lib/route.js";
+import { requireFeature } from "../lib/entitlements.js";
 import { Outbox } from "../services/events.js";
 
 type C = Context<AppEnv>;
@@ -30,8 +31,10 @@ export const __setInvoiceProviders = (p: { paymentLinks?: B.PaymentLinkProvider;
 };
 
 export const invoicing = new OpenAPIHono<AppEnv>({ defaultHook: validationHook as never });
-invoicing.use("/recurring-invoices/*", owner);
-invoicing.use("/recurring-invoices", owner);
+invoicing.use("/recurring-invoices/*", owner, requireFeature("recurring_invoices"));
+invoicing.use("/recurring-invoices", owner, requireFeature("recurring_invoices"));
+invoicing.use("/invoices/:id/payment-link", requireFeature("payment_links"));
+invoicing.use("/invoices/:id/currency", requireFeature("multi_currency"));
 invoicing.use("/receivables/*", owner);
 
 type Inv = {
