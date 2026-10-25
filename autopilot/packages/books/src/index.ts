@@ -15,3 +15,4 @@ export * from "./invoicing.js";
 export * from "./providers.js";
 export * from "./assistant.js";
 export * from "./practice.js";
+export * from "./intelligence.js";

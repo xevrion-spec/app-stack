@@ -140,6 +140,8 @@ describe("cross-firm writes with VALID bodies never touch firm A", () => {
     ["POST", `/v1/practice/portal-users/${ids.portalUser}/revoke`, {}],
     ["POST", `/v1/practice/clients/${ids.client}/working-papers`, { kind: "trial_balance", periodEnd: "2026-12-31" }],
     ["POST", `/v1/practice/working-papers/${ids.paper}/sign-off`, {}],
+    ["POST", `/v1/practice/clients/${ids.client}/anomalies/dismiss`, { transactionId: ids.txn, code: "round_sum", note: "cross-firm probe" }],
+    ["POST", `/v1/practice/assistant`, { question: "Which clients are at risk?" }],
     ["POST", `/v1/practice/bulk`, { action: "set_status", clientIds: [ids.client], status: "archived" }],
   ];
   it("each is refused or a no-op, and firm A's state is unchanged", async () => {
@@ -148,7 +150,8 @@ describe("cross-firm writes with VALID bodies never touch firm A", () => {
       const r = await call(m, p, { user: OTHER, body });
       expect(r.status, `${m} ${p} ${JSON.stringify(r.json)}`).toBeLessThan(500);
       const ok = r.status < 300;
-      if (ok) expect(JSON.stringify(r.json), `${m} ${p}`).toMatch(/"(approved|claimed)":0|"skipped"|"preview"|"matched":0|"count":0/);
+      if (ok && p === "/v1/practice/assistant") expect(JSON.stringify(r.json)).not.toContain("Secret Client A");
+      else if (ok) expect(JSON.stringify(r.json), `${m} ${p}`).toMatch(/"(approved|claimed)":0|"skipped"|"preview"|"matched":0|"count":0/);
     }
     const after = (await call("GET", `/v1/practice/clients/${ids.client}`, { user: ROLES.partner })).json;
     expect(after.status ?? after.settings?.status).toBe(before.status ?? before.settings?.status);

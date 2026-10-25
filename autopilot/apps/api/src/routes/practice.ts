@@ -204,7 +204,7 @@ const ClientSummary = z.object({
 type Summary = z.infer<typeof ClientSummary>;
 
 /** One aggregate query per signal for ALL visible clients (no per-client N+1), then pure health scoring. */
-async function clientSummaries(pdb: PracticeDb, role: PracticeRole, asOf: string, onlyTenant?: string): Promise<Summary[]> {
+export async function clientSummaries(pdb: PracticeDb, role: PracticeRole, asOf: string, onlyTenant?: string): Promise<Summary[]> {
   const scope = clientScopeSql(role);
   const filter = onlyTenant ? " and pc.tenant_id = ?3" : "";
   const args = onlyTenant ? [onlyTenant] : [];
