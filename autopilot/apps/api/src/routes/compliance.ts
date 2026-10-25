@@ -13,6 +13,7 @@ import { badRequest, conflict, notFound, tooLarge, unsupported } from "../lib/er
 import { def, IdParam, validationHook } from "../lib/route.js";
 import { requireFeature } from "../lib/entitlements.js";
 import { chart, ledger } from "./books.js";
+import { llmFromEnv } from "../services/pipeline.js";
 
 type C = Context<AppEnv>;
 const scope = (c: C) => new TenantDb(c.env.DB, c.get("principal").tenantId);
@@ -24,6 +25,12 @@ export const __setComplianceProviders = (p: { extractor?: B.DocumentExtractor; g
   if (p.extractor) extractor = p.extractor;
   if (p.ocr) ocr = p.ocr;
   if (p.gateway) gatewayFactory = p.gateway;
+};
+
+/** Per request: rules, plus the LLM (FreeLLMAPI) as an untrusted second opinion when one is configured (ADR 0029). */
+const extractorFor = (c: C): B.DocumentExtractor => {
+  const llm = llmFromEnv(c.env);
+  return llm ? new B.LlmAssistedExtractor(extractor, llm) : extractor;
 };
 
 export const compliance = new OpenAPIHono<AppEnv>({ defaultHook: validationHook as never });
@@ -56,8 +63,9 @@ compliance.openapi(
     const bytes = await c.req.arrayBuffer();
     if (bytes.byteLength > 512 * 1024) throw tooLarge("Text larger than 512 KB");
     if (!bytes.byteLength) throw badRequest("Empty body");
-    const r = await extractor.extract({ text: new TextDecoder().decode(bytes) });
-    return c.json({ extractor: extractor.name, ...r }, 200);
+    const ex = extractorFor(c);
+    const r = await ex.extract({ text: new TextDecoder().decode(bytes) });
+    return c.json({ extractor: ex.name, ...r }, 200);
   },
 );
 
@@ -87,7 +95,8 @@ compliance.openapi(
     } catch (e) {
       throw unsupported((e as Error).message);
     }
-    const r = await extractor.extract({ text: o.text });
+    const ex = extractorFor(c);
+    const r = await ex.extract({ text: o.text });
     const out = { ...r, confidence: Math.min(r.confidence, o.confidence), needsReview: r.needsReview || o.confidence < 0.6 };
     await db.batch([
       db.stmt(
@@ -104,7 +113,7 @@ compliance.openapi(
       ),
       auditStmt(db, actor(c), "document.extracted", id, { engine: o.engine, needsReview: out.needsReview }),
     ]);
-    return c.json({ extractor: extractor.name, documentId: id, ocrEngine: o.engine, ocrConfidence: o.confidence, ...out }, 200);
+    return c.json({ extractor: ex.name, documentId: id, ocrEngine: o.engine, ocrConfidence: o.confidence, ...out }, 200);
   },
 );
 

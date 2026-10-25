@@ -6,6 +6,8 @@ import { serve } from "@hono/node-server";
 import { join, resolve } from "node:path";
 import { createApp } from "../src/app.js";
 import { makeLocalEnv } from "./local-env.js";
+import { __setComplianceProviders } from "../src/routes/compliance.js";
+import { TesseractOcr } from "./tesseract-ocr.js";
 import { fileURLToPath } from "node:url";
 const HERE = fileURLToPath(import.meta.url).replace(/[\\/][^\\/]*$/, "");
 
@@ -14,6 +16,8 @@ const port = Number(process.env.PORT ?? 8787);
 const { env } = makeLocalEnv(dataDir, {
   ...(process.env.LLM_BASE_URL ? { LLM_BASE_URL: process.env.LLM_BASE_URL, LLM_API_KEY: process.env.LLM_API_KEY, LLM_MODEL: process.env.LLM_MODEL } : {}),
 });
+// OCR_ENGINE=tesseract: free local OCR for receipts (Node only). Default stays the labelled mock.
+if (process.env.OCR_ENGINE === "tesseract") __setComplianceProviders({ ocr: new TesseractOcr(join(dataDir, "tesseract-cache")) });
 const app = createApp();
 serve({ fetch: (req) => app.fetch(req, env), port, hostname: "127.0.0.1" }, (i) =>
   console.log(`autopilot local API on http://127.0.0.1:${i.port} (data: ${dataDir})`),

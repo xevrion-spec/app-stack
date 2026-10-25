@@ -25,7 +25,7 @@ import { auditStmt } from "../lib/audit.js";
 import { log } from "../lib/log.js";
 import { postTransactionJournal } from "./ledger.js";
 
-function llmFromEnv(env: Env): LlmClient | undefined {
+export function llmFromEnv(env: Env): LlmClient | undefined {
   if (!env.LLM_BASE_URL || !env.LLM_API_KEY) return undefined;
   return openAiCompatible(env.LLM_BASE_URL, env.LLM_API_KEY, env.LLM_MODEL ?? "llama-3.3-70b-fp8-fast");
 }

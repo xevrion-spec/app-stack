@@ -1,0 +1,212 @@
+[
+ {
+  "file": "r00.png",
+  "vendor": "Fictional Books",
+  "date": "2026-01-05",
+  "totalPence": 20141,
+  "vatPence": 3357
+ },
+ {
+  "file": "r01.png",
+  "vendor": "Synthetic Cafe Ltd",
+  "date": "2026-08-07",
+  "totalPence": 4373,
+  "vatPence": 729
+ },
+ {
+  "file": "r02.png",
+  "vendor": "Synthetic Cafe Ltd",
+  "date": "2026-09-11",
+  "totalPence": 8860,
+  "vatPence": null
+ },
+ {
+  "file": "r03.png",
+  "vendor": "Dummy Deli",
+  "date": "2026-02-23",
+  "totalPence": 14352,
+  "vatPence": 2392
+ },
+ {
+  "file": "r04.png",
+  "vendor": "Demo Stationers",
+  "date": "2026-04-01",
+  "totalPence": 18475,
+  "vatPence": 3079
+ },
+ {
+  "file": "r05.png",
+  "vendor": "Placeholder Parking",
+  "date": "2026-09-22",
+  "totalPence": 11737,
+  "vatPence": 1956
+ },
+ {
+  "file": "r06.png",
+  "vendor": "Dummy Deli",
+  "date": "2026-08-03",
+  "totalPence": 16741,
+  "vatPence": 2790
+ },
+ {
+  "file": "r07.png",
+  "vendor": "Demo Stationers",
+  "date": "2026-08-21",
+  "totalPence": 531,
+  "vatPence": 88
+ },
+ {
+  "file": "r08.png",
+  "vendor": "Demo Stationers",
+  "date": "2026-07-05",
+  "totalPence": 15088,
+  "vatPence": 2515
+ },
+ {
+  "file": "r09.png",
+  "vendor": "Fictional Books",
+  "date": "2026-03-13",
+  "totalPence": 2666,
+  "vatPence": 444
+ },
+ {
+  "file": "r10.png",
+  "vendor": "Sample Print Shop",
+  "date": "2026-09-10",
+  "totalPence": 17367,
+  "vatPence": null
+ },
+ {
+  "file": "r11.png",
+  "vendor": "Fictional Books",
+  "date": "2026-05-05",
+  "totalPence": 17583,
+  "vatPence": null
+ },
+ {
+  "file": "r12.png",
+  "vendor": "Example Fuel Stop",
+  "date": "2026-09-11",
+  "totalPence": 8292,
+  "vatPence": 1382
+ },
+ {
+  "file": "r13.png",
+  "vendor": "Sample Print Shop",
+  "date": "2026-10-08",
+  "totalPence": 11167,
+  "vatPence": 1861
+ },
+ {
+  "file": "r14.png",
+  "vendor": "Demo Stationers",
+  "date": "2026-12-24",
+  "totalPence": 3502,
+  "vatPence": 584
+ },
+ {
+  "file": "r15.png",
+  "vendor": "Example Fuel Stop",
+  "date": "2026-08-03",
+  "totalPence": 16055,
+  "vatPence": 2676
+ },
+ {
+  "file": "r16.png",
+  "vendor": "Demo Stationers",
+  "date": "2026-02-10",
+  "totalPence": 13532,
+  "vatPence": 2255
+ },
+ {
+  "file": "r17.png",
+  "vendor": "Test Hardware Co",
+  "date": "2026-04-13",
+  "totalPence": 14596,
+  "vatPence": null
+ },
+ {
+  "file": "r18.png",
+  "vendor": "Dummy Deli",
+  "date": "2026-09-15",
+  "totalPence": 11598,
+  "vatPence": 1933
+ },
+ {
+  "file": "r19.png",
+  "vendor": "Placeholder Parking",
+  "date": "2026-04-22",
+  "totalPence": 12916,
+  "vatPence": null
+ },
+ {
+  "file": "r20.png",
+  "vendor": "Mock Taxi Services",
+  "date": "2026-08-28",
+  "totalPence": 14670,
+  "vatPence": 2445
+ },
+ {
+  "file": "r21.png",
+  "vendor": "Sample Print Shop",
+  "date": "2026-10-10",
+  "totalPence": 6474,
+  "vatPence": 1079
+ },
+ {
+  "file": "r22.png",
+  "vendor": "Specimen Software Ltd",
+  "date": "2026-03-13",
+  "totalPence": 2669,
+  "vatPence": null
+ },
+ {
+  "file": "r23.png",
+  "vendor": "Specimen Software Ltd",
+  "date": "2026-01-26",
+  "totalPence": 14393,
+  "vatPence": 2399
+ },
+ {
+  "file": "r24.png",
+  "vendor": "Dummy Deli",
+  "date": "2026-07-15",
+  "totalPence": 21764,
+  "vatPence": 3627
+ },
+ {
+  "file": "r25.png",
+  "vendor": "Synthetic Cafe Ltd",
+  "date": "2026-07-21",
+  "totalPence": 16273,
+  "vatPence": 2712
+ },
+ {
+  "file": "r26.png",
+  "vendor": "Test Hardware Co",
+  "date": "2026-10-05",
+  "totalPence": 12490,
+  "vatPence": 2082
+ },
+ {
+  "file": "r27.png",
+  "vendor": "Mock Taxi Services",
+  "date": "2026-03-03",
+  "totalPence": 543,
+  "vatPence": null
+ },
+ {
+  "file": "r28.png",
+  "vendor": "Placeholder Parking",
+  "date": "2026-03-27",
+  "totalPence": 8254,
+  "vatPence": null
+ },
+ {
+  "file": "r29.png",
+  "vendor": "Test Hardware Co",
+  "date": "2026-07-05",
+  "totalPence": 782,
+  "vatPence": 130
+ }
+]

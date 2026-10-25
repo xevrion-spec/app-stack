@@ -17,3 +17,4 @@ export * from "./assistant.js";
 export * from "./practice.js";
 export * from "./intelligence.js";
 export * from "./integrations.js";
+export * from "./llm-extract.js";
