@@ -19,7 +19,7 @@
 | Demo job (synthetic data) → ledger + draft VAT + QA score | LOCAL, tested, traced in Langfuse | `local/demo_job.py` |
 | Dify categorise step | LOCAL, working (Agent app, streaming) | |
 | Crawl4AI research hook (gov.uk) | LOCAL, working | `local/research.py` |
-| Daytona sandboxed parsing | Code ready, **blocked**: Daytona org suspended ("Payment method required"), so it falls back to a local parser | |
+| Daytona sandboxed parsing | **WORKING** (25 Oct 2026 01:20): demo job parsed bank CSV in a Daytona sandbox, sandbox deleted after; local fallback kept | `local/common.py` |
 | Evals gate | LOCAL accuracy 1.000 (gate 0.8); CI runs offline at gate 0.6 | `evals/run_evals.py` |
 | CI (lint/typecheck/test/evals) | Workflow pushed; deploy workflow is manual only and needs GitHub secrets | `.github/workflows/autopilot-*.yml` |
 | Loops | Template specs only, nothing sent | `local/loops_templates/README.md` |
@@ -37,7 +37,6 @@ Existing Cloudflare items (xevrion-websites, xevrion-agent, app-stack on the ape
 - [ ] Choose an Open Banking (AIS) provider: TrueLayer / Yapily / GoCardless Bank Account Data / Plaid
 - [ ] Have a professional review the terms, privacy notice and customer DPA
 - [ ] Have an accountant verify every rate and rule in `packages/domain-uk-tax` (all marked unverified)
-- [ ] Fix Daytona billing or keep the local parser (synthetic data only until then)
 - [ ] Add GitHub repo secrets CLOUDFLARE_API_TOKEN and CLOUDFLARE_ACCOUNT_ID before using the deploy workflow
 - [ ] Decide whether app/docs/status should become public (currently behind your existing Access policy)
 
