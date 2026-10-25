@@ -48,15 +48,10 @@ def dify_categorise(lines):
     except Exception as e:
         print("dify categorise skipped:", type(e).__name__, str(e)[:120]); return None
 
-def daytona_parse(csv_text):
-    """Optional: parse untrusted CSV in a Daytona sandbox. Falls back to local parse (synthetic data only)."""
+def daytona_parse(csv_text, tenant="demo"):
+    """Parse untrusted CSV via the guarded Daytona sandbox (packages/sandbox). Returns (rows|None, how)."""
     if not E("DAYTONA_API_KEY"): return None, "no DAYTONA_API_KEY"
-    try:
-        from daytona import Daytona  # pip install daytona
-        d = Daytona(); sb = d.create()
-        try:
-            code = "import csv,io,json;print(json.dumps(list(csv.DictReader(io.StringIO(%r)))))" % csv_text
-            res = sb.process.code_run(code); return json.loads(res.result), "daytona"
-        finally: d.delete(sb)
-    except Exception as e:
-        return None, f"daytona fallback: {type(e).__name__}: {str(e)[:120]}"
+    import sys as _s; _s.path.insert(0, str(pathlib.Path(__file__).resolve().parents[1] / "packages"))
+    from sandbox.parser_job import parse
+    r = parse(csv_text.encode(), "bank.csv", tenant)
+    return (r["rows"], "daytona") if r["parser"] == "daytona" else (None, r.get("error") or "local")

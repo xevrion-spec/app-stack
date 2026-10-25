@@ -1,0 +1,13 @@
+{
+  "max_concurrent": 1,
+  "max_creates_per_day": 20,
+  "exec_timeout_s": 60,
+  "auto_stop_minutes": 5,
+  "auto_delete_minutes": 0,
+  "ephemeral": true,
+  "network_block_all": true,
+  "language": "python",
+  "janitor_max_age_minutes": 15,
+  "usage_file": "local/out/sandbox_usage.json",
+  "_notes": "auto_delete_minutes 0 = delete immediately when stopped. Smallest resources: default snapshot (Daytona default small class). Budget counter is a local file now; move to KV/D1 when the worker runs in the cloud."
+}

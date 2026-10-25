@@ -267,7 +267,24 @@ async def foundations(request: Request):
     if f.exists(): out["todos"] = [l.strip()[5:].strip() for l in f.read_text(encoding="utf-8").splitlines() if l.strip().startswith("- [ ]")]
     ev = ROOT / "repo" / "autopilot" / "evals" / "results" / "latest.json"
     if ev.exists(): out["last_eval"] = {k: v for k, v in json.loads(ev.read_text()).items() if k in ("accuracy", "threshold")}
+    su = ROOT / "repo" / "autopilot" / "local" / "out" / "sandbox_usage.json"
+    sc = ROOT / "repo" / "autopilot" / "packages" / "sandbox" / "sandbox.config.json"
+    try:
+        u = json.loads(su.read_text()) if su.exists() else {}
+        cfg = json.loads(sc.read_text()) if sc.exists() else {}
+        out["sandbox_usage"] = {"today": u.get("days", {}).get(datetime.date.today().isoformat(), 0), "daily_cap": cfg.get("max_creates_per_day"),
+                                "total_creates": u.get("total_creates", 0), "total_seconds": u.get("total_seconds", 0), "last": u.get("last")}
+    except Exception as e: out["sandbox_usage"] = {"error": str(e)}
     return out
+
+@r.post("/console/api/foundations/janitor")
+async def foundations_janitor(request: Request):
+    guard(request)
+    ap = ROOT / "repo" / "autopilot"
+    p = await asyncio.to_thread(subprocess.run, [str(ap / "local" / ".venv" / "Scripts" / "python.exe"), "packages/sandbox/janitor.py"],
+                                cwd=str(ap), capture_output=True, text=True, timeout=120)
+    try: return json.loads(p.stdout)
+    except Exception: return {"error": (p.stderr or p.stdout)[-500:]}
 
 @r.get("/console/foundations", response_class=HTMLResponse)
 def foundations_page(request: Request):
@@ -281,4 +298,5 @@ fetch('/console/api/foundations').then(r=>r.json()).then(d=>{let h=`<p>Domain: <
 h+='<h2>Hostnames</h2><table><tr><th>Host</th><th>Worker</th><th>HTTP</th></tr>'+d.hosts.map(x=>`<tr><td><a href="https://${x.host}" target=_blank>${x.host}</a></td><td>${x.worker||'-'}</td><td>${x.http}</td></tr>`).join('')+'</table>';
 h+='<h2>Cloudflare resources</h2><table>'+Object.entries(d.resources).map(([k,v])=>Object.entries(v).map(([n,ok])=>`<tr><td>${k}</td><td>${n}</td><td>${y(ok)}</td></tr>`).join('')).join('')+'</table>';
 h+='<h2>CI (foundation/autopilot-backoffice)</h2><table>'+(Array.isArray(d.ci)&&d.ci.length?d.ci.map(x=>`<tr><td>${x.name}</td><td>${x.status}</td><td>${x.conclusion||''}</td><td><a href="${x.url}" target=_blank>run</a></td></tr>`).join(''):'<tr><td>No runs yet</td></tr>')+'</table>';
+const su=d.sandbox_usage||{};h+=`<h2>Daytona sandboxes</h2><p>Today: <b>${su.today}</b> / cap ${su.daily_cap} &middot; total creates ${su.total_creates} &middot; total ${su.total_seconds}s</p><button onclick="this.disabled=true;fetch('/console/api/foundations/janitor',{method:'POST'}).then(r=>r.json()).then(j=>alert('Janitor: '+JSON.stringify(j.actions||j.error)+' | remaining: '+j.all_in_account))">Run janitor (delete stale sandboxes)</button>`;
 h+='<h2>Open TODOs (FOUNDATIONS.md)</h2><ul>'+d.todos.map(t=>`<li>${t.replace(/</g,'&lt;')}</li>`).join('')+'</ul>';o.innerHTML=h}).catch(e=>o.textContent='Error: '+e)</script>""")
