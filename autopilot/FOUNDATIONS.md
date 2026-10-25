@@ -39,8 +39,8 @@ Full status matrix: `docs/foundations-audit.md` (A-Z audit, 25 Oct 2026).
 - [ ] Choose an Open Banking (AIS) provider: TrueLayer / Yapily / GoCardless Bank Account Data / Plaid
 - [ ] Have a professional review the terms, privacy notice and customer DPA
 - [ ] Have an accountant verify every rate and rule in `packages/domain-uk-tax` (all marked unverified)
-- [ ] Add GitHub repo secrets CLOUDFLARE_API_TOKEN and CLOUDFLARE_ACCOUNT_ID before using the deploy workflow
-- [ ] Add a WAF rate-limit rule (or Zone WAF edit scope on the token)
+- [x] GitHub repo secrets CLOUDFLARE_API_TOKEN / CLOUDFLARE_ACCOUNT_ID set (25 Oct 2026); deploy workflow remains manual-only, not run
+- [x] Cloudflare rate-limit rule: per-IP 30 req/10s on api.xevrion.co.uk/v1/* (block 10s). Free plan allows only 1 rule, so the stricter upload limit stays in the Worker's KV limiter (upgrade plan for more rules)
 - [ ] Create the 4 Loops transactional templates in the Loops UI
 - [ ] Add a Coolify server (VPS, costs money) to host the Temporal worker
 - [ ] Decide whether app/docs/status should become public (currently behind your existing Access policy)

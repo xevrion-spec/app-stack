@@ -8,12 +8,12 @@ Legend: **Done**, **Local only**, **Blocked by Henry**, **Not started**
 | Cloudflare Workers api./app./docs./status. | Done (private) | Custom domains bound; 302 to Access | Henry: decide if app/docs/status go public (Access policy change) |
 | Cloudflare Access | Done (existing policy covers new hosts) | Existing Access apps unchanged | Dedicated Access app per host when customer auth lands |
 | Security headers | Done | Hono secureHeaders (API) + `_headers` (web) | Verify once public |
-| WAF rate-limit rule | Not started | Token can't write rulesets; KV limiter in place | Henry: add Zone WAF edit scope, or create the rule in the dashboard |
+| WAF rate-limit rule | Done | http_ratelimit rule: per-IP 30/10s on api./v1/* (Free plan max 1 rule; 2nd upload rule rejected: 'exceeded the maximum number of rules... 2 out of 1') | Stricter upload limit needs a paid plan; KV limiter covers it meanwhile |
 | console.xevrion.co.uk | Local only (by design) | localhost:8765/console | none |
 | Repo / monorepo | Done | branch foundation/autopilot-backoffice | none |
 | CI: lint/typecheck/test/evals | Done | autopilot-ci green | none |
 | CI: sandbox mocked tests | Done | autopilot-sandbox-tests workflow | none |
-| CI: deploy | Blocked by Henry | manual workflow, needs repo secrets | Henry: add CLOUDFLARE_API_TOKEN / CLOUDFLARE_ACCOUNT_ID secrets |
+| CI: deploy | Done (armed, manual-only) | Secrets set; workflow_dispatch only; never run | Run manually when ready to redeploy |
 | Pipeline (9 stages) | Local only | demo job end to end, QA 0.75, 5 exceptions | Connect queue to worker; real receipt OCR |
 | Evals gate | Done | accuracy 1.000 / gate 0.8 (Langfuse score) | Add a golden case per human correction |
 | Temporal worker | Local only | workflow ran via dev server; Docker Temporal stopped (RAM) | Host on Coolify/VPS (costs money: Henry) |
