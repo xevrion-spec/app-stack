@@ -28,8 +28,8 @@ nothing sends email, posts, submits to HMRC or connects to a bank. External prov
 | 19 | Document vault with retention policy; UK GDPR DSAR export, erasure (with statutory-retention holds), consent log, audit export | 4 | M | H | ✅ DSAR, erasure with holds, consent log, export (no document vault/R2 retention job) | V5 |
 | 20 | In-app notifications centre (from events; read/unread; preferences) | 4 | S | L | ✅ API (no web UI yet) | V5 |
 | 21 | Plans and entitlements (feature gates + quotas per plan) | 3 | S | L | ✅ features + seats (plan names/prices = Henry) | V5 |
-| 22 | “Ask your books” assistant grounded in the ledger with citations (tools over reports; LLM via Dify/FreeLLMAPI; deterministic fallback) | 5 | M | M | ⏳ | V6 |
-| 23 | Onboarding checklist and sample-data mode | 4 | S | L | ⏳ | V6 |
+| 22 | “Ask your books” assistant grounded in the ledger with citations (tools over reports; LLM via Dify/FreeLLMAPI; deterministic fallback) | 5 | M | M | ✅ | V6 |
+| 23 | Onboarding checklist and sample-data mode | 4 | S | L | ✅ | V6 |
 | 24 | Web: command palette, keyboard shortcuts, dark mode, i18n scaffold, accessibility polish | 3 | M | L | ⏳ | V7 |
 | 25 | Web: webhooks / API keys / automations UI; public API docs page | 3 | M | L | ⏳ | V7 |
 | 26 | Admin/ops console (tenants, jobs, DLQ, webhook health, usage) | 3 | M | M | ⏳ | V7 |

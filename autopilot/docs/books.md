@@ -39,3 +39,8 @@ Migration `0006_invoicing.sql` (additive). ADR 0017.
 - `POST /extract/text`: `TextReceiptExtractor` (deterministic: vendor, date, total, VAT including "VAT 20% £2.00", currency, number, confidence, `needsReview`).
 - `GET /mtd/obligations?taxYear`, `POST /mtd/quarterly-updates/preview`, `POST /mtd/quarterly-updates` (`confirm:true`, owner), `GET /mtd/submissions`. **Mock gateway only** (ADR 0018).
 - `BankFeed` interface + `MockBankFeed` (contract-tested; no routes or live provider yet).
+
+## Assistant and onboarding (V6, ADR 0021)
+- `POST /v1/assistant/ask` `{question, today?}` → `{intent, answer, figures, citations[], period, grounded, router, suggestions?}`. Owner/reviewer, `assistant` feature. Deterministic intents; optional LLM router maps intent only (mock only). Tax answers are UNVERIFIED.
+- `GET /v1/assistant/suggestions`.
+- `GET /v1/onboarding` (7-step checklist), `POST /v1/onboarding/sample-data` (owner, empty account only, 9 synthetic rows), `DELETE /v1/onboarding/sample-data` (removes sample rows and everything derived from them).
