@@ -2,12 +2,16 @@ import { createSdk, type Schemas } from "@xevrion/sdk";
 
 export type { Schemas };
 const PROD_HOST = "app.xevrion.co.uk";
-export const isProd = typeof location !== "undefined" && location.hostname === PROD_HOST;
-export const apiBase: string = import.meta.env.VITE_apiBase ?? (isProd ? "https://api.xevrion.co.uk" : "http://127.0.0.1:8787");
+const host = typeof location !== "undefined" ? location.hostname : "";
+export const isProd = host === PROD_HOST;
+/** Behind Cloudflare Access (production, or the TEST deploy on workers.dev): Access authenticates, never x-dev-user. */
+export const isHosted = isProd || host.endsWith(".workers.dev");
+/** The TEST deploy proxies /v1 same-origin (apps/web/staging-worker.ts), so its API base is "". */
+export const apiBase: string = import.meta.env.VITE_apiBase ?? (isProd ? "https://api.xevrion.co.uk" : isHosted ? "" : "http://127.0.0.1:8787");
 
 const DEV_KEY = "autopilot.devUser";
 export const devUser = {
-  get: () => (isProd ? null : localStorage.getItem(DEV_KEY)),
+  get: () => (isHosted ? null : localStorage.getItem(DEV_KEY)),
   set: (email: string | null) => (email ? localStorage.setItem(DEV_KEY, email) : localStorage.removeItem(DEV_KEY)),
 };
 

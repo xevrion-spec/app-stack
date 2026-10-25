@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from "react";
-import { ApiError, devUser, isProd, sdk, unwrap, type Schemas } from "./api";
+import { ApiError, devUser, isHosted, sdk, unwrap, type Schemas } from "./api";
 import { Exceptions } from "./pages/Exceptions";
 import { Invoices } from "./pages/Invoices";
 import { Jobs } from "./pages/Jobs";
@@ -66,7 +66,7 @@ export function App() {
   useEffect(() => applyTheme(theme), [theme]);
 
   const refresh = useCallback(async () => {
-    if (!isProd && !devUser.get()) return setSession({ state: "signed_out" });
+    if (!isHosted && !devUser.get()) return setSession({ state: "signed_out" });
     try {
       setSession({ state: "ready", me: unwrap(await sdk().GET("/v1/me")) });
     } catch (e) {
@@ -167,7 +167,7 @@ export function App() {
         {session.state === "ready" && !portal ? (
           <span className="who">
             {session.me.email} · {session.me.role}
-            {!isProd ? (
+            {!isHosted ? (
               <button
                 type="button"
                 className="link"

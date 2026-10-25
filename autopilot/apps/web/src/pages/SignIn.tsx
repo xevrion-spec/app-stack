@@ -1,11 +1,11 @@
 import { useState } from "react";
-import { devUser, isProd, sdk, unwrap } from "../api";
+import { devUser, isHosted, sdk, unwrap } from "../api";
 import { ErrorNote, Page } from "../ui";
 
 /** Production: Cloudflare Access protects the app, so an unauthenticated visitor only sees this if the API rejects them. */
 export function SignIn({ onSignedIn }: { onSignedIn: () => void }) {
   const [email, setEmail] = useState("demo.owner@example.test");
-  if (isProd)
+  if (isHosted)
     return (
       <Page title="Sign in">
         <div className="card stack">
