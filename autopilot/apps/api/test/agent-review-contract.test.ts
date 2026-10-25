@@ -80,6 +80,10 @@ describe("agent review API contract (OpenAPI)", () => {
     await s.call("GET", "/v1/agent-review/receipt-keys", { headers: bearer });
     const c = (await s.call("POST", "/v1/agent-reviews", { headers: bearer, body: { action: "x.y", payload: {} } })).json;
     await s.call("POST", `/v1/agent-reviews/${c.id}/cancel`, { headers: bearer, body: {} });
+    await s.call("PUT", `/v1/review-projects/${p.id}/retention`, { user: A, body: { retentionDays: 90 } });
+    await s.call("POST", `/v1/agent-reviews/${c.id}/legal-hold`, { user: A, body: { reason: "synthetic hold" } });
+    await s.call("DELETE", `/v1/agent-reviews/${c.id}/legal-hold`, { user: A });
+    await s.call("POST", `/v1/agent-reviews/${c.id}/redact`, { user: A });
     expect(s.problems).toEqual([]);
     // Coverage of the contract itself: every documented agent-review operation was exercised (stream and export are text, checked below).
     const documented = Object.entries(spec.paths)

@@ -360,7 +360,7 @@ const Decision = z.object({
   payloadVersion: z.number(),
   createdAt: z.string(),
 });
-const ReviewOut = z
+export const ReviewOut = z
   .object({
     id: z.string(),
     projectId: z.string(),
@@ -390,6 +390,8 @@ const ReviewOut = z
     version: z.number(),
     createdAt: z.string(),
     updatedAt: z.string(),
+    legalHold: z.boolean().openapi({ description: "Under legal hold: retention will not redact it" }),
+    redactedAt: z.string().nullable().openapi({ description: "When retention or erasure removed payload/context (hashes stay in the audit chain)" }),
     decisions: z.array(Decision).optional(),
   })
   .openapi("ReviewRequest");

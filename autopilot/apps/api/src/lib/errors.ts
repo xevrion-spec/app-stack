@@ -1,5 +1,6 @@
 export type ErrorCode =
   | "ip_not_allowed"
+  | "legal_hold"
   | "policy_violation"
   | "no_membership"
   | "plan_required"

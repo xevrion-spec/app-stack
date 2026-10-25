@@ -6,7 +6,7 @@ import { canonicalJson } from "./canonical.js";
  * Entries carry hashes of payloads, not payloads, so the chain can be exported to a SIEM without leaking content.
  */
 export const GENESIS = "0".repeat(64);
-export const LEDGER_KINDS = ["requested", "decided", "escalated", "expired", "cancelled"] as const;
+export const LEDGER_KINDS = ["requested", "decided", "escalated", "expired", "cancelled", "redacted"] as const;
 export type LedgerKind = (typeof LEDGER_KINDS)[number];
 
 export interface LedgerEntry {

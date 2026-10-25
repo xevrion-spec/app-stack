@@ -52,9 +52,11 @@ export type RequestRow = {
   callback_url: string | null;
   chain_seq: number;
   chain_head: string | null;
+  legal_hold_at: string | null;
+  redacted_at: string | null;
 };
 export const COLS =
-  "id, project_id, action, payload_json, current_payload_json, context_json, risk, confidence, status, required_approvals, snapshot_json, requester, external_id, tags_json, request_sha, deadline_at, decided_at, version, created_at, updated_at, policy_version, policy_rule_id, route_outcome, review_group, escalate_at, escalate_to_group, min_approvals, guardrails_json, callback_url, chain_seq, chain_head";
+  "id, project_id, action, payload_json, current_payload_json, context_json, risk, confidence, status, required_approvals, snapshot_json, requester, external_id, tags_json, request_sha, deadline_at, decided_at, version, created_at, updated_at, policy_version, policy_rule_id, route_outcome, review_group, escalate_at, escalate_to_group, min_approvals, guardrails_json, callback_url, chain_seq, chain_head, legal_hold_at, redacted_at";
 export type DecisionRow = { id: string; reviewer: string; decision: R.Decision; reason: string | null; payload_version: number; created_at: string };
 
 /** The group that may decide right now: the escalation group once escalated, else the routed group (null = anyone with the role). */
@@ -91,6 +93,8 @@ export function reviewOut(r: RequestRow, decisions?: DecisionRow[]) {
     version: r.version,
     createdAt: r.created_at,
     updatedAt: r.updated_at,
+    legalHold: !!r.legal_hold_at,
+    redactedAt: r.redacted_at,
     ...(decisions
       ? {
           decisions: decisions.map((d) => ({
@@ -184,6 +188,8 @@ function buildRow({ id, projectId, actor, body, snap, routing, policyVersion, de
     callback_url: body.callbackUrl ?? null,
     chain_seq: 0,
     chain_head: null,
+    legal_hold_at: null,
+    redacted_at: null,
   };
 }
 

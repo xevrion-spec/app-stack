@@ -3,6 +3,7 @@
  * and an NDJSON ledger export for SIEM ingestion. Read-only: nothing here changes a request.
  */
 import { OpenAPIHono, z } from "@hono/zod-openapi";
+import * as R from "@xevrion/agent-review";
 import type { AppEnv } from "../env.js";
 import { def, IdParam, validationHook } from "../lib/route.js";
 import { requireRole } from "../lib/auth.js";
@@ -17,7 +18,7 @@ const Entry = z
   .object({
     requestId: z.string(),
     seq: z.number().int(),
-    kind: z.enum(["requested", "decided", "escalated", "expired", "cancelled"]),
+    kind: z.enum(R.LEDGER_KINDS),
     actor: z.string(),
     at: z.string(),
     data: z.record(z.string(), z.unknown()),
