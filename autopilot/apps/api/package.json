@@ -14,6 +14,7 @@
     "@hono/zod-openapi": "^1.6.3",
     "@xevrion/books": "*",
     "@xevrion/pipeline": "*",
+    "@xevrion/agent-review": "*",
     "@xevrion/platform": "*",
     "hono": "^4.13.13",
     "jose": "^5.10.0",

@@ -145,6 +145,10 @@ const SCOPE_RULES: [RegExp, "GET" | "WRITE" | "*", Scope][] = [
   [/^\/v1\/webhooks(\/|$)/, "*", "webhooks:write"],
   [/^\/v1\/(events|activity|realtime)(\/|$)/, "GET", "events:read"],
   [/^\/v1\/(me|tenant|usage|flags)$/, "GET", "events:read"],
+  [/^\/v1\/agent-reviews\/[^/]+\/decisions$/, "WRITE", "reviews:decide"],
+  [/^\/v1\/agent-reviews(\/|$)/, "GET", "reviews:read"],
+  [/^\/v1\/agent-reviews(\/|$)/, "WRITE", "reviews:write"],
+  [/^\/v1\/review-projects$/, "GET", "reviews:read"],
 ];
 export function scopeFor(method: string, path: string): Scope | null {
   const kind = method === "GET" || method === "HEAD" ? "GET" : "WRITE";

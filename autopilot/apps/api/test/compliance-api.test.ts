@@ -44,10 +44,18 @@ describe("extraction with a configured LLM (FreeLLMAPI-compatible, stubbed)", ()
       Response.json({ choices: [{ message: { content: '{"vendor":"Demo Cafe","date":"2026-08-01","totalPence":300,"vatPence":null}' } }] }),
     );
     vi.stubGlobal("fetch", fetchMock);
-    const confident = await call("POST", "/v1/extract/text", { user: A, raw: "Cafe Nero\n01/08/2026\nVAT £0.50\nTotal £3.00", headers: { "content-type": "text/plain" } });
+    const confident = await call("POST", "/v1/extract/text", {
+      user: A,
+      raw: "Cafe Nero\n01/08/2026\nVAT £0.50\nTotal £3.00",
+      headers: { "content-type": "text/plain" },
+    });
     expect(confident.json).toMatchObject({ extractor: "text-rules+llm", totalPence: 300 });
     expect(fetchMock).not.toHaveBeenCalled();
-    const messy = await call("POST", "/v1/extract/text", { user: A, raw: "Demo Cafe\nthree pounds, first of August", headers: { "content-type": "text/plain" } });
+    const messy = await call("POST", "/v1/extract/text", {
+      user: A,
+      raw: "Demo Cafe\nthree pounds, first of August",
+      headers: { "content-type": "text/plain" },
+    });
     expect(messy.json).toMatchObject({ extractor: "text-rules+llm", totalPence: 300, date: "2026-08-01", needsReview: true });
     expect(messy.json.confidence).toBeLessThanOrEqual(0.8);
     expect(fetchMock).toHaveBeenCalledTimes(1);

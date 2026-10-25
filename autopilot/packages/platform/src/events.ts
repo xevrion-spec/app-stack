@@ -136,6 +136,44 @@ export const EVENT_CATALOG = {
     description: "A ledger integration sync imported transactions for a client (mock adapters until providers are live)",
     schema: z.object({ provider: z.string(), mode: z.enum(["mock", "live"]), jobId: id.nullable(), inserted: z.number(), duplicates: z.number() }),
   },
+  "review.requested": {
+    version: 1,
+    description: "An agent asked for a human decision (agent review layer)",
+    schema: z.object({
+      requestId: id,
+      projectId: id,
+      action: z.string(),
+      risk: z.string(),
+      requiredApprovals: z.number().int(),
+      deadlineAt: z.string(),
+      externalId: z.string().nullable(),
+    }),
+  },
+  "review.decision_recorded": {
+    version: 1,
+    description: "A reviewer approved, rejected, edited or escalated a review request (may not be final under four-eyes)",
+    schema: z.object({
+      requestId: id,
+      projectId: id,
+      decision: z.string(),
+      reviewer: z.string(),
+      status: z.string(),
+      payloadVersion: z.number().int(),
+      externalId: z.string().nullable(),
+    }),
+  },
+  "review.completed": {
+    version: 1,
+    description: "A review request reached a final status; payload is the version that was approved (if approved)",
+    schema: z.object({
+      requestId: id,
+      projectId: id,
+      status: z.enum(["approved", "rejected", "expired", "cancelled"]),
+      payload: z.record(z.string(), z.unknown()).nullable(),
+      payloadVersion: z.number().int(),
+      externalId: z.string().nullable(),
+    }),
+  },
 } as const;
 
 export type EventType = keyof typeof EVENT_CATALOG;

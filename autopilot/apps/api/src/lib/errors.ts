@@ -16,7 +16,12 @@ export type ErrorCode =
   | "insufficient_scope"
   | "not_implemented"
   | "maintenance"
-  | "internal";
+  | "internal"
+  | "already_final"
+  | "self_approval"
+  | "duplicate_decision"
+  | "already_escalated"
+  | "not_requester";
 
 export class AppError extends Error {
   constructor(

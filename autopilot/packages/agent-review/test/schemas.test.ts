@@ -16,3 +16,17 @@ describe("wire schemas", () => {
     expect(DecideReviewRequest.safeParse({ decision: "approve" }).success).toBe(true);
   });
 });
+
+import { canonicalJson } from "../src/index.js";
+import fc from "fast-check";
+describe("canonicalJson", () => {
+  it("is key-order independent, drops undefined, and round-trips", () => {
+    expect(canonicalJson({ b: 1, a: [{ d: 2, c: null }], u: undefined })).toBe('{"a":[{"c":null,"d":2}],"b":1}');
+    expect(canonicalJson(undefined)).toBe("null");
+    fc.assert(
+      fc.property(fc.jsonValue(), (v) => {
+        expect(JSON.parse(canonicalJson(v))).toEqual(JSON.parse(JSON.stringify(v)));
+      }),
+    );
+  });
+});

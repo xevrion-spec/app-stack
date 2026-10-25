@@ -762,6 +762,7 @@ const KeyOut = z
     expires_at: z.string().nullable(),
     revoked_at: z.string().nullable(),
     key: z.string().optional(),
+    project_id: z.string().nullable().openapi({ description: "Agent review project the key is bound to (null = whole tenant)" }),
   })
   .openapi("ApiKey");
 type KRow = {
@@ -773,10 +774,17 @@ type KRow = {
   last_used_at: string | null;
   expires_at: string | null;
   revoked_at: string | null;
+  project_id: string | null;
 };
-const K_COLS = "id, prefix, name, scopes_json, created_at, last_used_at, expires_at, revoked_at";
+const K_COLS = "id, prefix, name, scopes_json, created_at, last_used_at, expires_at, revoked_at, project_id";
 const kOut = ({ scopes_json, ...r }: KRow) => ({ ...r, scopes: JSON.parse(scopes_json) as string[] });
-const KeyIn = z.object({ name: z.string().min(1).max(60), scopes: z.array(z.enum(SCOPES)).min(1), expiresInDays: z.number().int().min(1).max(730).optional() });
+const KeyIn = z.object({
+  name: z.string().min(1).max(60),
+  scopes: z.array(z.enum(SCOPES)).min(1),
+  expiresInDays: z.number().int().min(1).max(730).optional(),
+  /** Bind the key to one agent review project: it can then only see and create requests there. */
+  projectId: z.string().max(64).optional(),
+});
 platform.use("/api-keys", owner);
 platform.use("/api-keys/*", owner);
 async function issueKey(c: C, b: z.infer<typeof KeyIn>, replaces?: string) {
@@ -784,9 +792,11 @@ async function issueKey(c: C, b: z.infer<typeof KeyIn>, replaces?: string) {
   const k = await generateApiKey(c.env.ENVIRONMENT === "production" ? "live" : "test");
   const id = newId();
   const exp = b.expiresInDays ? new Date(Date.now() + b.expiresInDays * 86400_000).toISOString() : null;
+  if (b.projectId && !(await db.first("select 1 from review_projects where tenant_id = ?1 and id = ?2 and archived_at is null", b.projectId)))
+    throw notFound("Project");
   const stmts = [
     db.stmt(
-      "insert into api_keys (tenant_id, id, prefix, key_hash, name, scopes_json, created_by, expires_at) values (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8)",
+      "insert into api_keys (tenant_id, id, prefix, key_hash, name, scopes_json, created_by, expires_at, project_id) values (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9)",
       id,
       k.prefix,
       k.hash,
@@ -794,8 +804,14 @@ async function issueKey(c: C, b: z.infer<typeof KeyIn>, replaces?: string) {
       JSON.stringify(b.scopes),
       actor(c),
       exp,
+      b.projectId ?? null,
     ),
-    auditStmt(db, actor(c), replaces ? "api_key.rotated" : "api_key.created", id, { name: b.name, scopes: b.scopes, prefix: k.prefix }),
+    auditStmt(db, actor(c), replaces ? "api_key.rotated" : "api_key.created", id, {
+      name: b.name,
+      scopes: b.scopes,
+      prefix: k.prefix,
+      projectId: b.projectId ?? null,
+    }),
   ];
   if (replaces)
     // grace window: old key keeps working for 24h so deploys can roll over
@@ -835,7 +851,10 @@ platform.openapi(
     const db = scope(c);
     const old = await db.first<KRow>(`select ${K_COLS} from api_keys where tenant_id = ?1 and id = ?2 and revoked_at is null`, c.req.valid("param").id);
     if (!old) throw notFound("API key");
-    return c.json(await issueKey(c, { name: old.name, scopes: JSON.parse(old.scopes_json) }, old.id), 201);
+    return c.json(
+      await issueKey(c, { name: old.name, scopes: JSON.parse(old.scopes_json), ...(old.project_id ? { projectId: old.project_id } : {}) }, old.id),
+      201,
+    );
   },
 );
 platform.openapi(
