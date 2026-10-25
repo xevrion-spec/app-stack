@@ -37,7 +37,7 @@ A cron sweep republishes anything not dispatched within 60 s, so a crash between
 - Signature: `Autopilot-Signature: t=<unix>,v1=<hex HMAC-SHA256(secret, "<t>.<raw body>")>`; also `Autopilot-Event-Id`,
   `Autopilot-Event-Type`. During `rotate-secret` both old and new secrets sign (`v1=…,v1=…`) for 24 h.
 - Delivery: 10 s timeout, retries on network errors/408/429/5xx with exponential backoff + full jitter (30 s base, 6 h cap, 8 attempts),
-  then `dead`. Endpoints auto-disable after 20 consecutive failures spanning 72 h. Full delivery log (status, attempt, response status, error, latency, next attempt); `POST …/deliveries/{id}/replay` and `POST …/test`.
+  then `dead`. Endpoints auto-disable after 20 consecutive failures, or after ≥3 consecutive failures spanning 72 h. Full delivery log (status, attempt, response status, error, latency, next attempt); `POST …/deliveries/{id}/replay` and `POST …/test`.
 - Each event is delivered at most once per endpoint (unique `(endpoint_id, event_id)`), even with duplicate queue messages.
 
 Verify in Node (see `examples/verify-webhook.mjs`):

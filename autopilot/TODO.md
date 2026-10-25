@@ -1,5 +1,5 @@
 # Autopilot TODO (resume point)
-Branch: feature/quality-1000. Constraints: synthetic data, no deploys, no emails/posts, no secrets, no PR, never main.
+Branch: feature/value-max (from feature/quality-1000). Roadmap + status: docs/value-roadmap.md. Constraints: synthetic data, no deploys, no emails/posts, no secrets, no PR, never main.
 
 ## Done (this commit)
 - A: 1,612 tests (unit/property/integration/RTL/chaos/migration/perf 10k); coverage 93.9/86.0 gated 90/85; Stryker 89.3% (break 70);
@@ -10,9 +10,7 @@ Branch: feature/quality-1000. Constraints: synthetic data, no deploys, no emails
 - Upgrades: zod 4 + @hono/zod-openapi 1.x (fixes high advisory), vitest 4, vite 7, wrangler 4.152, undici override.
 
 ## Remaining
-1. Run Playwright e2e + axe on the PC/CI after the vite 7 / zod 4 upgrades (not re-run this session).
-2. Lighthouse CI first run in GitHub Actions; tune thresholds if needed.
-3. Raise mutation score on webhooks.ts (80.5) and ledger.ts (84.8) to ≥ 85.
+(done on feature/value-max M0: Playwright 10/10 after upgrades; Lighthouse 100 perf / 100 a11y / 96 best practices on all pages; mutation ledger 91.9, webhooks 93.0)
 4. Pay down complexity waivers (docs/quality.md list), starting with pipeline runStages.
 5. Regex category rules run on normalised text (literal `\.` never matches) — decide: also match raw description.
 6. JWT tamper table test; SDK/workflows DLQ extra tests.

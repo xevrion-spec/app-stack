@@ -12,3 +12,5 @@ node_modules/
 .local/
 .stryker-tmp/
 reports/
+lighthouse/
+.lighthouseci/
