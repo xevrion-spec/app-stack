@@ -2,10 +2,30 @@
   "name": "@xevrion/web",
   "private": true,
   "scripts": {
-    "dev": "wrangler dev",
-    "deploy": "wrangler deploy"
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview",
+    "typecheck": "tsc --noEmit -p .",
+    "e2e": "playwright test",
+    "wrangler:dev": "wrangler dev"
   },
   "devDependencies": {
+    "@axe-core/playwright": "^4.13.0",
+    "@playwright/test": "^1.64.1",
+    "@testing-library/dom": "^10.4.2",
+    "@testing-library/react": "^16.3.3",
+    "@types/react": "^18.3.31",
+    "@types/react-dom": "^18.3.7",
+    "@vitejs/plugin-react": "^4.7.0",
+    "jsdom": "^25.0.1",
+    "typescript": "^5.9.3",
+    "vite": "^5.4.21",
     "wrangler": "^4.0.0"
-  }
+  },
+  "dependencies": {
+    "@xevrion/sdk": "*",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1"
+  },
+  "type": "module"
 }

@@ -1,7 +1,7 @@
 import { createRemoteJWKSet, jwtVerify, type JWTVerifyGetKey } from "jose";
 import type { MiddlewareHandler } from "hono";
 import type { AppEnv, Principal, Role } from "../env.js";
-import { forbidden, unauthenticated } from "./errors.js";
+import { AppError, forbidden, unauthenticated } from "./errors.js";
 
 const jwksCache = new Map<string, JWTVerifyGetKey>();
 function jwks(team: string): JWTVerifyGetKey {
@@ -58,7 +58,7 @@ export const principal: MiddlewareHandler<AppEnv> = async (c, next) => {
     (await c.env.DB.prepare("select id, tenant_id, role from users where email = ?1").bind(email).all<{ id: string; tenant_id: string; role: string }>())
       .results ?? [];
   const row = wanted ? rows.find((r) => r.tenant_id === wanted) : rows[0];
-  if (!row) throw forbidden(rows.length ? "Not a member of that tenant" : "No tenant membership for this user");
+  if (!row) throw rows.length ? forbidden("Not a member of that tenant") : new AppError(403, "no_membership", "No tenant membership for this user");
   const p: Principal = { userId: row.id, tenantId: row.tenant_id, email, role: (row.role === "owner" ? "owner" : "reviewer") as Role };
   c.set("principal", p);
   return next();

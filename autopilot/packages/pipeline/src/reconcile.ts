@@ -49,7 +49,25 @@ export function reconcile(lines: BankLine[], receipts: Receipt[], invoices: Invo
       if (score >= opt.minScore) cands.push({ lineId: l.id, kind, refId, score: Math.round(score * 1000) / 1000 });
     };
     receipts.forEach((r) => consider("receipt", r.id, r.totalPence, r.date, r.merchant, -1));
-    invoices.forEach((i) => consider("invoice", i.id, i.grossPence, i.issueDate, i.customerName + " " + i.number, 1));
+    // Invoices are paid after issue, often weeks later: accept receipts from 2 days before issue to 60 days after due date.
+    // A quoted invoice number in the bank reference is strong evidence.
+    for (const i of invoices) {
+      if (l.amountPence <= 0) continue;
+      const diff = Math.abs(amt - i.grossPence);
+      if (diff > opt.amountTolerancePence) continue;
+      const after = (Date.parse(l.date) - Date.parse(i.issueDate)) / 86_400_000;
+      const lateBy = (Date.parse(l.date) - Date.parse(i.dueDate ?? i.issueDate)) / 86_400_000;
+      if (after < -2 || lateBy > 60) continue;
+      const quotesNumber = new RegExp(`(^|\\D)${i.number.replace(/\D/g, "").replace(/^0+/, "") || "#"}(\\D|$)`).test(l.description.replace(/[^0-9 ]/g, " "))
+        ? 1
+        : 0;
+      const score =
+        0.5 * (1 - diff / (opt.amountTolerancePence + 1)) +
+        0.15 * (lateBy <= 0 ? 1 : 1 - lateBy / 61) +
+        0.2 * quotesNumber +
+        0.15 * similarity(l.description, i.customerName);
+      if (score >= opt.minScore) cands.push({ lineId: l.id, kind: "invoice", refId: i.id, score: Math.round(score * 1000) / 1000 });
+    }
   }
   cands.sort((a, b) => b.score - a.score);
   const usedL = new Set<string>();

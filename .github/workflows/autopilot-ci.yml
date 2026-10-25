@@ -20,6 +20,22 @@ jobs:
         run: npm run coverage
       - name: OpenAPI + SDK drift gate
         run: npm run openapi:check
+  e2e:
+    runs-on: ubuntu-latest
+    defaults: { run: { working-directory: autopilot } }
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: 22, cache: npm, cache-dependency-path: autopilot/package-lock.json }
+      - run: npm ci
+      - run: npx playwright install --with-deps chromium
+      - name: Web build
+        run: npm run build -w apps/web
+      - name: Playwright smoke + axe (local API on SQLite, synthetic data)
+        run: npm run e2e -w apps/web
+      - if: failure()
+        uses: actions/upload-artifact@v4
+        with: { name: playwright-traces, path: autopilot/apps/web/test-results, retention-days: 7 }
   evals-gate:
     runs-on: ubuntu-latest
     defaults: { run: { working-directory: autopilot } }

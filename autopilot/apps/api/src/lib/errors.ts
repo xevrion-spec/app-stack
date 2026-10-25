@@ -1,4 +1,5 @@
 export type ErrorCode =
+  | "no_membership"
   | "bad_request"
   | "validation_failed"
   | "unauthenticated"

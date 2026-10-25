@@ -1,6 +1,7 @@
 {
   "name": "xevrion-autopilot",
   "private": true,
+  "type": "module",
   "workspaces": [
     "apps/*",
     "packages/*"

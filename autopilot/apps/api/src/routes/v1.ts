@@ -1,4 +1,5 @@
 import { OpenAPIHono, z } from "@hono/zod-openapi";
+import { renderInvoicePdf } from "../services/invoice-pdf.js";
 import { computeVatReturn, computeSaSummary, vatOnNet, VAT_RATES, type VatInputLine } from "@xevrion/pipeline";
 import type { Context } from "hono";
 import type { AppEnv } from "../env.js";
@@ -7,7 +8,7 @@ import { def, IdParam } from "../lib/route.js";
 import { TenantDb, newId, encodeCursor, decodeCursor } from "../lib/db.js";
 import { auditStmt } from "../lib/audit.js";
 import { requireRole } from "../lib/auth.js";
-import { badRequest, conflict, notFound, notImplemented, tooLarge, unsupported } from "../lib/errors.js";
+import { badRequest, conflict, notFound, tooLarge, unsupported } from "../lib/errors.js";
 import { parseBankCsv, sha256Hex } from "../services/csv.js";
 import { postTransactionJournal, categoryKind } from "../services/ledger.js";
 
@@ -543,12 +544,55 @@ v1.openapi(
     );
   },
 );
-v1.openapi(
-  def({ method: "get", path: "/invoices/{id}/pdf", tag: "Invoices", summary: "Invoice PDF (not implemented yet)", params: IdParam, response: z.any() }),
-  () => {
-    throw notImplemented("Invoice PDF rendering is not built yet");
+v1.openAPIRegistry.registerPath({
+  method: "get",
+  path: "/invoices/{id}/pdf",
+  tags: ["Invoices"],
+  summary: "Render the invoice as PDF (A4, pdf-lib)",
+  security: [{ accessJwt: [] }],
+  request: { params: IdParam },
+  responses: {
+    200: { description: "PDF", content: { "application/pdf": { schema: z.string().openapi({ format: "binary" }) } } },
+    404: { description: "Not found" },
   },
-);
+});
+v1.get("/invoices/:id/pdf", async (c) => {
+  const db = scope(c);
+  const id = c.req.param("id");
+  const inv = await db.first<{
+    number: string;
+    customer_name: string;
+    issue_date: string;
+    due_date: string;
+    status: string;
+    net_pence: number;
+    vat_pence: number;
+    gross_pence: number;
+    lines_json: string;
+  }>(
+    "select number, customer_name, issue_date, due_date, status, net_pence, vat_pence, gross_pence, lines_json from invoices where tenant_id = ?1 and id = ?2",
+    id,
+  );
+  if (!inv) throw notFound("Invoice not found");
+  const t = await db.tenantRowStmt("name").first<{ name: string }>();
+  const pdf = await renderInvoicePdf({
+    sellerName: t?.name ?? "",
+    number: inv.number,
+    issueDate: inv.issue_date,
+    dueDate: inv.due_date,
+    customerName: inv.customer_name,
+    status: inv.status,
+    lines: JSON.parse(inv.lines_json),
+    netPence: inv.net_pence,
+    vatPence: inv.vat_pence,
+    grossPence: inv.gross_pence,
+  });
+  return c.body(pdf as Uint8Array<ArrayBuffer>, 200, {
+    "content-type": "application/pdf",
+    "content-disposition": `inline; filename="invoice-${inv.number.replace(/[^\w.-]/g, "_")}.pdf"`,
+    "cache-control": "private, no-store",
+  });
+});
 
 // ---------- VAT & SA ----------
 async function vatLines(db: TenantDb): Promise<VatInputLine[]> {
@@ -579,6 +623,34 @@ async function vatLines(db: TenantDb): Promise<VatInputLine[]> {
   }
   return out;
 }
+
+/**
+ * Accrual basis (standard and flat-rate schemes): sales VAT follows the invoice tax point (issue date), so issued
+ * invoices become income lines and the bank receipts that paid them are dropped to avoid double counting.
+ * Cash accounting keeps bank-dated receipts only. Bank income with no invoice (e.g. card payouts) stays in both.
+ */
+async function accrualAdjust(db: TenantDb, lines: VatInputLine[]): Promise<VatInputLine[]> {
+  const invs = await db.all<{ id: string; issue_date: string; lines_json: string; paid_transaction_id: string | null }>(
+    "select id, issue_date, lines_json, paid_transaction_id from invoices where tenant_id = ?1 and status in ('sent','paid')",
+  );
+  const paidBy = new Set(invs.map((i) => i.paid_transaction_id).filter((x): x is string => !!x));
+  const out = lines.filter((l) => !(l.kind === "income" && paidBy.has(l.id)));
+  for (const inv of invs) {
+    const ls = JSON.parse(inv.lines_json) as { quantity: number; unitPence: number; vatRateCode: string }[];
+    ls.forEach((l, i) => {
+      const net = Math.round(l.quantity * l.unitPence);
+      const rate = VAT_RATES[l.vatRateCode] ?? null;
+      out.push({
+        id: `${inv.id}#${i}`,
+        date: inv.issue_date,
+        grossPence: net + (rate == null ? 0 : vatOnNet(net, rate)),
+        kind: "income",
+        vatRateCode: l.vatRateCode,
+      });
+    });
+  }
+  return out;
+}
 v1.use("/vat/*", reviewer);
 v1.openapi(
   def({
@@ -600,7 +672,8 @@ v1.openapi(
     const scheme = (b.scheme ?? t?.vat_scheme ?? "standard") as "standard" | "cash" | "flat_rate";
     let draft;
     try {
-      draft = computeVatReturn(await vatLines(db), {
+      const bank = await vatLines(db);
+      draft = computeVatReturn(scheme === "cash" ? bank : await accrualAdjust(db, bank), {
         scheme,
         periodStart: b.periodStart,
         periodEnd: b.periodEnd,
@@ -609,6 +682,11 @@ v1.openapi(
     } catch (e) {
       throw badRequest((e as Error).message);
     }
+    draft.warnings.push(
+      scheme === "cash"
+        ? "Cash accounting: sales dated by bank receipt."
+        : "Accrual: sales dated by invoice issue date; receipts matched to invoices excluded.",
+    );
     if (!t?.vat_registered) draft.warnings.push("Tenant is not marked VAT registered.");
     const id = newId();
     await db.batch([

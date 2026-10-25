@@ -1513,7 +1513,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** Invoice PDF (not implemented yet) */
+        /** Render the invoice as PDF (A4, pdf-lib) */
         get: {
             parameters: {
                 query?: never;
@@ -1525,40 +1525,13 @@ export interface paths {
             };
             requestBody?: never;
             responses: {
-                /** @description OK */
+                /** @description PDF */
                 200: {
                     headers: {
                         [name: string]: unknown;
                     };
                     content: {
-                        "application/json": unknown;
-                    };
-                };
-                /** @description Bad request */
-                400: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/json": components["schemas"]["Error"];
-                    };
-                };
-                /** @description Unauthenticated */
-                401: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/json": components["schemas"]["Error"];
-                    };
-                };
-                /** @description Forbidden */
-                403: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/json": components["schemas"]["Error"];
+                        "application/pdf": string;
                     };
                 };
                 /** @description Not found */
@@ -1566,18 +1539,7 @@ export interface paths {
                     headers: {
                         [name: string]: unknown;
                     };
-                    content: {
-                        "application/json": components["schemas"]["Error"];
-                    };
-                };
-                /** @description Conflict */
-                409: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/json": components["schemas"]["Error"];
-                    };
+                    content?: never;
                 };
             };
         };

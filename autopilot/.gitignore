@@ -9,3 +9,4 @@ local/out/
 coverage/
 .wrangler/
 node_modules/
+.local/

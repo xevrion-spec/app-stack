@@ -120,18 +120,32 @@ export async function runPipeline(env: Env, tenantId: string, jobId: string, llm
       return [];
     }
   });
-  const invoices: InvoiceRef[] = (
-    await db.all<{ id: string; number: string; customer_name: string; gross_pence: number; issue_date: string }>(
-      "select id, number, customer_name, gross_pence, issue_date from invoices where tenant_id = ?1 and status = 'sent'",
-    )
-  ).map((i) => ({
+  const invRows = await db.all<{
+    id: string;
+    number: string;
+    customer_name: string;
+    gross_pence: number;
+    vat_pence: number;
+    issue_date: string;
+    due_date: string;
+  }>("select id, number, customer_name, gross_pence, vat_pence, issue_date, due_date from invoices where tenant_id = ?1 and status = 'sent'");
+  const invoices: InvoiceRef[] = invRows.map((i) => ({
     id: i.id,
     number: i.number,
     customerName: i.customer_name,
     grossPence: i.gross_pence,
     issueDate: i.issue_date,
+    dueDate: i.due_date,
   }));
+  const invVat = new Map(invRows.map((i) => [i.id, i.vat_pence]));
   const matches = reconcile(lines, receipts, invoices);
+  // A receipt matched to one of our invoices is a sale: it overrides the categoriser and clears "unknown category".
+  for (const m of matches.filter((x) => x.kind === "invoice")) {
+    const c = cat.items.find((i) => i.lineId === m.lineId);
+    if (c) Object.assign(c, { categoryCode: "4000", vatRateCode: "STD", confidence: Math.max(c.confidence, m.score), method: "invoice_match" });
+    for (let k = exceptions.length - 1; k >= 0; k--)
+      if (exceptions[k]!.subjectId === m.lineId && exceptions[k]!.reasonCode === "UNKNOWN_CATEGORY") exceptions.splice(k, 1);
+  }
   const rcptById = new Map(receipts.map((r) => [r.id, r]));
   if (await begin(db, jobId, "reconcile")) await db.batch([eventStmt(db, jobId, "reconcile", "done", { matches: matches.length })]);
 
@@ -152,6 +166,7 @@ export async function runPipeline(env: Env, tenantId: string, jobId: string, llm
     const m = matches.find((x) => x.lineId === t.id);
     let vat = 0;
     if (m?.kind === "receipt") vat = rcptById.get(m.refId)?.vatPence ?? 0;
+    else if (m?.kind === "invoice") vat = invVat.get(m.refId) ?? 0;
     else if (t.amount_pence > 0 && c.categoryCode === "4000") vat = vatFromGross(t.amount_pence, VAT_RATES.STD ?? 0);
     const vatCode = c.vatRateCode ?? (c.categoryCode === "4000" ? "STD" : null);
     writes.push(

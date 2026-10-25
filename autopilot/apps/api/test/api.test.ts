@@ -167,7 +167,11 @@ describe("invoices, VAT, SA, review, export, idempotency", () => {
     expect((await s.call("POST", `/v1/invoices/${a.json.id}/status`, { user: A, body: { status: "paid" } })).status).toBe(409);
     expect((await s.call("POST", `/v1/invoices/${a.json.id}/status`, { user: A, body: { status: "sent" } })).status).toBe(200);
     expect((await s.call("POST", `/v1/invoices/${a.json.id}/status`, { user: A, body: { status: "paid" } })).status).toBe(200);
-    expect((await s.call("GET", `/v1/invoices/${a.json.id}/pdf`, { user: A })).status).toBe(501);
+    const pdf = await s.call("GET", `/v1/invoices/${a.json.id}/pdf`, { user: A });
+    expect(pdf.status).toBe(200);
+    expect(pdf.headers.get("content-type")).toBe("application/pdf");
+    expect(pdf.text.startsWith("%PDF-")).toBe(true);
+    expect((await s.call("GET", `/v1/invoices/${a.json.id}/pdf`, { user: B })).status).toBe(404);
     const other = await s.call("POST", "/v1/invoices", { user: B, body: inv });
     expect(other.json.number).toBe(a.json.number); // per-tenant sequences
   });
@@ -195,6 +199,20 @@ describe("invoices, VAT, SA, review, export, idempotency", () => {
     const v = await f.call("POST", "/v1/vat/drafts", { user: A, body: { periodStart: "2026-07-01", periodEnd: "2026-09-30" } });
     // VAT drafts are computed from categorised bank transactions (invoices feed reconciliation, not VAT, to avoid double counting).
     expect(v.json.box1).toBe(Math.round(120000 * 0.125));
+  });
+  it("accrual VAT counts an invoice once (issue date), excluding the bank receipt that paid it; cash uses the receipt date", async () => {
+    const a = await s.call("POST", "/v1/invoices", { user: A, body: { ...inv, issueDate: "2026-06-20" } });
+    await s.call("POST", `/v1/invoices/${a.json.id}/status`, { user: A, body: { status: "sent" } });
+    // receipt of the full gross lands in July and is reconciled to the invoice by the pipeline
+    await uploadAndRun(s, A, "Date,Description,Amount\n05/07/2026,ACME LTD INV " + a.json.number + ",600.00\n");
+    const invNow = (await s.call("GET", "/v1/invoices", { user: A })).json.find((x: { id: string }) => x.id === a.json.id);
+    expect(invNow.status).toBe("paid");
+    const q2 = (await s.call("POST", "/v1/vat/drafts", { user: A, body: { periodStart: "2026-04-01", periodEnd: "2026-06-30" } })).json;
+    const q3 = (await s.call("POST", "/v1/vat/drafts", { user: A, body: { periodStart: "2026-07-01", periodEnd: "2026-09-30" } })).json;
+    expect(q2.box1).toBe(10000); expect(q2.box6).toBe(50000);
+    expect(q3.box1).toBe(0); expect(q3.box6).toBe(0);
+    const cashQ3 = (await s.call("POST", "/v1/vat/drafts", { user: A, body: { periodStart: "2026-07-01", periodEnd: "2026-09-30", scheme: "cash" } })).json;
+    expect(cashQ3.box1).toBe(10000);
   });
   it("SA summary is a draft with income and expenses", async () => {
     await uploadAndRun(s);

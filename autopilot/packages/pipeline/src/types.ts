@@ -25,6 +25,7 @@ export interface InvoiceRef {
   customerName: string;
   grossPence: Pence;
   issueDate: string;
+  dueDate?: string;
 }
 
 export type ReasonCode =
