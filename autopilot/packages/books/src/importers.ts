@@ -131,6 +131,8 @@ export function parseMt940(text: string): ImportResult {
     const mark = m[4]!;
     const [whole, frac = ""] = m[5]!.split(",");
     const pence = Number(whole) * 100 + Number(frac.padEnd(2, "0") || "0");
+    // Fuzzing found unbounded digit runs producing unsafe integers; reject anything over £1bn.
+    if (!Number.isSafeInteger(pence) || pence > 100_000_000_000) return void rejected.push({ row: i + 1, error: "amount out of range" });
     const credit = mark === "C" || mark === "RD"; // RD (reversal of debit) increases the balance
     const narrative = rest
       .join("\n")

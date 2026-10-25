@@ -43,8 +43,10 @@ export class TenantDb {
     return this.db.prepare(`update tenants set ${sets} where id = ?1`).bind(this.tenantId, ...keys.map((k) => fields[k]));
   }
   /** Atomic multi-statement write. */
-  async batch(stmts: D1PreparedStatement[]): Promise<void> {
-    await this.db.batch(stmts);
+  /** Runs statements atomically in one round trip; returns rows changed per statement. */
+  async batch(stmts: D1PreparedStatement[]): Promise<number[]> {
+    if (!stmts.length) return [];
+    return (await this.db.batch(stmts)).map((r) => r.meta?.changes ?? 0);
   }
 }
 

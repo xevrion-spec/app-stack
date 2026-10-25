@@ -15,6 +15,7 @@ export type ErrorCode =
   | "version_conflict"
   | "insufficient_scope"
   | "not_implemented"
+  | "maintenance"
   | "internal";
 
 export class AppError extends Error {

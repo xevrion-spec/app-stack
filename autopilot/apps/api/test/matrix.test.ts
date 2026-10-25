@@ -112,7 +112,7 @@ describe("roles", () => {
     ["POST", "/v1/categories", { code: "6901", name: "X", kind: "expense" }],
     ["POST", "/v1/invoices", inv],
     ["POST", "/v1/invoices/ID/status", { status: "void" }],
-    ["GET", "/v1/invoices/ID/pdf"],
+    ["PATCH", "/v1/invoices/ID", { customerName: "X" }],
   ];
   it.each(OWNER_ONLY)("reviewer cannot %s %s", async (m, p, body) => {
     const r = await w.call(m, fill(p), { user: R, ...(body ? { body } : {}) });
@@ -120,6 +120,8 @@ describe("roles", () => {
     expect(r.json.error.code).toBe("forbidden");
   });
   const REVIEWER_OK: [string, string][] = [
+    ["GET", "/v1/invoices/ID/pdf"], // same data as the invoice list reviewers already see
+    ["GET", "/v1/invoices/ID"],
     ["GET", "/v1/me"],
     ["GET", "/v1/tenant"],
     ["GET", "/v1/transactions"],

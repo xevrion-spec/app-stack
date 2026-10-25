@@ -23,6 +23,10 @@ export interface Env {
   WEBHOOK_DEV_HTTP_HOSTS?: string;
   /** Requests per minute per principal (default 600). */
   RATE_LIMIT_PER_MINUTE?: string;
+  /** Requests per minute per API key (default 120). */
+  RATE_LIMIT_API_KEY_PER_MINUTE?: string;
+  /** "1" freezes all writes with 503 (disaster-recovery runbook step 1); reads keep working. */
+  MAINTENANCE?: string;
   /** Document retention in days (>= 365). Unset = retention job reports eligible files only (dry run). UNVERIFIED period. */
   DOCUMENT_RETENTION_DAYS?: string;
   /** Comma-separated operator emails allowed to read the cross-tenant ops overview (aggregates only, no PII). */

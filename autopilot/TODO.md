@@ -1,6 +1,16 @@
 # Autopilot TODO (resume point)
 Branch: feature/value-max (from feature/quality-1000). Roadmap + status: docs/value-roadmap.md. Constraints: synthetic data, no deploys, no emails/posts, no secrets, no PR, never main.
 
+## H1 — harden (feature/harden) — done
+- Perf: migration 0010 (11 additive indexes, EXPLAIN-verified). Bank sync batched (N+1 removed). CSV export streamed (keyset 2k pages). Ledger export O(n²)→O(n). 100k txns: list p50 46.5→0.9 ms. HTTP load A/B: 468→581 rps, p95 65→48 ms (docs/performance.md).
+- Guards: perf-guards.test.ts (N+1 query-count invariance ×7 endpoints, 10k budgets, 100k under PERF=1, per-API-key rate limit, body limit, maintenance freeze, log redaction, dev-auth fail-closed).
+- Security: authz-matrix.test.ts (every OpenAPI op × anon/non-member/roles + cross-tenant + leak regex, 159 tests). Global 2 MB/10 MB streaming body limit. Per-API-key buckets. x-dev-user fail-closed. Log redaction. docs/security-checklist.md (ASVS L2 + API Top 10).
+- Parsers: importers.fuzz.test.ts (OFX/QIF/MT940/CSV properties + ReDoS budgets); MT940 out-of-range amounts rejected.
+- Reliability: MAINTENANCE=1 write freeze; docs/disaster-recovery.md (D1 Time Travel, R2, outbox replay).
+- Gates: 2,218 tests; coverage 96.42% stmts / 89.07% branches; Playwright+axe 19 passed / 1 skipped; Lighthouse perf 100, a11y 100, best practices 96, SEO 82; npm audit 0; gitleaks clean; knip/madge clean; web bundle 61.1 KB; Worker 368 KB gzip.
+- Mutation: importers.ts first scoped run 66.42% (below 70 break). TODO: kill the dedupe/normalise survivors.
+- TODO: WAF hard rate limit; nightly D1 export to R2 + timed restore drill; external pentest; web CSP without unsafe-inline; SEO 82 (meta description).
+
 ## Done (this commit)
 - A: 1,612 tests (unit/property/integration/RTL/chaos/migration/perf 10k); coverage 93.9/86.0 gated 90/85; Stryker 89.3% (break 70);
   knip, madge, licence allow-list, prod npm audit, gitleaks, ESLint complexity, bundle budget, Lighthouse CI config, load script; split CI jobs.

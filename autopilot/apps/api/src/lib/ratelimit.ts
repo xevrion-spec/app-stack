@@ -16,8 +16,11 @@ export const __setRateLimitClock = (f: (() => number) | null) => {
 export const rateLimit: MiddlewareHandler<AppEnv> = async (c, next) => {
   const p = c.get("principal");
   if (!p) return next();
-  const perMin = Math.max(1, Number(c.env.RATE_LIMIT_PER_MINUTE ?? 600) || 600);
-  const key = `${p.tenantId}:${p.userId}`;
+  // API keys get their own (lower) bucket per key, so one integration cannot exhaust a user's interactive budget.
+  const perMin = p.apiKey
+    ? Math.max(1, Number(c.env.RATE_LIMIT_API_KEY_PER_MINUTE ?? 120) || 120)
+    : Math.max(1, Number(c.env.RATE_LIMIT_PER_MINUTE ?? 600) || 600);
+  const key = p.apiKey ? `key:${p.apiKey.id}` : `${p.tenantId}:${p.userId}`;
   const r = takeToken(buckets.get(key) ?? null, now(), perMin, perMin / 60);
   buckets.set(key, r.bucket);
   if (buckets.size > 10_000) buckets.delete(buckets.keys().next().value!);

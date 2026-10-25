@@ -81,7 +81,7 @@ export function makeSqliteD1(path = ":memory:"): { d1: D1Database; raw: Database
     batch: async (stmts: Stmt[]) =>
       raw
         .transaction(() => stmts.map((s) => s.runSync()))()
-        .map(() => ({ success: true, meta: {} })),
+        .map((r) => ({ success: true, meta: { changes: Array.isArray(r) ? 0 : ((r as { changes?: number }).changes ?? 0) } })),
     exec: async (sql: string) => {
       raw.exec(sql);
       return { count: 1, duration: 0 };

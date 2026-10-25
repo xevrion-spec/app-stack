@@ -1,0 +1,12 @@
+-- Manual, confirmed rollback only.
+drop index if exists idx_users_email;
+drop index if exists idx_docs_sha;
+drop index if exists idx_docs_retention;
+drop index if exists idx_txn_list;
+drop index if exists idx_events_list;
+drop index if exists idx_audit_list;
+drop index if exists idx_journals_source;
+drop index if exists idx_exc_tenant_status;
+drop index if exists idx_credit_notes_invoice;
+drop index if exists idx_sched_tenant;
+drop index if exists idx_notifications_list;

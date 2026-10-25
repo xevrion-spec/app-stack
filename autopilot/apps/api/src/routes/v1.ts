@@ -538,7 +538,8 @@ v1.openapi(def({ method: "get", path: "/invoices", tag: "Invoices", summary: "Li
   ),
 );
 v1.use("/invoices", async (c, next) => (c.req.method === "POST" ? owner(c, next) : next()));
-v1.use("/invoices/*", owner);
+// Reads of a single invoice (detail, balance, PDF) match the list: any member; changes stay owner-only.
+v1.use("/invoices/*", async (c, next) => (c.req.method === "GET" ? next() : owner(c, next)));
 v1.openapi(
   def({
     method: "post",
@@ -1014,17 +1015,34 @@ v1.openAPIRegistry.registerPath({
   security: [{ accessJwt: [] }],
   responses: { 200: { description: "CSV", content: { "text/csv": { schema: z.string() } } } },
 });
+/** Rows per page when streaming exports (keyset over (txn_date, id), so memory stays flat at 100k+ rows). */
+const EXPORT_PAGE = 2000;
 v1.get("/export/transactions.csv", async (c) => {
   const db = scope(c);
-  const rows = await db.all<Record<string, unknown>>(
-    "select txn_date, description, amount_pence, currency, category_code, vat_rate_code, vat_pence, status from transactions where tenant_id = ?1 order by txn_date, id",
-  );
   const head = ["txn_date", "description", "amount_pence", "currency", "category_code", "vat_rate_code", "vat_pence", "status"];
   await db.run("insert into audit_log (tenant_id, id, actor, action, subject) values (?1, ?2, ?3, 'export.transactions_csv', null)", newId(), actor(c));
-  return c.body([head.join(","), ...rows.map((r) => head.map((h) => csvCell(r[h])).join(","))].join("\n") + "\n", 200, {
-    "content-type": "text/csv; charset=utf-8",
-    "content-disposition": "attachment; filename=transactions.csv",
+  const enc = new TextEncoder();
+  let after: [string, string] | null = null;
+  let headerSent = false;
+  const stream = new ReadableStream<Uint8Array>({
+    async pull(ctrl) {
+      if (!headerSent) {
+        headerSent = true;
+        ctrl.enqueue(enc.encode(head.join(",") + "\n"));
+      }
+      const rows: Record<string, unknown>[] = await db.all<Record<string, unknown>>(
+        `select id, txn_date, description, amount_pence, currency, category_code, vat_rate_code, vat_pence, status from transactions where tenant_id = ?1${
+          after ? " and (txn_date > ?2 or (txn_date = ?2 and id > ?3))" : ""
+        } order by txn_date, id limit ${EXPORT_PAGE}`,
+        ...(after ?? []),
+      );
+      if (rows.length) ctrl.enqueue(enc.encode(rows.map((r) => head.map((h) => csvCell(r[h])).join(",")).join("\n") + "\n"));
+      if (rows.length < EXPORT_PAGE) return ctrl.close();
+      const last = rows[rows.length - 1]!;
+      after = [String(last.txn_date), String(last.id)];
+    },
   });
+  return c.body(stream, 200, { "content-type": "text/csv; charset=utf-8", "content-disposition": "attachment; filename=transactions.csv" });
 });
 v1.openapi(def({ method: "get", path: "/export/ledger.json", tag: "Export", summary: "Journals with lines as JSON", response: z.any() }), async (c) => {
   const db = scope(c);
@@ -1035,7 +1053,12 @@ v1.openapi(def({ method: "get", path: "/export/ledger.json", tag: "Export", summ
     "select journal_id, account_code, debit_pence, credit_pence, vat_rate_code from journal_lines where tenant_id = ?1",
   );
   const by = new Map<string, unknown[]>();
-  for (const l of lines) by.set(l.journal_id, [...(by.get(l.journal_id) ?? []), l]);
+  // O(n): the previous spread-copy per line was O(n²) on large ledgers.
+  for (const l of lines) {
+    const arr = by.get(l.journal_id);
+    if (arr) arr.push(l);
+    else by.set(l.journal_id, [l]);
+  }
   await db.run("insert into audit_log (tenant_id, id, actor, action, subject) values (?1, ?2, ?3, 'export.ledger_json', null)", newId(), actor(c));
   return c.json({ journals: journals.map((j) => ({ ...j, lines: by.get(j.id) ?? [] })) }, 200);
 });

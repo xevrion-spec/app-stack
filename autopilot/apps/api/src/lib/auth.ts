@@ -29,7 +29,9 @@ export const identity: MiddlewareHandler<AppEnv> = async (c, next) => {
   const auth = c.req.header("authorization");
   if (auth?.startsWith("Bearer ap_")) return apiKeyAuth(c, auth.slice(7), next);
   const devEmail = c.req.header("x-dev-user");
-  if (env.ENVIRONMENT !== "production" && devEmail) {
+  // Fail closed: only explicit development/test environments trust x-dev-user. A missing or unexpected ENVIRONMENT
+  // (e.g. a "staging" deploy or a typo) must never accept a forged identity header.
+  if ((env.ENVIRONMENT === "development" || env.ENVIRONMENT === "test") && devEmail) {
     c.set("identityEmail", devEmail.toLowerCase());
     c.set("identitySubject", `dev:${devEmail.toLowerCase()}`);
     return next();

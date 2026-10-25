@@ -112,17 +112,20 @@ banking.openapi(
     const until = c.req.valid("json").today ?? new Date().toISOString().slice(0, 10);
     const since = conn.synced_until ? B.addDays(conn.synced_until, 1) : B.addDays(until, -90);
     const rows = since > until ? [] : await feed.transactions(conn.account_id, since, until);
-    let inserted = 0;
-    for (const r of rows) {
-      inserted += await db.run(
-        "insert or ignore into transactions (tenant_id, id, source, txn_date, description, amount_pence, currency, fingerprint, status) values (?1, ?2, 'bank_feed', ?3, ?4, ?5, 'GBP', ?6, 'new')",
-        newId(),
-        r.date,
-        r.description.slice(0, 500),
-        r.amountPence,
-        await sha256Hex(`feed|${conn.provider}|${r.id}`),
+    // One batched round trip instead of a write per row (was N+1).
+    const stmts: D1PreparedStatement[] = [];
+    for (const r of rows)
+      stmts.push(
+        db.stmt(
+          "insert or ignore into transactions (tenant_id, id, source, txn_date, description, amount_pence, currency, fingerprint, status) values (?1, ?2, 'bank_feed', ?3, ?4, ?5, 'GBP', ?6, 'new')",
+          newId(),
+          r.date,
+          r.description.slice(0, 500),
+          r.amountPence,
+          await sha256Hex(`feed|${conn.provider}|${r.id}`),
+        ),
       );
-    }
+    const inserted = (await db.batch(stmts)).reduce((a, n) => a + n, 0);
     await db.batch([
       db.stmt("update bank_feed_connections set synced_until = ?3 where tenant_id = ?1 and id = ?2", conn.id, until),
       auditStmt(db, actor(c), "bank_feed.synced", conn.id, { fetched: rows.length, inserted }),

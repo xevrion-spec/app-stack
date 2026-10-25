@@ -1,9 +1,10 @@
 import { OpenAPIHono } from "@hono/zod-openapi";
 import { cors } from "hono/cors";
 import { secureHeaders } from "hono/secure-headers";
+import { bodyLimit } from "hono/body-limit";
 import { HTTPException } from "hono/http-exception";
 import type { AppEnv } from "./env.js";
-import { AppError } from "./lib/errors.js";
+import { AppError, tooLarge } from "./lib/errors.js";
 import { identity, principal } from "./lib/auth.js";
 import { idempotency } from "./lib/idempotency.js";
 import { log } from "./lib/log.js";
@@ -53,6 +54,32 @@ export function createApp() {
       referrerPolicy: "no-referrer",
     }),
   );
+  // DR write freeze (docs/disaster-recovery.md): reads stay up so owners can still see their books.
+  app.use("*", async (c, next) => {
+    if (c.env.MAINTENANCE === "1" && !["GET", "HEAD", "OPTIONS"].includes(c.req.method)) {
+      c.header("retry-after", "300");
+      throw new AppError(503, "maintenance", "Autopilot is in read-only maintenance; please retry shortly");
+    }
+    return next();
+  });
+  // Cap request bodies before any handler buffers them (memory-exhaustion guard; OWASP API4). Receipts get 10 MB + slack;
+  // everything else 2 MB + slack. Handlers still apply their own tighter, friendlier limits.
+  const big = bodyLimit({
+    maxSize: 10 * 1024 * 1024 + 4096,
+    onError: () => {
+      throw tooLarge("Request body too large");
+    },
+  });
+  const small = bodyLimit({
+    maxSize: 2 * 1024 * 1024 + 4096,
+    onError: () => {
+      throw tooLarge("Request body too large");
+    },
+  });
+  app.use("*", async (c, next) => {
+    if (c.req.method === "GET" || c.req.method === "HEAD" || c.req.method === "OPTIONS") return next();
+    return (new URL(c.req.url).pathname.endsWith("/uploads/receipt") ? big : small)(c, next);
+  });
   app.use("*", async (c, next) =>
     cors({
       origin: (c.env.ALLOWED_ORIGINS ?? "").split(",").map((s) => s.trim()),
