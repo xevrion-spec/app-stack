@@ -117,7 +117,7 @@ export function App() {
       banking: <Banking />,
       privacy: <Privacy />,
       ops: <Ops />,
-      practice: <Practice />,
+      practice: <Practice clientId={arg} />,
     }[route];
   }
   const visible = ROUTES.filter(([k]) => session.state !== "ready" || session.me.role === "owner" || !OWNER_ONLY.has(k));

@@ -72,3 +72,9 @@ Previous branch: feature/value-max (from feature/quality-1000). Roadmap + status
 ## Remaining
 
 (done on feature/value-max M0: Playwright 10/10 after upgrades; Lighthouse 100 perf / 100 a11y / 96 best practices on all pages; mutation ledger 91.9, webhooks 93.0) 4. Pay down complexity waivers (docs/quality.md list), starting with pipeline runStages. 5. Regex category rules run on normalised text (literal `\.` never matches) — decide: also match raw description. 6. JWT tamper table test; SDK/workflows DLQ extra tests. 7. Notion: Change Log, MVP build status, Decisions (needs a Notion run).
+
+## Practice demo track (approved 2026-10-25, t57u)
+- [x] 1. Staff client workspace (#/practice/<id>): assign staff, engagement letters (draft/send/withdraw, sha256 shown), document requests (ad-hoc or template, waive), client queries, working papers (prepare; four-eyes sign-off hidden from the preparer, server-enforced), audit CSV export. Playwright e2e covers the full loop (staff → portal upload, answer, accept → reviewer sign-off) with axe on 3 screens, desktop and mobile. e2e total 23 passed, 1 pre-existing skip. Bundle 65.1/80 KB.
+- [ ] 2. Test deployment behind the existing Access (workers.dev "All Workers" app), separate test D1/R2/KV, remote migrations, smoke, D1 Time Travel restore rehearsal, load test.
+- [ ] 3. Demo mode: seeded synthetic day-in-the-life plus docs/demo-script.md.
+- [ ] 4. FreeLLMAPI categorisation + free/local OCR with an accuracy harness and rules fallback.

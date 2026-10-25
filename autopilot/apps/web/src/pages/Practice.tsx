@@ -2,8 +2,9 @@ import { useState } from "react";
 import { ApiError, json } from "../api";
 import { useLoad } from "../hooks";
 import { Badge, Empty, ErrorNote, Loading, Page } from "../ui";
+import { PracticeClient } from "./PracticeClient";
 
-type Firm = { id: string; name: string; plan: string; role: string; clients: number; staff: number };
+type Firm = { id: string; name: string; plan: string; role: string; email: string; clients: number; staff: number };
 type Client = {
   tenantId: string;
   name: string;
@@ -112,7 +113,9 @@ function Clients({ role, onChange }: { role: string; onChange: () => void }) {
             <tbody>
               {items.map((x) => (
                 <tr key={x.tenantId}>
-                  <th scope="row">{x.name}</th>
+                  <th scope="row">
+                    <a href={`#/practice/${x.tenantId}`}>{x.name}</a>
+                  </th>
                   <td title={x.health.reasons.join("; ")}>
                     <Badge value={x.health.status} /> {x.health.score}
                   </td>
@@ -172,10 +175,11 @@ function Ops() {
   );
 }
 
-export function Practice() {
+export function Practice({ clientId }: { clientId?: string | null }) {
   const f = useLoad(() =>
     json<Firm>("/v1/practice").catch((e: unknown) => (e instanceof ApiError && e.status === 403 && e.code === "forbidden" ? null : Promise.reject(e))),
   );
+  if (clientId && f.data) return <PracticeClient tenantId={clientId} me={f.data.email} role={f.data.role} />;
   return (
     <Page title="Practice">
       <ErrorNote error={f.error} />

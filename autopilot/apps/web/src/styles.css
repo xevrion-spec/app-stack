@@ -560,3 +560,9 @@ button.danger {
   border-color: #b91c1c;
   color: #fff;
 }
+
+.check {
+  display: inline-flex;
+  gap: 0.3rem;
+  margin-right: 0.8rem;
+}
