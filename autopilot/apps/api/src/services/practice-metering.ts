@@ -3,7 +3,7 @@ import { AppError } from "../lib/errors.js";
 import type { PracticeDb } from "../lib/practice.js";
 import { practiceQuota, type MeteredMetric } from "./practice.js";
 
-export const usagePeriod = (d = new Date()) => d.toISOString().slice(0, 7);
+const usagePeriod = (d = new Date()) => d.toISOString().slice(0, 7);
 /** Counts one unit of `metric`, or throws 429 quota_exceeded when this month's cap is reached. */
 export async function meterPractice(pdb: PracticeDb, metric: MeteredMetric, n = 1): Promise<number> {
   const plan = (await pdb.first<{ plan: string }>("select plan from practices where id = ?1"))?.plan ?? "trial";
