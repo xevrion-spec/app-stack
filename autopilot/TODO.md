@@ -5,14 +5,23 @@
 Built INTO the existing app: same API, web, D1, auth/tenancy and CI. A tenant is an organisation, which has review projects with environments. Market check: docs/agent-review-market.md.
 Reuse: api_keys (hashed, scoped, rotatable), events catalog + outbox, webhook engine (HMAC, retries, SSRF guard), realtime DO, usage caps, idempotency middleware, OpenAPI + SDK, hash-chain audit pattern.
 
-- [ ] A1 core: packages/agent-review (states + transitions, fast-check property tests), migration 0016 (review_projects, review_requests, review_decisions, api_keys.project_id), /v1/agent-reviews API (create with idempotency key, get, list, decide approve/reject/edit/escalate, cancel), scopes reviews:read/write/decide.
-- [ ] A2 policy engine: rules (risk, action, amount/field thresholds) -> auto | human(n approvers, four-eyes) | reject; reviewer groups routing; SLA deadline + escalation sweep (cron); POST /v1/agent-reviews/simulate (dry run).
+- [x] A1 core (51a55c8): 11 package tests (100% cov, fast-check 3k runs), 8 API tests; packages/agent-review (states + transitions, fast-check property tests), migration 0016 (review_projects, review_requests, review_decisions, api_keys.project_id), /v1/agent-reviews API (create with idempotency key, get, list, decide approve/reject/edit/escalate, cancel), scopes reviews:read/write/decide.
+- [ ] A2 policy engine + D1/D2 (interleaved, highest value): versioned policy-as-code (immutable versions, canary %, impact preview), time-travel replay of past requests against a candidate policy with an outcome diff; rules (risk, action, amount/field thresholds) -> auto | human(n approvers, four-eyes) | reject; reviewer groups routing; SLA deadline + escalation sweep (cron); POST /v1/agent-reviews/simulate (dry run).
 - [ ] A3 delivery: review.* events through the existing webhooks (signed, retries/DLQ, replay); per-request callback_url (signed, SSRF-guarded); GET /wait long-poll; realtime SSE; at-least-once with idempotent decisions.
-- [ ] A4 audit/evidence: per-project hash chain, verify endpoint, export bundle, retention, field-level payload redaction, export/delete.
+- [ ] A4 audit/evidence + D5: Ed25519-signed decision receipts verifiable offline (public key endpoint, CLI verifier); per-project hash chain, verify endpoint, export bundle, retention, field-level payload redaction, export/delete.
 - [ ] A5 SDK (generated TS) + Python client + CLI + LangGraph/CrewAI/function-calling adapters (tested on fakes), examples.
 - [ ] A6 reviewer UI (queue, diff/edit, shortcuts, realtime) + developer dashboard (keys, usage, logs, deliveries), axe.
 - [ ] A7 E2E: full journey Playwright + API suite, failure paths, load + contract tests, E2E 10x flake rate. Then docs + re-scored benchmark.
-      Notes for later (no action): contracts/terms/DPA need adult sign-off (Henry is 17); GDPR roles for customer payloads; never claim AI Act compliance.
+      Enterprise (t68u, after/interleaved by value; mocks count as missing):
+- [ ] A8 identity: OIDC + SAML SSO (mock IdP in tests), SCIM 2.0 users/groups, custom roles (RBAC) + ABAC conditions (project, env, risk), org -> workspace hierarchy.
+- [ ] A9 security/data: API key IP allowlists + expiry policy, envelope encryption of payloads with per-tenant DEKs (WebCrypto AES-GCM; BYOK/KMS = design doc + interface, mock), data residency flag, retention policies, legal hold.
+- [ ] A10 operations: audit streaming (NDJSON/CEF export + signed push), SLA/uptime + status data, usage metering + quotas + rate-limit tiers (no real billing), sandbox env semantics, change-approval workflow for policy changes (dogfooded through the review layer), multi-region/failover design doc.
+      Differentiators (each tested, honest about what is real):
+- [ ] D3 reviewer-quality analytics: agreement rate, override rate, decision latency, fatigue detection (latency/approval-rate drift over session), simple bias checks by tag.
+- [ ] D4 learn when to stop asking: suggest auto-approve rules from reviewer history with guardrails (min sample, Wilson lower bound, never below stated confidence, shadow mode first), output = policy draft needing approval.
+- [ ] D6 agent analytics: cost/latency/outcome per action/agent; D7 regulator-style evidence pack (no compliance claims).
+
+Notes for later (no action): contracts/terms/DPA need adult sign-off (Henry is 17); GDPR roles for customer payloads; never claim AI Act compliance.
 
 Current branch: feature/practice-copilot (from feature/harden). Goal: UK accountant/bookkeeper co-pilot. Push only, no PR, never main.
 
