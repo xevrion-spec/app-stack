@@ -15,3 +15,5 @@ node_modules/
 reports/
 lighthouse/
 .lighthouseci/
+.stryker-tmp-agent-review/
+__pycache__/

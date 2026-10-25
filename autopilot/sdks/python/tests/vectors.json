@@ -1,0 +1,7 @@
+{
+  "comment": "Shared signing vector. packages/sdk/test/vectors.test.ts asserts the TypeScript server signer produces this exact header; tests/test_client.py asserts Python verifies it.",
+  "secret": "whsec_test_vector_not_a_real_secret",
+  "timestamp": 1790000000,
+  "body": "{\"id\":\"cb_1\",\"type\":\"review.completed\",\"data\":{\"requestId\":\"r_1\",\"status\":\"approved\",\"payload\":{\"amount\":120}}}",
+  "header": "t=1790000000,v1=0fb79cd2d546ad0c2e89a2315ef8670029e4a6cc086d4be8c4766d15ae3fff54"
+}

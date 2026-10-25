@@ -25,7 +25,9 @@
     "audit:prod": "npm audit --omit=dev --audit-level=high",
     "bundle:budget": "node scripts/bundle-budget.mjs",
     "load": "tsx scripts/load.ts",
-    "quality": "npm run typecheck && npm run lint && npm run coverage && npm run knip && npm run madge && npm run licenses && npm run audit:prod"
+    "quality": "npm run typecheck && npm run lint && npm run coverage && npm run knip && npm run madge && npm run licenses && npm run audit:prod",
+    "test:python": "python3 -m unittest discover -s sdks/python/tests",
+    "mutation:agent-review": "stryker run stryker.agent-review.config.mjs"
   },
   "allowScripts": {
     "better-sqlite3@11.10.0": true,

@@ -7,7 +7,7 @@ export default defineConfig({
     exclude: ["**/node_modules/**", "apps/web/e2e/**"],
     coverage: {
       provider: "v8",
-      include: ["packages/pipeline/src/**", "packages/books/src/**", "packages/platform/src/**", "packages/agent-review/src/**", "apps/api/src/**"],
+      include: ["packages/pipeline/src/**", "packages/books/src/**", "packages/platform/src/**", "packages/agent-review/src/**", "packages/sdk/src/**", "apps/api/src/**"],
       exclude: ["apps/api/src/index.ts", "apps/api/src/env.ts", "**/*.d.ts"],
       reporter: ["text-summary", "json-summary"],
       reportsDirectory: "coverage",
