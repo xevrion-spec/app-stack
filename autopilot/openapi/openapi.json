@@ -2627,6 +2627,112 @@
           "createdAt"
         ]
       },
+      "ReviewPolicy": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "version": {
+            "type": "number"
+          },
+          "description": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "draft",
+              "active",
+              "canary",
+              "retired"
+            ]
+          },
+          "canaryPercent": {
+            "type": [
+              "number",
+              "null"
+            ]
+          },
+          "sha256": {
+            "type": "string"
+          },
+          "document": {},
+          "createdBy": {
+            "type": "string"
+          },
+          "createdAt": {
+            "type": "string"
+          },
+          "activatedAt": {
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "id",
+          "version",
+          "description",
+          "status",
+          "canaryPercent",
+          "sha256",
+          "createdBy",
+          "createdAt",
+          "activatedAt"
+        ]
+      },
+      "PolicyReplayReport": {
+        "type": "object",
+        "properties": {
+          "evaluated": {
+            "type": "number"
+          },
+          "changed": {
+            "type": "number"
+          },
+          "transitions": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "number"
+            }
+          },
+          "wouldAutoApproveRejected": {
+            "type": "number"
+          },
+          "wouldAutoApproveEdited": {
+            "type": "number"
+          },
+          "reviewsSaved": {
+            "type": "number"
+          },
+          "humanLoadDelta": {
+            "type": "number"
+          },
+          "safe": {
+            "type": "boolean"
+          },
+          "samples": {
+            "type": "array",
+            "items": {}
+          }
+        },
+        "required": [
+          "evaluated",
+          "changed",
+          "transitions",
+          "wouldAutoApproveRejected",
+          "wouldAutoApproveEdited",
+          "reviewsSaved",
+          "humanLoadDelta",
+          "safe",
+          "samples"
+        ]
+      },
       "ReviewRequest": {
         "type": "object",
         "properties": {
@@ -2714,6 +2820,54 @@
               "null"
             ]
           },
+          "routing": {
+            "type": "object",
+            "properties": {
+              "outcome": {
+                "type": "string",
+                "enum": [
+                  "auto_approve",
+                  "human",
+                  "reject"
+                ]
+              },
+              "policyVersion": {
+                "type": "number"
+              },
+              "ruleId": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "group": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "escalateAt": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "guardrails": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              }
+            },
+            "required": [
+              "outcome",
+              "policyVersion",
+              "ruleId",
+              "group",
+              "escalateAt",
+              "guardrails"
+            ]
+          },
           "version": {
             "type": "number"
           },
@@ -2785,9 +2939,102 @@
           "tags",
           "deadlineAt",
           "decidedAt",
+          "routing",
           "version",
           "createdAt",
           "updatedAt"
+        ]
+      },
+      "ReviewRoutingSimulation": {
+        "type": "object",
+        "properties": {
+          "outcome": {
+            "type": "string",
+            "enum": [
+              "auto_approve",
+              "human",
+              "reject"
+            ]
+          },
+          "approvals": {
+            "type": "number"
+          },
+          "group": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "ruleId": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "timeoutSeconds": {
+            "type": [
+              "number",
+              "null"
+            ]
+          },
+          "escalateAfterSeconds": {
+            "type": [
+              "number",
+              "null"
+            ]
+          },
+          "escalateToGroup": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "guardrails": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "trace": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "ruleId": {
+                  "type": "string"
+                },
+                "matched": {
+                  "type": "boolean"
+                },
+                "failed": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  }
+                }
+              },
+              "required": [
+                "ruleId",
+                "matched",
+                "failed"
+              ]
+            }
+          },
+          "policyVersion": {
+            "type": "number"
+          }
+        },
+        "required": [
+          "outcome",
+          "approvals",
+          "group",
+          "ruleId",
+          "timeoutSeconds",
+          "escalateAfterSeconds",
+          "escalateToGroup",
+          "guardrails",
+          "trace",
+          "policyVersion"
         ]
       }
     },
@@ -32798,12 +33045,1235 @@
         }
       }
     },
+    "/v1/review-projects/{id}/policies": {
+      "post": {
+        "tags": [
+          "Agent review"
+        ],
+        "summary": "Save a new immutable policy version (draft). Unsafe rules (auto-approve without confidence, critical auto-approve) are refused.",
+        "security": [
+          {
+            "accessJwt": []
+          }
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 64
+            },
+            "required": true,
+            "name": "id",
+            "in": "path"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "document": {
+                    "type": "object",
+                    "properties": {
+                      "rules": {
+                        "type": "array",
+                        "items": {
+                          "type": "object",
+                          "properties": {
+                            "id": {
+                              "type": "string",
+                              "minLength": 1,
+                              "maxLength": 60
+                            },
+                            "description": {
+                              "type": "string",
+                              "maxLength": 300
+                            },
+                            "when": {
+                              "type": "object",
+                              "properties": {
+                                "action": {
+                                  "type": "string",
+                                  "maxLength": 120
+                                },
+                                "risk": {
+                                  "type": "array",
+                                  "items": {
+                                    "type": "string",
+                                    "enum": [
+                                      "low",
+                                      "medium",
+                                      "high",
+                                      "critical"
+                                    ]
+                                  },
+                                  "minItems": 1
+                                },
+                                "minConfidence": {
+                                  "type": "number",
+                                  "minimum": 0,
+                                  "maximum": 1
+                                },
+                                "maxConfidence": {
+                                  "type": "number",
+                                  "minimum": 0,
+                                  "maximum": 1
+                                },
+                                "tagsAny": {
+                                  "type": "array",
+                                  "items": {
+                                    "type": "string",
+                                    "maxLength": 40
+                                  },
+                                  "maxItems": 20
+                                },
+                                "payload": {
+                                  "type": "array",
+                                  "items": {
+                                    "type": "object",
+                                    "properties": {
+                                      "path": {
+                                        "type": "string",
+                                        "minLength": 1,
+                                        "maxLength": 200,
+                                        "pattern": "^[A-Za-z0-9_]+(\\.[A-Za-z0-9_]+)*$"
+                                      },
+                                      "op": {
+                                        "type": "string",
+                                        "enum": [
+                                          "eq",
+                                          "neq",
+                                          "gt",
+                                          "gte",
+                                          "lt",
+                                          "lte",
+                                          "in",
+                                          "exists"
+                                        ]
+                                      },
+                                      "value": {
+                                        "anyOf": [
+                                          {
+                                            "type": "string"
+                                          },
+                                          {
+                                            "type": "number"
+                                          },
+                                          {
+                                            "type": "boolean"
+                                          },
+                                          {
+                                            "type": "null"
+                                          },
+                                          {
+                                            "type": "array",
+                                            "items": {
+                                              "anyOf": [
+                                                {
+                                                  "type": "string"
+                                                },
+                                                {
+                                                  "type": "number"
+                                                }
+                                              ]
+                                            }
+                                          }
+                                        ]
+                                      }
+                                    },
+                                    "required": [
+                                      "path",
+                                      "op"
+                                    ]
+                                  },
+                                  "maxItems": 20
+                                }
+                              },
+                              "default": {}
+                            },
+                            "then": {
+                              "type": "object",
+                              "properties": {
+                                "outcome": {
+                                  "type": "string",
+                                  "enum": [
+                                    "auto_approve",
+                                    "human",
+                                    "reject"
+                                  ]
+                                },
+                                "approvals": {
+                                  "type": "integer",
+                                  "minimum": 1,
+                                  "maximum": 5,
+                                  "default": 1
+                                },
+                                "group": {
+                                  "type": "string",
+                                  "maxLength": 60
+                                },
+                                "timeoutSeconds": {
+                                  "type": "integer",
+                                  "minimum": 10,
+                                  "maximum": 2592000
+                                },
+                                "escalateAfterSeconds": {
+                                  "type": "integer",
+                                  "minimum": 10,
+                                  "maximum": 2592000
+                                },
+                                "escalateToGroup": {
+                                  "type": "string",
+                                  "maxLength": 60
+                                }
+                              },
+                              "required": [
+                                "outcome"
+                              ]
+                            }
+                          },
+                          "required": [
+                            "id",
+                            "then"
+                          ]
+                        },
+                        "maxItems": 200
+                      },
+                      "default": {
+                        "type": "object",
+                        "properties": {
+                          "outcome": {
+                            "type": "string",
+                            "enum": [
+                              "auto_approve",
+                              "human",
+                              "reject"
+                            ]
+                          },
+                          "approvals": {
+                            "type": "integer",
+                            "minimum": 1,
+                            "maximum": 5,
+                            "default": 1
+                          },
+                          "group": {
+                            "type": "string",
+                            "maxLength": 60
+                          },
+                          "timeoutSeconds": {
+                            "type": "integer",
+                            "minimum": 10,
+                            "maximum": 2592000
+                          },
+                          "escalateAfterSeconds": {
+                            "type": "integer",
+                            "minimum": 10,
+                            "maximum": 2592000
+                          },
+                          "escalateToGroup": {
+                            "type": "string",
+                            "maxLength": 60
+                          }
+                        },
+                        "default": {
+                          "outcome": "human",
+                          "approvals": 1
+                        },
+                        "required": [
+                          "outcome"
+                        ]
+                      }
+                    },
+                    "required": [
+                      "rules"
+                    ]
+                  },
+                  "description": {
+                    "type": "string",
+                    "maxLength": 300
+                  }
+                },
+                "required": [
+                  "document"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReviewPolicy"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthenticated",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "412": {
+            "description": "Precondition failed (stale ETag)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Rate limited or quota exceeded",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      },
+      "get": {
+        "tags": [
+          "Agent review"
+        ],
+        "summary": "List policy versions (newest first)",
+        "security": [
+          {
+            "accessJwt": []
+          }
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 64
+            },
+            "required": true,
+            "name": "id",
+            "in": "path"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "items": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/ReviewPolicy"
+                      }
+                    }
+                  },
+                  "required": [
+                    "items"
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthenticated",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "412": {
+            "description": "Precondition failed (stale ETag)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Rate limited or quota exceeded",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/review-projects/{id}/policies/replay": {
+      "post": {
+        "tags": [
+          "Agent review"
+        ],
+        "summary": "Time-travel replay: re-run past requests against a candidate policy (a document or a saved version) and diff the outcomes",
+        "security": [
+          {
+            "accessJwt": []
+          }
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 64
+            },
+            "required": true,
+            "name": "id",
+            "in": "path"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "document": {
+                    "type": "object",
+                    "properties": {
+                      "rules": {
+                        "type": "array",
+                        "items": {
+                          "type": "object",
+                          "properties": {
+                            "id": {
+                              "type": "string",
+                              "minLength": 1,
+                              "maxLength": 60
+                            },
+                            "description": {
+                              "type": "string",
+                              "maxLength": 300
+                            },
+                            "when": {
+                              "type": "object",
+                              "properties": {
+                                "action": {
+                                  "type": "string",
+                                  "maxLength": 120
+                                },
+                                "risk": {
+                                  "type": "array",
+                                  "items": {
+                                    "type": "string",
+                                    "enum": [
+                                      "low",
+                                      "medium",
+                                      "high",
+                                      "critical"
+                                    ]
+                                  },
+                                  "minItems": 1
+                                },
+                                "minConfidence": {
+                                  "type": "number",
+                                  "minimum": 0,
+                                  "maximum": 1
+                                },
+                                "maxConfidence": {
+                                  "type": "number",
+                                  "minimum": 0,
+                                  "maximum": 1
+                                },
+                                "tagsAny": {
+                                  "type": "array",
+                                  "items": {
+                                    "type": "string",
+                                    "maxLength": 40
+                                  },
+                                  "maxItems": 20
+                                },
+                                "payload": {
+                                  "type": "array",
+                                  "items": {
+                                    "type": "object",
+                                    "properties": {
+                                      "path": {
+                                        "type": "string",
+                                        "minLength": 1,
+                                        "maxLength": 200,
+                                        "pattern": "^[A-Za-z0-9_]+(\\.[A-Za-z0-9_]+)*$"
+                                      },
+                                      "op": {
+                                        "type": "string",
+                                        "enum": [
+                                          "eq",
+                                          "neq",
+                                          "gt",
+                                          "gte",
+                                          "lt",
+                                          "lte",
+                                          "in",
+                                          "exists"
+                                        ]
+                                      },
+                                      "value": {
+                                        "anyOf": [
+                                          {
+                                            "type": "string"
+                                          },
+                                          {
+                                            "type": "number"
+                                          },
+                                          {
+                                            "type": "boolean"
+                                          },
+                                          {
+                                            "type": "null"
+                                          },
+                                          {
+                                            "type": "array",
+                                            "items": {
+                                              "anyOf": [
+                                                {
+                                                  "type": "string"
+                                                },
+                                                {
+                                                  "type": "number"
+                                                }
+                                              ]
+                                            }
+                                          }
+                                        ]
+                                      }
+                                    },
+                                    "required": [
+                                      "path",
+                                      "op"
+                                    ]
+                                  },
+                                  "maxItems": 20
+                                }
+                              },
+                              "default": {}
+                            },
+                            "then": {
+                              "type": "object",
+                              "properties": {
+                                "outcome": {
+                                  "type": "string",
+                                  "enum": [
+                                    "auto_approve",
+                                    "human",
+                                    "reject"
+                                  ]
+                                },
+                                "approvals": {
+                                  "type": "integer",
+                                  "minimum": 1,
+                                  "maximum": 5,
+                                  "default": 1
+                                },
+                                "group": {
+                                  "type": "string",
+                                  "maxLength": 60
+                                },
+                                "timeoutSeconds": {
+                                  "type": "integer",
+                                  "minimum": 10,
+                                  "maximum": 2592000
+                                },
+                                "escalateAfterSeconds": {
+                                  "type": "integer",
+                                  "minimum": 10,
+                                  "maximum": 2592000
+                                },
+                                "escalateToGroup": {
+                                  "type": "string",
+                                  "maxLength": 60
+                                }
+                              },
+                              "required": [
+                                "outcome"
+                              ]
+                            }
+                          },
+                          "required": [
+                            "id",
+                            "then"
+                          ]
+                        },
+                        "maxItems": 200
+                      },
+                      "default": {
+                        "type": "object",
+                        "properties": {
+                          "outcome": {
+                            "type": "string",
+                            "enum": [
+                              "auto_approve",
+                              "human",
+                              "reject"
+                            ]
+                          },
+                          "approvals": {
+                            "type": "integer",
+                            "minimum": 1,
+                            "maximum": 5,
+                            "default": 1
+                          },
+                          "group": {
+                            "type": "string",
+                            "maxLength": 60
+                          },
+                          "timeoutSeconds": {
+                            "type": "integer",
+                            "minimum": 10,
+                            "maximum": 2592000
+                          },
+                          "escalateAfterSeconds": {
+                            "type": "integer",
+                            "minimum": 10,
+                            "maximum": 2592000
+                          },
+                          "escalateToGroup": {
+                            "type": "string",
+                            "maxLength": 60
+                          }
+                        },
+                        "default": {
+                          "outcome": "human",
+                          "approvals": 1
+                        },
+                        "required": [
+                          "outcome"
+                        ]
+                      }
+                    },
+                    "required": [
+                      "rules"
+                    ]
+                  },
+                  "version": {
+                    "type": "integer",
+                    "minimum": 1
+                  },
+                  "since": {
+                    "type": "string",
+                    "format": "date-time"
+                  },
+                  "limit": {
+                    "type": "integer",
+                    "minimum": 1,
+                    "maximum": 5000,
+                    "default": 1000
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PolicyReplayReport"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthenticated",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "412": {
+            "description": "Precondition failed (stale ETag)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Rate limited or quota exceeded",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/review-projects/{id}/policies/{version}/activate": {
+      "post": {
+        "tags": [
+          "Agent review"
+        ],
+        "summary": "Activate a version for all traffic, or as a canary for canaryPercent of new requests. Refused (409 unsafe_policy) if replaying recent history shows it would auto-approve anything a human rejected or edited, unless force is set.",
+        "security": [
+          {
+            "accessJwt": []
+          }
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 64
+            },
+            "required": true,
+            "name": "id",
+            "in": "path"
+          },
+          {
+            "schema": {
+              "type": "integer",
+              "minimum": 1
+            },
+            "required": true,
+            "name": "version",
+            "in": "path"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "canaryPercent": {
+                    "type": "integer",
+                    "minimum": 1,
+                    "maximum": 99
+                  },
+                  "force": {
+                    "type": "boolean",
+                    "default": false
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "policy": {
+                      "$ref": "#/components/schemas/ReviewPolicy"
+                    },
+                    "replay": {
+                      "$ref": "#/components/schemas/PolicyReplayReport"
+                    }
+                  },
+                  "required": [
+                    "policy",
+                    "replay"
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthenticated",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "412": {
+            "description": "Precondition failed (stale ETag)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Rate limited or quota exceeded",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/review-groups/{name}": {
+      "put": {
+        "tags": [
+          "Agent review"
+        ],
+        "summary": "Set the members of a reviewer group (owner only). Requests routed to a group can only be decided by its members or an owner.",
+        "security": [
+          {
+            "accessJwt": []
+          }
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 60
+            },
+            "required": true,
+            "name": "name",
+            "in": "path"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "members": {
+                    "type": "array",
+                    "items": {
+                      "type": "string",
+                      "maxLength": 200,
+                      "format": "email"
+                    },
+                    "maxItems": 500
+                  }
+                },
+                "required": [
+                  "members"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "name": {
+                      "type": "string"
+                    },
+                    "members": {
+                      "type": "array",
+                      "items": {
+                        "type": "string"
+                      }
+                    }
+                  },
+                  "required": [
+                    "name",
+                    "members"
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthenticated",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "412": {
+            "description": "Precondition failed (stale ETag)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Rate limited or quota exceeded",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/review-groups": {
+      "get": {
+        "tags": [
+          "Agent review"
+        ],
+        "summary": "List reviewer groups and members",
+        "security": [
+          {
+            "accessJwt": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "items": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "name": {
+                            "type": "string"
+                          },
+                          "members": {
+                            "type": "array",
+                            "items": {
+                              "type": "string"
+                            }
+                          }
+                        },
+                        "required": [
+                          "name",
+                          "members"
+                        ]
+                      }
+                    }
+                  },
+                  "required": [
+                    "items"
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthenticated",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "412": {
+            "description": "Precondition failed (stale ETag)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Rate limited or quota exceeded",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/v1/agent-reviews": {
       "post": {
         "tags": [
           "Agent review"
         ],
-        "summary": "Ask for a human decision. Send Idempotency-Key: a retry with the same key and body returns the original request (200); the same key with a different body is 409.",
+        "summary": "Ask for a human decision. The project's policy routes it (auto-approve, human, four-eyes or reject). Send Idempotency-Key: a retry with the same key and body returns the original request (200); the same key with a different body is 409.",
         "security": [
           {
             "accessJwt": []
@@ -32972,7 +34442,7 @@
         "tags": [
           "Agent review"
         ],
-        "summary": "List review requests (newest first), filterable by project, status, risk and externalId",
+        "summary": "List review requests (newest first), filterable by project, status, risk, group and externalId",
         "security": [
           {
             "accessJwt": []
@@ -33016,6 +34486,15 @@
             },
             "required": false,
             "name": "risk",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "maxLength": 60
+            },
+            "required": false,
+            "name": "group",
             "in": "query"
           },
           {
@@ -33073,6 +34552,401 @@
                     "items",
                     "nextCursor"
                   ]
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthenticated",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "412": {
+            "description": "Precondition failed (stale ETag)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Rate limited or quota exceeded",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/agent-reviews/simulate": {
+      "post": {
+        "tags": [
+          "Agent review"
+        ],
+        "summary": "Dry run: how would this request be routed by the live policy (or a draft document)? Nothing is stored.",
+        "security": [
+          {
+            "accessJwt": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "request": {
+                    "type": "object",
+                    "properties": {
+                      "action": {
+                        "type": "string",
+                        "minLength": 1,
+                        "maxLength": 120,
+                        "pattern": "^[a-z0-9][a-z0-9_.:-]*$"
+                      },
+                      "payload": {
+                        "type": "object",
+                        "additionalProperties": {}
+                      },
+                      "context": {
+                        "type": "object",
+                        "additionalProperties": {}
+                      },
+                      "risk": {
+                        "type": "string",
+                        "enum": [
+                          "low",
+                          "medium",
+                          "high",
+                          "critical"
+                        ],
+                        "default": "medium"
+                      },
+                      "confidence": {
+                        "type": "number",
+                        "minimum": 0,
+                        "maximum": 1
+                      },
+                      "deadlineAt": {
+                        "type": "string",
+                        "format": "date-time"
+                      },
+                      "timeoutSeconds": {
+                        "type": "integer",
+                        "minimum": 10,
+                        "maximum": 2592000
+                      },
+                      "minApprovals": {
+                        "type": "integer",
+                        "minimum": 1,
+                        "maximum": 5
+                      },
+                      "externalId": {
+                        "type": "string",
+                        "maxLength": 200
+                      },
+                      "tags": {
+                        "type": "array",
+                        "items": {
+                          "type": "string",
+                          "maxLength": 40
+                        },
+                        "maxItems": 20,
+                        "default": []
+                      },
+                      "projectId": {
+                        "type": "string",
+                        "maxLength": 64
+                      }
+                    },
+                    "required": [
+                      "action",
+                      "payload"
+                    ]
+                  },
+                  "document": {
+                    "type": "object",
+                    "properties": {
+                      "rules": {
+                        "type": "array",
+                        "items": {
+                          "type": "object",
+                          "properties": {
+                            "id": {
+                              "type": "string",
+                              "minLength": 1,
+                              "maxLength": 60
+                            },
+                            "description": {
+                              "type": "string",
+                              "maxLength": 300
+                            },
+                            "when": {
+                              "type": "object",
+                              "properties": {
+                                "action": {
+                                  "type": "string",
+                                  "maxLength": 120
+                                },
+                                "risk": {
+                                  "type": "array",
+                                  "items": {
+                                    "type": "string",
+                                    "enum": [
+                                      "low",
+                                      "medium",
+                                      "high",
+                                      "critical"
+                                    ]
+                                  },
+                                  "minItems": 1
+                                },
+                                "minConfidence": {
+                                  "type": "number",
+                                  "minimum": 0,
+                                  "maximum": 1
+                                },
+                                "maxConfidence": {
+                                  "type": "number",
+                                  "minimum": 0,
+                                  "maximum": 1
+                                },
+                                "tagsAny": {
+                                  "type": "array",
+                                  "items": {
+                                    "type": "string",
+                                    "maxLength": 40
+                                  },
+                                  "maxItems": 20
+                                },
+                                "payload": {
+                                  "type": "array",
+                                  "items": {
+                                    "type": "object",
+                                    "properties": {
+                                      "path": {
+                                        "type": "string",
+                                        "minLength": 1,
+                                        "maxLength": 200,
+                                        "pattern": "^[A-Za-z0-9_]+(\\.[A-Za-z0-9_]+)*$"
+                                      },
+                                      "op": {
+                                        "type": "string",
+                                        "enum": [
+                                          "eq",
+                                          "neq",
+                                          "gt",
+                                          "gte",
+                                          "lt",
+                                          "lte",
+                                          "in",
+                                          "exists"
+                                        ]
+                                      },
+                                      "value": {
+                                        "anyOf": [
+                                          {
+                                            "type": "string"
+                                          },
+                                          {
+                                            "type": "number"
+                                          },
+                                          {
+                                            "type": "boolean"
+                                          },
+                                          {
+                                            "type": "null"
+                                          },
+                                          {
+                                            "type": "array",
+                                            "items": {
+                                              "anyOf": [
+                                                {
+                                                  "type": "string"
+                                                },
+                                                {
+                                                  "type": "number"
+                                                }
+                                              ]
+                                            }
+                                          }
+                                        ]
+                                      }
+                                    },
+                                    "required": [
+                                      "path",
+                                      "op"
+                                    ]
+                                  },
+                                  "maxItems": 20
+                                }
+                              },
+                              "default": {}
+                            },
+                            "then": {
+                              "type": "object",
+                              "properties": {
+                                "outcome": {
+                                  "type": "string",
+                                  "enum": [
+                                    "auto_approve",
+                                    "human",
+                                    "reject"
+                                  ]
+                                },
+                                "approvals": {
+                                  "type": "integer",
+                                  "minimum": 1,
+                                  "maximum": 5,
+                                  "default": 1
+                                },
+                                "group": {
+                                  "type": "string",
+                                  "maxLength": 60
+                                },
+                                "timeoutSeconds": {
+                                  "type": "integer",
+                                  "minimum": 10,
+                                  "maximum": 2592000
+                                },
+                                "escalateAfterSeconds": {
+                                  "type": "integer",
+                                  "minimum": 10,
+                                  "maximum": 2592000
+                                },
+                                "escalateToGroup": {
+                                  "type": "string",
+                                  "maxLength": 60
+                                }
+                              },
+                              "required": [
+                                "outcome"
+                              ]
+                            }
+                          },
+                          "required": [
+                            "id",
+                            "then"
+                          ]
+                        },
+                        "maxItems": 200
+                      },
+                      "default": {
+                        "type": "object",
+                        "properties": {
+                          "outcome": {
+                            "type": "string",
+                            "enum": [
+                              "auto_approve",
+                              "human",
+                              "reject"
+                            ]
+                          },
+                          "approvals": {
+                            "type": "integer",
+                            "minimum": 1,
+                            "maximum": 5,
+                            "default": 1
+                          },
+                          "group": {
+                            "type": "string",
+                            "maxLength": 60
+                          },
+                          "timeoutSeconds": {
+                            "type": "integer",
+                            "minimum": 10,
+                            "maximum": 2592000
+                          },
+                          "escalateAfterSeconds": {
+                            "type": "integer",
+                            "minimum": 10,
+                            "maximum": 2592000
+                          },
+                          "escalateToGroup": {
+                            "type": "string",
+                            "maxLength": 60
+                          }
+                        },
+                        "default": {
+                          "outcome": "human",
+                          "approvals": 1
+                        },
+                        "required": [
+                          "outcome"
+                        ]
+                      }
+                    },
+                    "required": [
+                      "rules"
+                    ]
+                  }
+                },
+                "required": [
+                  "request"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReviewRoutingSimulation"
                 }
               }
             }
@@ -33262,7 +35136,7 @@
         "tags": [
           "Agent review"
         ],
-        "summary": "Record a decision: approve, reject (veto), edit (replaces the payload; earlier approvals stop counting) or escalate",
+        "summary": "Record a decision: approve, reject (veto), edit (replaces the payload; earlier approvals stop counting) or escalate. Routed requests need a member of the group (or an owner).",
         "security": [
           {
             "accessJwt": []

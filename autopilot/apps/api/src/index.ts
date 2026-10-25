@@ -2,6 +2,7 @@ import type { Env, QueueMessage } from "./env.js";
 import { createApp } from "./app.js";
 import { handleDeadLetters, handlePipelineBatch } from "./queue.js";
 import { sweep } from "./services/dispatch.js";
+import { sweepAgentReviews } from "./services/agent-review.js";
 import { maybeRunDaily } from "./services/schedules.js";
 import { log } from "./lib/log.js";
 
@@ -18,6 +19,7 @@ export default {
   /** Cron (every minute): outbox sweeper + webhook retries; once a day: recurring invoices, reminder events, retention. */
   async scheduled(_c: ScheduledController, env: Env, ctx: ExecutionContext) {
     ctx.waitUntil(sweep(env).then((r) => log("info", "sweep", r)));
+    ctx.waitUntil(sweepAgentReviews(env).then((r) => log("info", "agent_review.sweep", r)));
     ctx.waitUntil(maybeRunDaily(env).then((r) => (r ? log("info", "daily", { ...r }) : undefined)));
   },
 } satisfies ExportedHandler<Env, QueueMessage>;

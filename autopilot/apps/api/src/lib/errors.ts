@@ -21,7 +21,9 @@ export type ErrorCode =
   | "self_approval"
   | "duplicate_decision"
   | "already_escalated"
-  | "not_requester";
+  | "not_requester"
+  | "not_in_group"
+  | "unsafe_policy";
 
 export class AppError extends Error {
   constructor(

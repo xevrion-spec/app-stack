@@ -22882,6 +22882,730 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/v1/review-projects/{id}/policies": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List policy versions (newest first) */
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            items: components["schemas"]["ReviewPolicy"][];
+                        };
+                    };
+                };
+                /** @description Bad request */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Error"];
+                    };
+                };
+                /** @description Unauthenticated */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Error"];
+                    };
+                };
+                /** @description Forbidden */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Error"];
+                    };
+                };
+                /** @description Not found */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Error"];
+                    };
+                };
+                /** @description Conflict */
+                409: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Error"];
+                    };
+                };
+                /** @description Precondition failed (stale ETag) */
+                412: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Error"];
+                    };
+                };
+                /** @description Rate limited or quota exceeded */
+                429: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Error"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        /** Save a new immutable policy version (draft). Unsafe rules (auto-approve without confidence, critical auto-approve) are refused. */
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json": {
+                        document: {
+                            rules: {
+                                id: string;
+                                description?: string;
+                                /** @default {} */
+                                when?: {
+                                    action?: string;
+                                    risk?: ("low" | "medium" | "high" | "critical")[];
+                                    minConfidence?: number;
+                                    maxConfidence?: number;
+                                    tagsAny?: string[];
+                                    payload?: {
+                                        path: string;
+                                        /** @enum {string} */
+                                        op: "eq" | "neq" | "gt" | "gte" | "lt" | "lte" | "in" | "exists";
+                                        value?: string | number | boolean | null | (string | number)[];
+                                    }[];
+                                };
+                                then: {
+                                    /** @enum {string} */
+                                    outcome: "auto_approve" | "human" | "reject";
+                                    /** @default 1 */
+                                    approvals?: number;
+                                    group?: string;
+                                    timeoutSeconds?: number;
+                                    escalateAfterSeconds?: number;
+                                    escalateToGroup?: string;
+                                };
+                            }[];
+                            /**
+                             * @default {
+                             *       "outcome": "human",
+                             *       "approvals": 1
+                             *     }
+                             */
+                            default?: {
+                                /** @enum {string} */
+                                outcome: "auto_approve" | "human" | "reject";
+                                /** @default 1 */
+                                approvals?: number;
+                                group?: string;
+                                timeoutSeconds?: number;
+                                escalateAfterSeconds?: number;
+                                escalateToGroup?: string;
+                            };
+                        };
+                        description?: string;
+                    };
+                };
+            };
+            responses: {
+                /** @description OK */
+                201: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ReviewPolicy"];
+                    };
+                };
+                /** @description Bad request */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Error"];
+                    };
+                };
+                /** @description Unauthenticated */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Error"];
+                    };
+                };
+                /** @description Forbidden */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Error"];
+                    };
+                };
+                /** @description Not found */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Error"];
+                    };
+                };
+                /** @description Conflict */
+                409: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Error"];
+                    };
+                };
+                /** @description Precondition failed (stale ETag) */
+                412: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Error"];
+                    };
+                };
+                /** @description Rate limited or quota exceeded */
+                429: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Error"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/review-projects/{id}/policies/replay": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Time-travel replay: re-run past requests against a candidate policy (a document or a saved version) and diff the outcomes */
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json": {
+                        document?: {
+                            rules: {
+                                id: string;
+                                description?: string;
+                                /** @default {} */
+                                when?: {
+                                    action?: string;
+                                    risk?: ("low" | "medium" | "high" | "critical")[];
+                                    minConfidence?: number;
+                                    maxConfidence?: number;
+                                    tagsAny?: string[];
+                                    payload?: {
+                                        path: string;
+                                        /** @enum {string} */
+                                        op: "eq" | "neq" | "gt" | "gte" | "lt" | "lte" | "in" | "exists";
+                                        value?: string | number | boolean | null | (string | number)[];
+                                    }[];
+                                };
+                                then: {
+                                    /** @enum {string} */
+                                    outcome: "auto_approve" | "human" | "reject";
+                                    /** @default 1 */
+                                    approvals?: number;
+                                    group?: string;
+                                    timeoutSeconds?: number;
+                                    escalateAfterSeconds?: number;
+                                    escalateToGroup?: string;
+                                };
+                            }[];
+                            /**
+                             * @default {
+                             *       "outcome": "human",
+                             *       "approvals": 1
+                             *     }
+                             */
+                            default?: {
+                                /** @enum {string} */
+                                outcome: "auto_approve" | "human" | "reject";
+                                /** @default 1 */
+                                approvals?: number;
+                                group?: string;
+                                timeoutSeconds?: number;
+                                escalateAfterSeconds?: number;
+                                escalateToGroup?: string;
+                            };
+                        };
+                        version?: number;
+                        /** Format: date-time */
+                        since?: string;
+                        /** @default 1000 */
+                        limit?: number;
+                    };
+                };
+            };
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["PolicyReplayReport"];
+                    };
+                };
+                /** @description Bad request */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Error"];
+                    };
+                };
+                /** @description Unauthenticated */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Error"];
+                    };
+                };
+                /** @description Forbidden */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Error"];
+                    };
+                };
+                /** @description Not found */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Error"];
+                    };
+                };
+                /** @description Conflict */
+                409: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Error"];
+                    };
+                };
+                /** @description Precondition failed (stale ETag) */
+                412: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Error"];
+                    };
+                };
+                /** @description Rate limited or quota exceeded */
+                429: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Error"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/review-projects/{id}/policies/{version}/activate": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Activate a version for all traffic, or as a canary for canaryPercent of new requests. Refused (409 unsafe_policy) if replaying recent history shows it would auto-approve anything a human rejected or edited, unless force is set. */
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                    version: number;
+                };
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json": {
+                        canaryPercent?: number;
+                        /** @default false */
+                        force?: boolean;
+                    };
+                };
+            };
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            policy: components["schemas"]["ReviewPolicy"];
+                            replay: components["schemas"]["PolicyReplayReport"];
+                        };
+                    };
+                };
+                /** @description Bad request */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Error"];
+                    };
+                };
+                /** @description Unauthenticated */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Error"];
+                    };
+                };
+                /** @description Forbidden */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Error"];
+                    };
+                };
+                /** @description Not found */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Error"];
+                    };
+                };
+                /** @description Conflict */
+                409: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Error"];
+                    };
+                };
+                /** @description Precondition failed (stale ETag) */
+                412: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Error"];
+                    };
+                };
+                /** @description Rate limited or quota exceeded */
+                429: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Error"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/review-groups/{name}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /** Set the members of a reviewer group (owner only). Requests routed to a group can only be decided by its members or an owner. */
+        put: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    name: string;
+                };
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json": {
+                        members: string[];
+                    };
+                };
+            };
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            name: string;
+                            members: string[];
+                        };
+                    };
+                };
+                /** @description Bad request */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Error"];
+                    };
+                };
+                /** @description Unauthenticated */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Error"];
+                    };
+                };
+                /** @description Forbidden */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Error"];
+                    };
+                };
+                /** @description Not found */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Error"];
+                    };
+                };
+                /** @description Conflict */
+                409: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Error"];
+                    };
+                };
+                /** @description Precondition failed (stale ETag) */
+                412: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Error"];
+                    };
+                };
+                /** @description Rate limited or quota exceeded */
+                429: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Error"];
+                    };
+                };
+            };
+        };
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/review-groups": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List reviewer groups and members */
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            items: {
+                                name: string;
+                                members: string[];
+                            }[];
+                        };
+                    };
+                };
+                /** @description Bad request */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Error"];
+                    };
+                };
+                /** @description Unauthenticated */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Error"];
+                    };
+                };
+                /** @description Forbidden */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Error"];
+                    };
+                };
+                /** @description Not found */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Error"];
+                    };
+                };
+                /** @description Conflict */
+                409: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Error"];
+                    };
+                };
+                /** @description Precondition failed (stale ETag) */
+                412: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Error"];
+                    };
+                };
+                /** @description Rate limited or quota exceeded */
+                429: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Error"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/v1/agent-reviews": {
         parameters: {
             query?: never;
@@ -22889,13 +23613,14 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** List review requests (newest first), filterable by project, status, risk and externalId */
+        /** List review requests (newest first), filterable by project, status, risk, group and externalId */
         get: {
             parameters: {
                 query?: {
                     projectId?: string;
                     status?: "pending" | "escalated" | "approved" | "rejected" | "expired" | "cancelled";
                     risk?: "low" | "medium" | "high" | "critical";
+                    group?: string;
                     externalId?: string;
                     limit?: number;
                     cursor?: string;
@@ -22984,7 +23709,7 @@ export interface paths {
             };
         };
         put?: never;
-        /** Ask for a human decision. Send Idempotency-Key: a retry with the same key and body returns the original request (200); the same key with a different body is 409. */
+        /** Ask for a human decision. The project's policy routes it (auto-approve, human, four-eyes or reject). Send Idempotency-Key: a retry with the same key and body returns the original request (200); the same key with a different body is 409. */
         post: {
             parameters: {
                 query?: never;
@@ -23027,6 +23752,179 @@ export interface paths {
                     };
                     content: {
                         "application/json": components["schemas"]["ReviewRequest"];
+                    };
+                };
+                /** @description Bad request */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Error"];
+                    };
+                };
+                /** @description Unauthenticated */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Error"];
+                    };
+                };
+                /** @description Forbidden */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Error"];
+                    };
+                };
+                /** @description Not found */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Error"];
+                    };
+                };
+                /** @description Conflict */
+                409: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Error"];
+                    };
+                };
+                /** @description Precondition failed (stale ETag) */
+                412: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Error"];
+                    };
+                };
+                /** @description Rate limited or quota exceeded */
+                429: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Error"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/agent-reviews/simulate": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Dry run: how would this request be routed by the live policy (or a draft document)? Nothing is stored. */
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json": {
+                        request: {
+                            action: string;
+                            payload: {
+                                [key: string]: unknown;
+                            };
+                            context?: {
+                                [key: string]: unknown;
+                            };
+                            /**
+                             * @default medium
+                             * @enum {string}
+                             */
+                            risk?: "low" | "medium" | "high" | "critical";
+                            confidence?: number;
+                            /** Format: date-time */
+                            deadlineAt?: string;
+                            timeoutSeconds?: number;
+                            minApprovals?: number;
+                            externalId?: string;
+                            /** @default [] */
+                            tags?: string[];
+                            projectId?: string;
+                        };
+                        document?: {
+                            rules: {
+                                id: string;
+                                description?: string;
+                                /** @default {} */
+                                when?: {
+                                    action?: string;
+                                    risk?: ("low" | "medium" | "high" | "critical")[];
+                                    minConfidence?: number;
+                                    maxConfidence?: number;
+                                    tagsAny?: string[];
+                                    payload?: {
+                                        path: string;
+                                        /** @enum {string} */
+                                        op: "eq" | "neq" | "gt" | "gte" | "lt" | "lte" | "in" | "exists";
+                                        value?: string | number | boolean | null | (string | number)[];
+                                    }[];
+                                };
+                                then: {
+                                    /** @enum {string} */
+                                    outcome: "auto_approve" | "human" | "reject";
+                                    /** @default 1 */
+                                    approvals?: number;
+                                    group?: string;
+                                    timeoutSeconds?: number;
+                                    escalateAfterSeconds?: number;
+                                    escalateToGroup?: string;
+                                };
+                            }[];
+                            /**
+                             * @default {
+                             *       "outcome": "human",
+                             *       "approvals": 1
+                             *     }
+                             */
+                            default?: {
+                                /** @enum {string} */
+                                outcome: "auto_approve" | "human" | "reject";
+                                /** @default 1 */
+                                approvals?: number;
+                                group?: string;
+                                timeoutSeconds?: number;
+                                escalateAfterSeconds?: number;
+                                escalateToGroup?: string;
+                            };
+                        };
+                    };
+                };
+            };
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ReviewRoutingSimulation"];
                     };
                 };
                 /** @description Bad request */
@@ -23210,7 +24108,7 @@ export interface paths {
         };
         get?: never;
         put?: never;
-        /** Record a decision: approve, reject (veto), edit (replaces the payload; earlier approvals stop counting) or escalate */
+        /** Record a decision: approve, reject (veto), edit (replaces the payload; earlier approvals stop counting) or escalate. Routed requests need a member of the group (or an owner). */
         post: {
             parameters: {
                 query?: never;
@@ -24033,6 +24931,32 @@ export interface components {
             environment: "development" | "staging" | "production";
             createdAt: string;
         };
+        ReviewPolicy: {
+            id: string;
+            version: number;
+            description: string | null;
+            /** @enum {string} */
+            status: "draft" | "active" | "canary" | "retired";
+            canaryPercent: number | null;
+            sha256: string;
+            document?: unknown;
+            createdBy: string;
+            createdAt: string;
+            activatedAt: string | null;
+        };
+        PolicyReplayReport: {
+            evaluated: number;
+            changed: number;
+            transitions: {
+                [key: string]: number;
+            };
+            wouldAutoApproveRejected: number;
+            wouldAutoApproveEdited: number;
+            reviewsSaved: number;
+            humanLoadDelta: number;
+            safe: boolean;
+            samples: unknown[];
+        };
         ReviewRequest: {
             id: string;
             projectId: string;
@@ -24060,6 +24984,15 @@ export interface components {
             tags: string[];
             deadlineAt: string;
             decidedAt: string | null;
+            routing: {
+                /** @enum {string} */
+                outcome: "auto_approve" | "human" | "reject";
+                policyVersion: number;
+                ruleId: string | null;
+                group: string | null;
+                escalateAt: string | null;
+                guardrails: string[];
+            };
             version: number;
             createdAt: string;
             updatedAt: string;
@@ -24072,6 +25005,23 @@ export interface components {
                 payloadVersion: number;
                 createdAt: string;
             }[];
+        };
+        ReviewRoutingSimulation: {
+            /** @enum {string} */
+            outcome: "auto_approve" | "human" | "reject";
+            approvals: number;
+            group: string | null;
+            ruleId: string | null;
+            timeoutSeconds: number | null;
+            escalateAfterSeconds: number | null;
+            escalateToGroup: string | null;
+            guardrails: string[];
+            trace: {
+                ruleId: string;
+                matched: boolean;
+                failed: string[];
+            }[];
+            policyVersion: number;
         };
     };
     responses: never;
