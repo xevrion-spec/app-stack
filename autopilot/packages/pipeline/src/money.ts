@@ -5,15 +5,35 @@ export function assertPence(n: number, label = "amount"): asserts n is Pence {
   if (!Number.isSafeInteger(n)) throw new RangeError(`${label} must be an integer number of pence, got ${n}`);
 }
 
-/** Parse "1,234.56", "-12.3", "(45.00)", "£9.99" into pence. Throws on garbage. */
+/**
+ * Parse UK bank amount renderings into pence: "1,234.56", "-12.3", "(45.00)", "£9.99", "+5", "12.00 CR", "12.00 DR", "12.00-".
+ * Throws on anything ambiguous (misplaced thousands separators, stray signs, unbalanced brackets, > 2 decimals, unsafe size).
+ */
 export function parseAmountToPence(raw: string): Pence {
-  const s = raw.trim().replace(/[£$€,\s]/g, "");
-  const neg = /^\(.*\)$/.test(s) || s.startsWith("-");
-  const body = s.replace(/[()\-+]/g, "");
-  if (!/^\d+(\.\d{1,2})?$/.test(body)) throw new RangeError(`unparseable amount: ${raw}`);
-  const [whole = "0", frac = ""] = body.split(".");
-  const p = Number(whole) * 100 + Number((frac + "00").slice(0, 2));
-  return neg ? -p : p;
+  let s = raw
+    .trim()
+    .replace(/\u2212/g, "-")
+    .replace(/\s+/g, "");
+  let neg = false;
+  const suffix = s.match(/^(.*?)(CR|DR)$/i);
+  if (suffix) {
+    s = suffix[1]!;
+    neg = suffix[2]!.toUpperCase() === "DR";
+  } else if (/\d-$/.test(s)) {
+    s = s.slice(0, -1);
+    neg = true;
+  }
+  if (/^\(.*\)$/.test(s)) {
+    s = s.slice(1, -1);
+    neg = !neg;
+  }
+  const m = s.match(/^([+-])?[£$€]?([+-])?(\d{1,3}(?:,\d{3})+|\d+)(?:\.(\d{1,2}))?$/);
+  if (!m || (m[1] && m[2])) throw new RangeError(`unparseable amount: ${raw}`);
+  if ((m[1] ?? m[2]) === "-") neg = !neg;
+  const whole = m[3]!.replace(/,/g, "");
+  const p = Number(whole) * 100 + Number(((m[4] ?? "") + "00").slice(0, 2));
+  if (!Number.isSafeInteger(p)) throw new RangeError(`amount too large: ${raw}`);
+  return neg && p !== 0 ? -p : p;
 }
 
 /** Round half away from zero (HMRC VAT guidance allows rounding to nearest penny; verify per scheme). */

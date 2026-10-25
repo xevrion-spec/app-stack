@@ -38,3 +38,16 @@ export function def<
   });
 }
 export const IdParam = z.object({ id: z.string().min(1).max(64) });
+
+/** Shared zod validation hook: every app/sub-app returns the same typed 400 error envelope. */
+export const validationHook = (
+  result: { success: boolean; error?: { flatten: () => unknown } },
+  c: { json: (b: unknown, s: 400) => Response; get: (k: "requestId") => string },
+) => {
+  if (!result.success)
+    return c.json(
+      { error: { code: "validation_failed", message: "Request validation failed", requestId: c.get("requestId"), details: result.error?.flatten() } },
+      400,
+    );
+  return undefined;
+};

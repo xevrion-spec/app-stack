@@ -34,14 +34,33 @@ export function normaliseDescription(d: string): string {
 }
 
 /** Whole-word / token-boundary match, so "SALE" doesn't match "WHOLESALE". */
+/**
+ * Conservative ReDoS guard for user regex rules: bounded length, no backreferences/lookarounds, and no quantified group
+ * that itself contains a quantifier (the classic "(a+)+" catastrophic-backtracking shape).
+ */
+export function isSafeRuleRegex(pattern: string): boolean {
+  if (pattern.length > 80) return false;
+  if (/\\[1-9]|\(\?[=!<]/.test(pattern)) return false;
+  if (/\((?:[^()\\]|\\.)*[+*{](?:[^()\\]|\\.)*\)\s*[+*{?]/.test(pattern)) return false;
+  try {
+    new RegExp(pattern, "i");
+    return true;
+  } catch {
+    return false;
+  }
+}
+
 export function ruleMatches(rule: CategoryRule, normDesc: string): boolean {
-  const p = rule.pattern.toUpperCase().trim();
+  // Patterns are normalised exactly like descriptions, so "booking.com" or "B&Q" match "BOOKING COM" / "B&Q".
+  const p = rule.matchType === "regex" ? rule.pattern : normaliseDescription(rule.pattern);
+  if (!p) return false;
   switch (rule.matchType) {
     case "exact":
       return normDesc === p;
     case "prefix":
       return normDesc.startsWith(p);
     case "regex":
+      if (!isSafeRuleRegex(rule.pattern)) return false;
       try {
         return new RegExp(rule.pattern, "i").test(normDesc);
       } catch {
@@ -65,11 +84,20 @@ export function categoriseByRules(line: BankLine, rules: CategoryRule[]): Catego
   const isRefund = REFUND_RE.test(norm);
   // Priority first, then the most specific (longest) pattern: "GOOGLE ADS" beats "GOOGLE".
   const ordered = [...rules].sort((a, b) => a.priority - b.priority || b.pattern.trim().length - a.pattern.trim().length);
+  const skipped: string[] = [];
   for (const r of ordered) {
     if (!ruleMatches(r, norm)) continue;
+    // Review-list rules (personal / not allowable spend, e.g. "UBER EATS" vs "UBER") force a human decision.
+    if (r.categoryCode === SUSPENSE) return null;
     const ruleIsIncome = r.categoryCode === SALES;
+    const p = normaliseDescription(r.pattern);
+    // Don't fall back to a shorter pattern of the same merchant ("SHOPIFY PAYMENTS" outflow must not become "SHOPIFY" software).
+    if (skipped.some((s) => s.includes(p))) return null;
     // Money going out can never be a sale (e.g. "INVOICE PAYMENT TO PRINTER").
-    if (ruleIsIncome && !isIn) continue;
+    if (ruleIsIncome && !isIn) {
+      skipped.push(p);
+      continue;
+    }
     // Money coming in on an expense rule: a refund is a contra-expense (same account); otherwise it is suspicious.
     const confidence = !ruleIsIncome && isIn ? (isRefund ? 0.9 : 0.6) : 0.95;
     return { lineId: line.id, categoryCode: r.categoryCode, confidence, method: "rule", ruleId: r.id, vatRateCode: r.vatRateCode ?? null };

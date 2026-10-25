@@ -1,6 +1,6 @@
 import { OpenAPIHono, z } from "@hono/zod-openapi";
 import { renderInvoicePdf } from "../services/invoice-pdf.js";
-import { computeVatReturn, computeSaSummary, vatOnNet, VAT_RATES, type VatInputLine } from "@xevrion/pipeline";
+import { computeVatReturn, isSafeRuleRegex, computeSaSummary, vatOnNet, VAT_RATES, type VatInputLine } from "@xevrion/pipeline";
 import type { Context } from "hono";
 import type { AppEnv } from "../env.js";
 import * as S from "../schemas.js";
@@ -8,11 +8,12 @@ import { def, IdParam } from "../lib/route.js";
 import { TenantDb, newId, encodeCursor, decodeCursor } from "../lib/db.js";
 import { auditStmt } from "../lib/audit.js";
 import { requireRole } from "../lib/auth.js";
+import { validationHook } from "../lib/route.js";
 import { badRequest, conflict, notFound, tooLarge, unsupported } from "../lib/errors.js";
 import { parseBankCsv, sha256Hex } from "../services/csv.js";
 import { postTransactionJournal, categoryKind } from "../services/ledger.js";
 
-export const v1 = new OpenAPIHono<AppEnv>();
+export const v1 = new OpenAPIHono<AppEnv>({ defaultHook: validationHook as never });
 type C = Context<AppEnv>;
 const scope = (c: C) => new TenantDb(c.env.DB, c.get("principal").tenantId);
 const actor = (c: C) => c.get("principal").email;
@@ -357,13 +358,10 @@ v1.openapi(
   def({ method: "post", path: "/rules", tag: "Categories", summary: "Add a rule", body: S.CreateRuleBody, response: S.RuleSchema, status: 201 }),
   async (c) => {
     const b = c.req.valid("json");
-    if (b.matchType === "regex") {
-      try {
-        new RegExp(b.pattern);
-      } catch {
-        throw badRequest("Invalid regex");
-      }
-    }
+    if (b.matchType === "regex" && !isSafeRuleRegex(b.pattern))
+      throw badRequest("Invalid or unsafe regex (nested quantifiers, backreferences and lookarounds are not allowed)");
+    // Regex patterns keep their case: upper-casing would turn \d into \D. Matching is case-insensitive anyway.
+    const pattern = b.matchType === "regex" ? b.pattern : b.pattern.toUpperCase();
     const db = scope(c);
     if (!(await db.first("select code from categories where tenant_id = ?1 and code = ?2", b.categoryCode))) throw badRequest("Unknown category");
     const id = newId();
@@ -371,7 +369,7 @@ v1.openapi(
       db.stmt(
         "insert into category_rules (tenant_id, id, pattern, match_type, category_code, vat_rate_code, priority, created_by) values (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8)",
         id,
-        b.pattern.toUpperCase(),
+        pattern,
         b.matchType,
         b.categoryCode,
         b.vatRateCode,
@@ -380,10 +378,7 @@ v1.openapi(
       ),
       auditStmt(db, actor(c), "rule.created", id, b),
     ]);
-    return c.json(
-      { id, pattern: b.pattern.toUpperCase(), match_type: b.matchType, category_code: b.categoryCode, vat_rate_code: b.vatRateCode, priority: b.priority },
-      201,
-    );
+    return c.json({ id, pattern, match_type: b.matchType, category_code: b.categoryCode, vat_rate_code: b.vatRateCode, priority: b.priority }, 201);
   },
 );
 
@@ -893,7 +888,8 @@ v1.openapi(def({ method: "get", path: "/billing/events", tag: "Billing", summary
 
 const csvCell = (v: unknown) => {
   const s = v == null ? "" : String(v);
-  const safe = /^[=+\-@\t\r]/.test(s) ? `'${s}` : s; // neutralise spreadsheet formula injection
+  // neutralise spreadsheet formula injection in text; real numbers (e.g. -4560 pence) stay numeric
+  const safe = typeof v !== "number" && /^[=+\-@\t\r]/.test(s) ? `'${s}` : s;
   return /[",\n]/.test(safe) ? `"${safe.replace(/"/g, '""')}"` : safe;
 };
 v1.openAPIRegistry.registerPath({

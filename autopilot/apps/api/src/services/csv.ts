@@ -27,6 +27,7 @@ export function parseCsv(text: string): string[][] {
       row = [];
     } else field += ch;
   }
+  if (q) throw new RangeError("CSV has an unterminated quoted field");
   row.push(field);
   if (row.some((f) => f.trim() !== "")) rows.push(row);
   return rows;
@@ -40,18 +41,30 @@ export interface ParsedBankLine {
   currency: string;
 }
 
-/** Normalise dd/mm/yyyy, yyyy-mm-dd, dd-mm-yyyy to ISO. UK banks use day-first. */
+const validYmd = (y: number, m: number, d: number) => {
+  if (y < 1990 || y > 2100 || m < 1 || m > 12 || d < 1) return false;
+  return d <= new Date(Date.UTC(y, m, 0)).getUTCDate();
+};
+const MONTHS = ["jan", "feb", "mar", "apr", "may", "jun", "jul", "aug", "sep", "oct", "nov", "dec"];
+
+/**
+ * Normalise UK bank date renderings to ISO yyyy-mm-dd: yyyy-mm-dd (optionally with a time, e.g. Revolut),
+ * dd/mm/yyyy, dd-mm-yy, dd.mm.yyyy and "01 Jul 2026"/"01-Jul-26". UK banks are day-first. Rejects impossible dates.
+ */
 export function toIsoDate(raw: string): string {
   const t = raw.trim();
-  let m = t.match(/^(\d{4})-(\d{2})-(\d{2})$/);
-  if (m) return `${m[1]}-${m[2]}-${m[3]}`;
-  m = t.match(/^(\d{1,2})[/.-](\d{1,2})[/.-](\d{2,4})$/);
-  if (m) {
-    const y = m[3]!.length === 2 ? `20${m[3]}` : m[3]!;
-    const iso = `${y}-${m[2]!.padStart(2, "0")}-${m[1]!.padStart(2, "0")}`;
-    if (!Number.isNaN(Date.parse(iso))) return iso;
-  }
-  throw new RangeError(`unrecognised date: ${raw}`);
+  let y: number, mo: number, d: number;
+  let m = t.match(/^(\d{4})-(\d{2})-(\d{2})(?:[T ]\d{2}:\d{2}(?::\d{2}(?:\.\d+)?)?Z?)?$/);
+  if (m) [y, mo, d] = [Number(m[1]), Number(m[2]), Number(m[3])];
+  else if ((m = t.match(/^(\d{1,2})[/.-](\d{1,2})[/.-](\d{2}|\d{4})$/))) {
+    [d, mo, y] = [Number(m[1]), Number(m[2]), Number(m[3])];
+    if (m[3]!.length === 2) y += 2000;
+  } else if ((m = t.match(/^(\d{1,2})[ -]([A-Za-z]{3})[a-z]*[ -](\d{2}|\d{4})$/))) {
+    [d, mo, y] = [Number(m[1]), MONTHS.indexOf(m[2]!.toLowerCase()) + 1, Number(m[3])];
+    if (m[3]!.length === 2) y += 2000;
+  } else throw new RangeError(`unrecognised date: ${raw}`);
+  if (!validYmd(y, mo, d)) throw new RangeError(`invalid date: ${raw}`);
+  return `${y}-${String(mo).padStart(2, "0")}-${String(d).padStart(2, "0")}`;
 }
 
 /** Accepts headers: date + description + (amount | paid out/paid in | debit/credit) [+ currency]. */
@@ -60,10 +73,17 @@ export function parseBankCsv(text: string, maxRows = 5000): { lines: ParsedBankL
   if (rows.length < 2) throw new RangeError("CSV needs a header row and at least one data row");
   if (rows.length - 1 > maxRows) throw new RangeError(`CSV has more than ${maxRows} rows`);
   const h = rows[0]!.map((x) => x.trim().toLowerCase());
-  const idx = (...names: string[]) => h.findIndex((x) => names.some((n) => x === n || x.includes(n)));
-  const iDate = idx("date"),
-    iDesc = idx("description", "details", "narrative", "memo", "payee");
-  const iAmt = h.findIndex((x) => x === "amount" || x === "value");
+  const idx = (...names: string[]) => {
+    for (const n of names) {
+      const exact = h.indexOf(n);
+      if (exact >= 0) return exact;
+    }
+    return h.findIndex((x) => names.some((n) => x.includes(n)));
+  };
+  // Prefer the posting/completed date over value/started dates when a bank exports several.
+  const iDate = idx("date", "transaction date", "posting date", "completed date", "posted");
+  const iDesc = idx("description", "transaction description", "details", "narrative", "memo", "payee", "counter party", "name", "reference");
+  const iAmt = h.findIndex((x) => x === "amount" || x === "value" || /^amount\s*\(gbp\)$/.test(x) || x === "amount gbp");
   const iOut = idx("paid out", "debit", "money out"),
     iIn = idx("paid in", "credit", "money in"),
     iCur = idx("currency");
@@ -74,6 +94,8 @@ export function parseBankCsv(text: string, maxRows = 5000): { lines: ParsedBankL
   rows.slice(1).forEach((r, k) => {
     const rowNo = k + 2;
     try {
+      // A shifted row (e.g. an unquoted "12,34") must not be silently read from the wrong columns.
+      if (r.slice(h.length).some((f) => f.trim() !== "")) throw new RangeError(`row has ${r.length} columns, header has ${h.length}`);
       const date = toIsoDate(r[iDate] ?? "");
       const description = (r[iDesc] ?? "").trim().slice(0, 300);
       if (!description) throw new RangeError("empty description");
