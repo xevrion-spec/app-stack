@@ -25,7 +25,7 @@ Keys act as the tenant with exactly those scopes (missing scope → 403 `insuffi
 
 ## Events (versioned catalog)
 `GET /v1/events/catalog` lists every type with its version and JSON schema: `transaction.created`, `transaction.categorised`,
-`invoice.created`, `invoice.paid`, `exception.opened`, `exception.resolved`, `vat_draft.ready`, `job.completed`, `trigger.received`.
+`invoice.created`, `invoice.paid`, `invoice.payment_recorded`, `invoice.credit_note_issued`, `invoice.reminder_due` (event only — Autopilot never emails customers), `invoice.recurring_issued`, `exception.opened`, `exception.resolved`, `vat_draft.ready`, `job.completed`, `trigger.received`.
 Events are written in the **same D1 batch** as the change that caused them (transactional outbox), then published to the queue.
 A cron sweep republishes anything not dispatched within 60 s, so a crash between commit and publish loses nothing.
 `GET /v1/events` (cursor, `type=invoice.*` filters), `GET /v1/events/{id}`, `GET /v1/activity` (audit feed), and

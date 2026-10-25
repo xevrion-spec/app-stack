@@ -2,8 +2,16 @@
   "name": "@xevrion/books",
   "private": true,
   "type": "module",
-  "exports": { ".": "./src/index.ts" },
-  "scripts": { "typecheck": "tsc --noEmit -p ." },
-  "dependencies": { "@xevrion/pipeline": "*" },
-  "devDependencies": { "fast-check": "^3.23.2" }
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "scripts": {
+    "typecheck": "tsc --noEmit -p ."
+  },
+  "dependencies": {
+    "@xevrion/pipeline": "*"
+  },
+  "devDependencies": {
+    "fast-check": "^3.23.2"
+  }
 }

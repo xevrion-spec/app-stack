@@ -17,7 +17,10 @@ Branch: feature/value-max (from feature/quality-1000). Roadmap + status: docs/va
 - Rates: packages/domain-uk-tax/uk-rates.unverified.json (verified:false). ADR 0015, docs/books.md.
 - Books API (/v1/books): importers, learned rules (corrections captured on PATCH), recurring, forecast, spikes, reports,
   calculators, tax estimate, deadlines, mileage log. Migration 0005 (+down). ADR 0016. OpenAPI + SDK regenerated. 15 API tests.
-- Next: V3 invoicing, V4 extraction/MTD mock, V5 accountant/GDPR/notifications/plans, V6 assistant, V7 web/admin/SLOs.
+- V3 invoicing: partial payments, credit notes, aged debtors, reminders (events only, no backlog), recurring invoices,
+  payment-link + FX provider interfaces with mock adapters + contract tests. Migration 0006, ADR 0017, 4 new event types.
+  Note: cron wiring for recurring/reminder runs is not done yet (endpoints exist; sweep is cross-tenant and needs care).
+- Next: V4 extraction/MTD mock, V5 accountant/GDPR/notifications/plans, V6 assistant, V7 web/admin/SLOs.
 
 - Fixed flaky property test: merchantKey was not idempotent ("SO0"); fixed root cause (strip non-letters before noise words).
 - CI: licence gate failed under npm 10 (extraneous @img/sharp-wasm32 listed); script now skips extraneous. gitleaks clean on full history.

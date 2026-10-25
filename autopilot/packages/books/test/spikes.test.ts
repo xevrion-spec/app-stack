@@ -12,9 +12,7 @@ describe("detectSpikes", () => {
   });
   it("flags a material rise with ratio and severity", () => {
     const s = detectSpikes([...base, l("2026-06-02", "fuel", -25000), l("2026-06-03", "fuel", -5000)], "2026-06");
-    expect(s).toEqual([
-      { categoryCode: "fuel", month: "2026-06", spendPence: 30000, baselinePence: 10000, increasePence: 20000, ratio: 3, severity: "high" },
-    ]);
+    expect(s).toEqual([{ categoryCode: "fuel", month: "2026-06", spendPence: 30000, baselinePence: 10000, increasePence: 20000, ratio: 3, severity: "high" }]);
   });
   it("medium severity between 1x and 2x the ratio threshold", () => {
     expect(detectSpikes([...base, l("2026-06-02", "fuel", -20000)], "2026-06")[0]).toMatchObject({ ratio: 2, severity: "medium" });

@@ -18,8 +18,8 @@ nothing sends email, posts, submits to HMRC or connects to a bank. External prov
 | 9 | Calculators: mileage, home office (simplified flat rate vs proportion), simplified expenses | 4 | S | M | ✅ lib + API | V2 |
 | 10 | Capital allowances (AIA estimate) and tax-pot / set-aside estimate (income tax + Class 4) | 5 | M | H | ✅ lib + API | V2 |
 | 11 | SA + VAT deadline calendar, payments on account, reminders as **events** only | 5 | S | M | ✅ lib + API | V2 |
-| 12 | Invoicing: credit notes, partial payments, recurring invoices, overdue reminders as events | 5 | M | L | ⏳ | V3 |
-| 13 | Payment links (interface + mock provider), multi-currency invoices with an FX-rates interface (ECB-style mock) | 4 | M | M | 🟡 planned | V3 |
+| 12 | Invoicing: credit notes, partial payments, recurring invoices, overdue reminders as events | 5 | M | L | ✅ (aged debtors too) | V3 |
+| 13 | Payment links (interface + mock provider), multi-currency invoices with an FX-rates interface (ECB-style mock) | 4 | M | M | ✅ interfaces + mock adapters + contract tests | V3 |
 | 14 | MTD-ready data model (obligations, quarterly updates, submissions) + HMRC adapter interface + **mock** HMRC | 5 | L | H | 🟡 planned | V4 |
 | 15 | Receipt/invoice OCR & extraction: pluggable extractor (LLM-vision via FreeLLMAPI if supported, deterministic text parser, mock) | 5 | M | M | 🟡 planned | V4 |
 | 16 | Bank feed abstraction (Open Banking provider interface + mock; no live provider) | 4 | M | H | 🟡 planned | V4 |

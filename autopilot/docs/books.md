@@ -27,3 +27,10 @@ Pure functions; all amounts are integer pence. Tax and allowance outputs are **e
 | `GET/POST /mileage-trips` | Mileage log; feeds the mileage calculator when `miles` omitted |
 
 Migration `0005_books.sql` (additive): `category_corrections`, `mileage_trips`, `category_rules.source/confidence`.
+
+## Invoicing (V3)
+- `GET /invoices/{id}/balance`, `POST /invoices/{id}/payments` (partial; overpayment → 409; settles to `paid`), `POST /invoices/{id}/credit-notes` (`CN-<number>-n`, VAT reversed proportionally, ≤ outstanding).
+- `POST /invoices/{id}/payment-link` (mock provider), `POST /invoices/{id}/currency` (drafts; mock FX to GBP).
+- `GET /receivables/aged`, `POST /receivables/reminders/run`: emits `invoice.reminder_due`. Only the latest due reminder fires, never a backlog, and each fires once.
+- `POST/GET /recurring-invoices`, `POST /recurring-invoices/run`: issues drafts. Catch-up is capped at 12, a run is idempotent per period, and the schedule ends at `endDate`.
+Migration `0006_invoicing.sql` (additive). ADR 0017.

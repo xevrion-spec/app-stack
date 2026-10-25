@@ -35,6 +35,26 @@ export const EVENT_CATALOG = {
     description: "An invoice was marked paid (manually or by reconciliation)",
     schema: z.object({ invoiceId: id, number: z.string(), grossPence: pence, transactionId: id.nullable() }),
   },
+  "invoice.payment_recorded": {
+    version: 1,
+    description: "A (possibly partial) payment was recorded against an invoice",
+    schema: z.object({ invoiceId: id, number: z.string(), amountPence: pence, outstandingPence: pence }),
+  },
+  "invoice.credit_note_issued": {
+    version: 1,
+    description: "A credit note was issued against an invoice",
+    schema: z.object({ invoiceId: id, creditNoteId: id, number: z.string(), grossPence: pence }),
+  },
+  "invoice.reminder_due": {
+    version: 1,
+    description: "A payment reminder is due (an event only; Autopilot never emails customers itself)",
+    schema: z.object({ invoiceId: id, number: z.string(), kind: z.string(), outstandingPence: pence, customerEmail: z.string().nullable() }),
+  },
+  "invoice.recurring_issued": {
+    version: 1,
+    description: "A recurring schedule issued a new draft invoice",
+    schema: z.object({ invoiceId: id, scheduleId: id, number: z.string(), grossPence: pence }),
+  },
   "exception.opened": {
     version: 1,
     description: "Something needs a human decision",
