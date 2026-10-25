@@ -62,6 +62,13 @@ describe("authz matrix over every OpenAPI operation", () => {
   it.each(OPS)("%s %s: anonymous is 401, non-member never succeeds, nothing 5xx, no leaks", async (m, p) => {
     if (p === "/v1/tenants") return; // sign-up endpoint: any authenticated identity may create a business
     if (p === "/v1/portal/session") return; // portal sign-in: exchanges a magic token, covered by practice-authz-matrix
+    if (p.startsWith("/sso/oidc/")) {
+      // public SSO login legs (covered by sso-oidc.test.ts): unauthenticated by design, but junk input must be a clean 4xx
+      const r = await send(m, p);
+      expect([r.status >= 400, r.status < 500]).toEqual([true, true]);
+      expect(r.text).not.toMatch(LEAKS);
+      return;
+    }
     const anon = await send(m, p);
     expect(anon.status).toBe(401);
     const nob = await send(m, p, NOBODY);

@@ -2,6 +2,7 @@ import { createRemoteJWKSet, jwtVerify, type JWTVerifyGetKey } from "jose";
 import type { MiddlewareHandler } from "hono";
 import type { AppEnv, Principal, Role } from "../env.js";
 import { AppError, forbidden, unauthenticated } from "./errors.js";
+import { verifySession } from "../services/sso.js";
 import { hashApiKey, hasScope, ipAllowed, isKeyUsable, parseApiKey, timingSafeEqual, type Scope } from "@xevrion/platform";
 
 const jwksCache = new Map<string, JWTVerifyGetKey>();
@@ -30,6 +31,13 @@ export const identity: MiddlewareHandler<AppEnv> = async (c, next) => {
   const env = c.env;
   const auth = c.req.header("authorization");
   if (auth?.startsWith("Bearer ap_")) return apiKeyAuth(c, auth.slice(7), next);
+  if (auth?.startsWith("Bearer ses_")) {
+    const sess = await verifySession(env, auth.slice(11));
+    c.set("identityEmail", sess.email);
+    c.set("identitySubject", sess.subject);
+    c.set("ssoTenant", sess.tenantId);
+    return next();
+  }
   const devEmail = c.req.header("x-dev-user");
   // Fail closed: only explicit development/test environments trust x-dev-user. A missing or unexpected ENVIRONMENT
   // (e.g. a "staging" deploy or a typo) must never accept a forged identity header.
@@ -60,11 +68,15 @@ export const identity: MiddlewareHandler<AppEnv> = async (c, next) => {
 export const principal: MiddlewareHandler<AppEnv> = async (c, next) => {
   if (c.get("principal")?.apiKey) return next();
   const email = c.get("identityEmail");
-  const wanted = c.req.header("x-tenant-id");
+  // An SSO session is bound to the tenant that issued it; x-tenant-id cannot move it elsewhere.
+  const wanted = c.get("ssoTenant") ?? c.req.header("x-tenant-id");
   // Membership lookup is the ONE query that is not tenant-scoped: it is how we discover the tenant.
   const rows =
-    (await c.env.DB.prepare("select id, tenant_id, role from users where email = ?1").bind(email).all<{ id: string; tenant_id: string; role: string }>())
-      .results ?? [];
+    (
+      await c.env.DB.prepare("select id, tenant_id, role from users where email = ?1 and deactivated_at is null")
+        .bind(email)
+        .all<{ id: string; tenant_id: string; role: string }>()
+    ).results ?? [];
   const row = wanted ? rows.find((r) => r.tenant_id === wanted) : rows[0];
   if (!row) throw rows.length ? forbidden("Not a member of that tenant") : new AppError(403, "no_membership", "No tenant membership for this user");
   const p: Principal = {

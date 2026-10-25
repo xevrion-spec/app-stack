@@ -29,7 +29,11 @@ export function makeEnv(over: Partial<Env> = {}) {
       },
       delete: async (k: string) => void objects.delete(k),
     } as unknown as R2Bucket,
-    CONFIG: { get: async (k: string) => kv.get(k) ?? null, put: async (k: string, v: string) => void kv.set(k, v) } as unknown as KVNamespace,
+    CONFIG: {
+      get: async (k: string) => kv.get(k) ?? null,
+      put: async (k: string, v: string) => void kv.set(k, v),
+      delete: async (k: string) => void kv.delete(k),
+    } as unknown as KVNamespace,
     PIPELINE: {
       send: async (m: QueueMessage) => void (m.kind === "events" ? events.push(m) : sent.push(m)),
       sendBatch: async () => {},

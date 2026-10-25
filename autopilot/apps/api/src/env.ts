@@ -23,6 +23,8 @@ export interface Env {
   WEBHOOK_DEV_HTTP_HOSTS?: string;
   /** Secret: Ed25519 private JWK (with kid) that signs agent-review decision receipts. Receipts return 503 when unset. */
   RECEIPT_SIGNING_JWK?: string;
+  /** HMAC key (>= 32 chars) for SSO session tokens (ses_...). SSO login is disabled without it. */
+  SESSION_SIGNING_KEY?: string;
   /** Public JWKs (JSON array) of retired receipt keys, still published so old receipts keep verifying after rotation. */
   RECEIPT_RETIRED_PUBLIC_JWKS?: string;
   /** Requests per minute per principal (default 600). */
@@ -82,5 +84,7 @@ interface AppVariables {
   portal: PortalPrincipal;
   identityEmail: string;
   identitySubject: string;
+  /** Set when the caller authenticated with an SSO session: the session's tenant wins over x-tenant-id. */
+  ssoTenant?: string;
 }
 export type AppEnv = { Bindings: Env; Variables: AppVariables };

@@ -18,6 +18,7 @@ import { v1 } from "./routes/v1.js";
 import { rateLimit, versioning } from "./lib/ratelimit.js";
 import { requireScopes } from "./lib/auth.js";
 import { inboundHook } from "./routes/inbound.js";
+import { ssoPublic } from "./routes/sso.js";
 
 // eslint-disable-next-line max-lines-per-function -- known debt (docs/quality.md): split in a follow-up
 export function createApp() {
@@ -158,6 +159,9 @@ export function createApp() {
 
   // Inbound triggers: external systems POST signed JSON; becomes a trigger.received event for automations.
   app.post("/hooks/inbound/:id", async (c) => inboundHook(c));
+
+  // SSO login (public: this is how an identity is obtained); admin config lives under /v1.
+  app.route("/", ssoPublic);
 
   // Bootstrap: an authenticated identity with no membership creates its tenant and becomes owner.
   app.use("*", versioning);
