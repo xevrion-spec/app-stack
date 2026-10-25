@@ -1,4 +1,5 @@
 import { matchesFilter, type EventEnvelope } from "@xevrion/platform";
+import { deliverReviewCallbacks } from "./agent-review-delivery.js";
 import type { Env } from "../env.js";
 import { TenantDb } from "../lib/db.js";
 import { log } from "../lib/log.js";
@@ -13,6 +14,8 @@ export interface DispatchReport {
   emitted: number;
   deliveries: Record<string, number>;
   realtime: "sent" | "skipped" | "failed";
+  /** Agent review per-request callbacks attempted for review.completed events. */
+  callbacks?: Record<string, number>;
 }
 
 /**
@@ -60,6 +63,7 @@ export async function dispatchEvents(env: Env, tenantId: string, eventIds: strin
       report.deliveries[outcome] = (report.deliveries[outcome] ?? 0) + 1;
     }
   }
+  report.callbacks = await deliverReviewCallbacks(env, db, events, rand);
   report.realtime = await pushRealtime(env, tenantId, events);
   await db.run(
     `update events set dispatched_at = strftime('%Y-%m-%dT%H:%M:%fZ','now') where tenant_id = ?1 and dispatched_at is null and id in (${placeholders})`,

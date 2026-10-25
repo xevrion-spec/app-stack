@@ -11,6 +11,9 @@ import { auditStmt } from "../lib/audit.js";
 import { AppError, badRequest, conflict, notFound } from "../lib/errors.js";
 import { Outbox } from "./events.js";
 import { sha256Hex } from "./csv.js";
+import { validateWebhookUrl } from "@xevrion/platform";
+import { devHttpHosts } from "./webhooks.js";
+import { retryDueCallbacks } from "./agent-review-delivery.js";
 
 const DEFAULT_TIMEOUT_S = 24 * 3600;
 const now = () => new Date().toISOString();
@@ -45,9 +48,10 @@ export type RequestRow = {
   escalate_to_group: string | null;
   min_approvals: number | null;
   guardrails_json: string | null;
+  callback_url: string | null;
 };
 export const COLS =
-  "id, project_id, action, payload_json, current_payload_json, context_json, risk, confidence, status, required_approvals, snapshot_json, requester, external_id, tags_json, request_sha, deadline_at, decided_at, version, created_at, updated_at, policy_version, policy_rule_id, route_outcome, review_group, escalate_at, escalate_to_group, min_approvals, guardrails_json";
+  "id, project_id, action, payload_json, current_payload_json, context_json, risk, confidence, status, required_approvals, snapshot_json, requester, external_id, tags_json, request_sha, deadline_at, decided_at, version, created_at, updated_at, policy_version, policy_rule_id, route_outcome, review_group, escalate_at, escalate_to_group, min_approvals, guardrails_json, callback_url";
 export type DecisionRow = { id: string; reviewer: string; decision: R.Decision; reason: string | null; payload_version: number; created_at: string };
 
 /** The group that may decide right now: the escalation group once escalated, else the routed group (null = anyone with the role). */
@@ -174,6 +178,7 @@ function buildRow({ id, projectId, actor, body, snap, routing, policyVersion, de
     escalate_to_group: routing.escalateToGroup,
     min_approvals: body.minApprovals ?? null,
     guardrails_json: JSON.stringify(routing.guardrails),
+    callback_url: body.callbackUrl ?? null,
   };
 }
 
@@ -208,6 +213,12 @@ function autoDecision(db: TenantDb, outbox: Outbox, row: RequestRow, payload: Re
   ];
 }
 export type CreateBody = R.CreateReviewRequest;
+function assertCallbackUrl(env: Env, url: string | undefined): void {
+  if (!url) return;
+  const check = validateWebhookUrl(url, { allowHttpHosts: devHttpHosts(env) });
+  if (!check.ok) throw badRequest(`callbackUrl rejected: ${check.reason}`);
+}
+
 export async function createReview(
   env: Env,
   db: TenantDb,
@@ -226,6 +237,7 @@ export async function createReview(
       return { row: prior, created: false };
     }
   }
+  assertCallbackUrl(env, body.callbackUrl);
   const t = now();
   const id = newId();
   const policy = choosePolicy(await livePolicies(db, projectId), id);
@@ -262,8 +274,8 @@ export async function createReview(
     db.stmt(
       `insert into review_requests (tenant_id, id, project_id, action, payload_json, current_payload_json, context_json, risk, confidence, status, required_approvals,
          snapshot_json, requester, external_id, tags_json, idempotency_key, request_sha, deadline_at, decided_at, version, created_at, updated_at,
-         policy_version, policy_rule_id, route_outcome, review_group, escalate_at, escalate_to_group, min_approvals, guardrails_json)
-       values (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11, ?12, ?13, ?14, ?15, ?16, ?17, ?18, ?19, 1, ?20, ?20, ?21, ?22, ?23, ?24, ?25, ?26, ?27, ?28)`,
+         policy_version, policy_rule_id, route_outcome, review_group, escalate_at, escalate_to_group, min_approvals, guardrails_json, callback_url)
+       values (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11, ?12, ?13, ?14, ?15, ?16, ?17, ?18, ?19, 1, ?20, ?20, ?21, ?22, ?23, ?24, ?25, ?26, ?27, ?28, ?29)`,
       id,
       projectId,
       row.action,
@@ -291,6 +303,7 @@ export async function createReview(
       row.escalate_to_group,
       row.min_approvals,
       row.guardrails_json,
+      row.callback_url,
     ),
     auditStmt(db, actor, "review.requested", id, {
       projectId,
@@ -444,7 +457,11 @@ export async function expireIfDue(env: Env, db: TenantDb, r: RequestRow): Promis
  * Cron sweep: expires overdue requests and escalates pending ones past their SLA. The cross-tenant discovery query returns
  * only ids; each transition then runs tenant-scoped. Bounded per run (limit) so a backlog drains over several minutes.
  */
-export async function sweepAgentReviews(env: Env, at = new Date(), limit = 200): Promise<{ expired: number; escalated: number; conflicts: number }> {
+export async function sweepAgentReviews(
+  env: Env,
+  at = new Date(),
+  limit = 200,
+): Promise<{ expired: number; escalated: number; conflicts: number; callbacks: number }> {
   const ts = at.toISOString();
   const due =
     (
@@ -454,7 +471,7 @@ export async function sweepAgentReviews(env: Env, at = new Date(), limit = 200):
         .bind(ts, limit)
         .all<{ tenant_id: string; id: string }>()
     ).results ?? [];
-  const out = { expired: 0, escalated: 0, conflicts: 0 };
+  const out = { expired: 0, escalated: 0, conflicts: 0, callbacks: 0 };
   for (const d of due) {
     const db = new TenantDb(env.DB, d.tenant_id);
     const r = await loadReview(db, d.id, null);
@@ -471,5 +488,6 @@ export async function sweepAgentReviews(env: Env, at = new Date(), limit = 200):
       out.conflicts++;
     }
   }
+  out.callbacks = await retryDueCallbacks(env, at);
   return out;
 }

@@ -16,6 +16,8 @@ import { AppError, badRequest, conflict, notFound } from "../lib/errors.js";
 import { sha256Hex } from "../services/csv.js";
 import * as S from "../services/agent-review.js";
 import { replay } from "../services/agent-review-replay.js";
+import { attemptCallback, CALLBACK_COLS, type CallbackRow } from "../services/agent-review-delivery.js";
+import { randomToken } from "@xevrion/platform";
 
 type C = Context<AppEnv>;
 export const agentReviews = new OpenAPIHono<AppEnv>({ defaultHook: validationHook });
@@ -38,7 +40,7 @@ agentReviews.openapi(
     tag: "Agent review",
     summary: "Create a review project in one environment (owner only; API keys cannot create projects)",
     body: z.object({ name: z.string().min(1).max(80), environment: z.enum(ENVS).default("production") }),
-    response: Project,
+    response: Project.extend({ callbackSecret: z.string().openapi({ description: "Signs per-request callbacks. Shown once; rotate to replace." }) }),
     status: 201,
   }),
   async (c) => {
@@ -47,18 +49,41 @@ agentReviews.openapi(
     if (await db.first("select 1 from review_projects where tenant_id = ?1 and name = ?2 and environment = ?3", b.name, b.environment))
       throw conflict("A project with this name already exists in that environment");
     const row: ProjectRow = { id: newId(), name: b.name, environment: b.environment, created_at: now() };
+    const secret = `whsec_${randomToken(24)}`;
     await db.batch([
       db.stmt(
-        "insert into review_projects (tenant_id, id, name, environment, created_by, created_at) values (?1, ?2, ?3, ?4, ?5, ?6)",
+        "insert into review_projects (tenant_id, id, name, environment, created_by, created_at, callback_secret) values (?1, ?2, ?3, ?4, ?5, ?6, ?7)",
         row.id,
         row.name,
         row.environment,
         actor(c),
         row.created_at,
+        secret,
       ),
       auditStmt(db, actor(c), "review_project.created", row.id, { name: row.name, environment: row.environment }),
     ]);
-    return c.json(projectOut(row), 201);
+    return c.json({ ...projectOut(row), callbackSecret: secret }, 201);
+  },
+);
+agentReviews.post("/review-projects/:id/rotate-callback-secret", requireRole("owner"));
+agentReviews.openapi(
+  def({
+    method: "post",
+    path: "/review-projects/{id}/rotate-callback-secret",
+    tag: "Agent review",
+    summary: "Replace the project's callback signing secret (owner only; shown once). Callbacks sent after this use the new secret.",
+    params: z.object({ id: z.string().min(1).max(64) }),
+    response: z.object({ callbackSecret: z.string() }),
+  }),
+  async (c) => {
+    const projectId = await resolveProject(c, c.req.valid("param").id);
+    const db = scope(c);
+    const secret = `whsec_${randomToken(24)}`;
+    await db.batch([
+      db.stmt("update review_projects set callback_secret = ?3 where tenant_id = ?1 and id = ?2", projectId, secret),
+      auditStmt(db, actor(c), "review_project.callback_secret_rotated", projectId),
+    ]);
+    return c.json({ callbackSecret: secret }, 200);
   },
 );
 agentReviews.openapi(
@@ -547,3 +572,147 @@ agentReviews.openapi(
     return c.json(S.reviewOut(await S.transition(c.env, db, r, { type: "cancel", by: actor(c) }, { actor: actor(c) })), 200);
   },
 );
+
+// ---------------- delivery: callbacks, long-poll wait, server-sent events ----------------
+let pollMs = 500;
+/** Test hook: shortens the wait/stream polling interval. */
+export const __setAgentReviewPollMs = (ms: number | null) => {
+  pollMs = ms ?? 500;
+};
+const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
+const CallbackOut = z
+  .object({
+    id: z.string(),
+    url: z.string(),
+    eventType: z.string(),
+    status: z.enum(["pending", "failed", "succeeded", "dead"]),
+    attempt: z.number(),
+    responseStatus: z.number().nullable(),
+    error: z.string().nullable(),
+    durationMs: z.number().nullable(),
+    nextAttemptAt: z.string().nullable(),
+    createdAt: z.string(),
+    updatedAt: z.string().nullable(),
+  })
+  .openapi("ReviewCallbackDelivery");
+const cbOut = (r: CallbackRow) => ({
+  id: r.id,
+  url: r.url,
+  eventType: r.event_type,
+  status: r.status,
+  attempt: r.attempt,
+  responseStatus: r.response_status,
+  error: r.error,
+  durationMs: r.duration_ms,
+  nextAttemptAt: r.next_attempt_at,
+  createdAt: r.created_at,
+  updatedAt: r.updated_at,
+});
+agentReviews.openapi(
+  def({
+    method: "get",
+    path: "/agent-reviews/{id}/callbacks",
+    tag: "Agent review",
+    summary: "Callback delivery log for a request",
+    params: IdParam,
+    response: z.object({ items: z.array(CallbackOut) }),
+  }),
+  async (c) => {
+    const db = scope(c);
+    const r = await S.loadReview(db, c.req.valid("param").id, await boundProject(c));
+    const rows = await db.all<CallbackRow>(`select ${CALLBACK_COLS} from review_callbacks where tenant_id = ?1 and request_id = ?2 order by created_at`, r.id);
+    return c.json({ items: rows.map(cbOut) }, 200);
+  },
+);
+agentReviews.openapi(
+  def({
+    method: "post",
+    path: "/agent-reviews/{id}/callbacks/redeliver",
+    tag: "Agent review",
+    summary: "Redeliver the request's callbacks now (including dead or already-succeeded ones). Receivers dedupe by callback id.",
+    params: IdParam,
+    response: z.object({ items: z.array(CallbackOut) }),
+  }),
+  async (c) => {
+    const db = scope(c);
+    const r = await S.loadReview(db, c.req.valid("param").id, await boundProject(c));
+    const ids = (await db.all<{ id: string }>("select id from review_callbacks where tenant_id = ?1 and request_id = ?2", r.id)).map((x) => x.id);
+    if (!ids.length) throw notFound("Callback");
+    for (const id of ids) {
+      await db.run("update review_callbacks set status = 'pending', attempt = 0, next_attempt_at = ?3 where tenant_id = ?1 and id = ?2", id, now());
+      await attemptCallback(c.env, db, id);
+    }
+    await db.run(
+      "insert into audit_log (tenant_id, id, actor, action, subject) values (?1, ?2, ?3, 'review.callbacks_redelivered', ?4)",
+      newId(),
+      actor(c),
+      r.id,
+    );
+    const rows = await db.all<CallbackRow>(`select ${CALLBACK_COLS} from review_callbacks where tenant_id = ?1 and request_id = ?2 order by created_at`, r.id);
+    return c.json({ items: rows.map(cbOut) }, 200);
+  },
+);
+
+agentReviews.openapi(
+  def({
+    method: "get",
+    path: "/agent-reviews/{id}/wait",
+    tag: "Agent review",
+    summary: "Long-poll: returns as soon as the request is final, or after timeoutSeconds with its current state (check status; call again to keep waiting).",
+    params: IdParam,
+    query: z.object({ timeoutSeconds: z.coerce.number().int().min(0).max(25).default(20) }),
+    response: ReviewOut,
+  }),
+  async (c) => {
+    const db = scope(c);
+    const bound = await boundProject(c);
+    const id = c.req.valid("param").id;
+    const until = Date.now() + c.req.valid("query").timeoutSeconds * 1000;
+    let r = await S.expireIfDue(c.env, db, await S.loadReview(db, id, bound));
+    while (!R.FINAL.has(r.status) && Date.now() < until) {
+      await sleep(Math.min(pollMs, Math.max(0, until - Date.now())));
+      r = await S.expireIfDue(c.env, db, await S.loadReview(db, id, bound));
+    }
+    c.header("x-review-final", String(R.FINAL.has(r.status)));
+    return c.json(S.reviewOut(r), 200);
+  },
+);
+
+agentReviews.get("/agent-reviews/:id/stream", async (c) => {
+  const db = scope(c);
+  const bound = await boundProject(c);
+  const id = c.req.param("id");
+  const maxSeconds = Math.min(Math.max(Number(c.req.query("maxSeconds") ?? 55) || 55, 1), 55);
+  let r = await S.loadReview(db, id, bound);
+  const env = c.env;
+  const enc = new TextEncoder();
+  const stream = new ReadableStream<Uint8Array>({
+    async start(ctl) {
+      const send = (ev: string, data: unknown) => ctl.enqueue(enc.encode(`event: ${ev}\ndata: ${JSON.stringify(data)}\n\n`));
+      ctl.enqueue(enc.encode("retry: 2000\n\n"));
+      const until = Date.now() + maxSeconds * 1000;
+      let lastVersion = -1;
+      try {
+        for (;;) {
+          r = await S.expireIfDue(env, db, r.version === lastVersion ? await S.loadReview(db, id, bound) : r);
+          if (r.version !== lastVersion) {
+            lastVersion = r.version;
+            send("review", S.reviewOut(r));
+          }
+          if (R.FINAL.has(r.status)) {
+            send("end", { reason: "final", status: r.status });
+            break;
+          }
+          if (Date.now() >= until) {
+            send("end", { reason: "timeout", status: r.status });
+            break;
+          }
+          await sleep(pollMs);
+        }
+      } finally {
+        ctl.close();
+      }
+    },
+  });
+  return new Response(stream, { headers: { "content-type": "text/event-stream", "cache-control": "no-store", "x-accel-buffering": "no" } });
+});

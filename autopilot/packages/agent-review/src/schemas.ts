@@ -35,6 +35,8 @@ export const CreateReviewRequest = z.object({
   minApprovals: z.number().int().min(1).max(5).optional(),
   /** Caller's own correlation id (for example the agent run id), returned on every event. */
   externalId: z.string().max(200).optional(),
+  /** Optional HTTPS URL that receives a signed POST when the request reaches a final status (in addition to webhooks). */
+  callbackUrl: z.url().max(2000).optional(),
   /** Free-form labels for routing and search. */
   tags: z.array(z.string().max(40)).max(20).default([]),
 });

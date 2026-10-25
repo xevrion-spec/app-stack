@@ -90,7 +90,7 @@ describe("agent review policy engine API (A2)", () => {
     expect((await s.call("GET", "/v1/agent-reviews?group=leads", { user: A })).json.items).toHaveLength(1);
     // SLA passes: the sweeper escalates to managers; leads can no longer decide
     await s.env.DB.prepare("update review_requests set escalate_at = '2000-01-01T00:00:00.000Z' where id = ?1").bind(r.id).run();
-    expect(await sweepAgentReviews(s.env)).toEqual({ expired: 0, escalated: 1, conflicts: 0 });
+    expect(await sweepAgentReviews(s.env)).toEqual({ expired: 0, escalated: 1, conflicts: 0, callbacks: 0 });
     const esc = (await s.call("GET", `/v1/agent-reviews/${r.id}`, { user: A })).json;
     expect(esc).toMatchObject({ status: "escalated", routing: { group: "managers" } });
     expect(esc.decisions[0]).toMatchObject({ reviewer: "system:sla", decision: "escalate", reason: "SLA elapsed" });

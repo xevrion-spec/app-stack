@@ -31,6 +31,10 @@ export const __setWebhookClock = (f: (() => number) | null) => {
   clock = f ?? (() => Date.now());
 };
 
+/** The injected fetcher and clock, shared by other signed-delivery channels (agent review callbacks). */
+export const webhookFetch: Fetcher = (url, init) => fetcher(url, init);
+export const webhookNow = () => clock();
+
 export interface EndpointRow {
   id: string;
   url: string;
