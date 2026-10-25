@@ -11,6 +11,7 @@ import {
   etagFor,
   ftsQuery,
   generateApiKey,
+  parseCidr,
   ifMatchFails,
   ifNoneMatchHits,
   isEnabled,
@@ -763,6 +764,7 @@ const KeyOut = z
     revoked_at: z.string().nullable(),
     key: z.string().optional(),
     project_id: z.string().nullable().openapi({ description: "Agent review project the key is bound to (null = whole tenant)" }),
+    allowed_cidrs: z.array(z.string()).nullable().openapi({ description: "Client networks the key may be used from (null = anywhere)" }),
   })
   .openapi("ApiKey");
 type KRow = {
@@ -775,20 +777,43 @@ type KRow = {
   expires_at: string | null;
   revoked_at: string | null;
   project_id: string | null;
+  allowed_cidrs_json: string | null;
 };
-const K_COLS = "id, prefix, name, scopes_json, created_at, last_used_at, expires_at, revoked_at, project_id";
-const kOut = ({ scopes_json, ...r }: KRow) => ({ ...r, scopes: JSON.parse(scopes_json) as string[] });
+const K_COLS = "id, prefix, name, scopes_json, created_at, last_used_at, expires_at, revoked_at, project_id, allowed_cidrs_json";
+const kOut = ({ scopes_json, allowed_cidrs_json, ...r }: KRow) => ({
+  ...r,
+  scopes: JSON.parse(scopes_json) as string[],
+  allowed_cidrs: allowed_cidrs_json ? (JSON.parse(allowed_cidrs_json) as string[]) : null,
+});
+const Cidr = z
+  .string()
+  .max(64)
+  .refine((v) => parseCidr(v) !== null, "Invalid IP or CIDR");
 const KeyIn = z.object({
   name: z.string().min(1).max(60),
   scopes: z.array(z.enum(SCOPES)).min(1),
   expiresInDays: z.number().int().min(1).max(730).optional(),
   /** Bind the key to one agent review project: it can then only see and create requests there. */
   projectId: z.string().max(64).optional(),
+  /** Restrict use to these client networks (IPv4/IPv6 CIDR or bare address). Requests from elsewhere get 403. */
+  allowedCidrs: z.array(Cidr).min(1).max(50).optional(),
 });
 platform.use("/api-keys", owner);
+type KeyPolicy = { max_expiry_days: number | null; require_ip_allowlist: number };
+/** Tenant key policy (A9a): a maximum lifetime (keys without expiry get it) and an optional allowlist requirement. */
+async function applyKeyPolicy(db: ReturnType<typeof scope>, b: z.infer<typeof KeyIn>) {
+  const pol = await db.first<KeyPolicy>("select max_expiry_days, require_ip_allowlist from key_policies where tenant_id = ?1");
+  if (!pol) return b;
+  if (pol.require_ip_allowlist && !b.allowedCidrs?.length) throw new AppError(422, "policy_violation", "Tenant policy requires an IP allowlist on every key");
+  if (pol.max_expiry_days && (b.expiresInDays ?? Infinity) > pol.max_expiry_days)
+    if (b.expiresInDays) throw new AppError(422, "policy_violation", `Tenant policy caps key lifetime at ${pol.max_expiry_days} days`);
+    else return { ...b, expiresInDays: pol.max_expiry_days };
+  return b;
+}
 platform.use("/api-keys/*", owner);
-async function issueKey(c: C, b: z.infer<typeof KeyIn>, replaces?: string) {
+async function issueKey(c: C, input: z.infer<typeof KeyIn>, replaces?: string) {
   const db = scope(c);
+  const b = await applyKeyPolicy(db, input);
   const k = await generateApiKey(c.env.ENVIRONMENT === "production" ? "live" : "test");
   const id = newId();
   const exp = b.expiresInDays ? new Date(Date.now() + b.expiresInDays * 86400_000).toISOString() : null;
@@ -796,7 +821,7 @@ async function issueKey(c: C, b: z.infer<typeof KeyIn>, replaces?: string) {
     throw notFound("Project");
   const stmts = [
     db.stmt(
-      "insert into api_keys (tenant_id, id, prefix, key_hash, name, scopes_json, created_by, expires_at, project_id) values (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9)",
+      "insert into api_keys (tenant_id, id, prefix, key_hash, name, scopes_json, created_by, expires_at, project_id, allowed_cidrs_json) values (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10)",
       id,
       k.prefix,
       k.hash,
@@ -805,12 +830,15 @@ async function issueKey(c: C, b: z.infer<typeof KeyIn>, replaces?: string) {
       actor(c),
       exp,
       b.projectId ?? null,
+      b.allowedCidrs ? JSON.stringify(b.allowedCidrs) : null,
     ),
     auditStmt(db, actor(c), replaces ? "api_key.rotated" : "api_key.created", id, {
       name: b.name,
       scopes: b.scopes,
       prefix: k.prefix,
       projectId: b.projectId ?? null,
+      allowedCidrs: b.allowedCidrs ?? null,
+      expiresAt: exp,
     }),
   ];
   if (replaces)
@@ -852,7 +880,16 @@ platform.openapi(
     const old = await db.first<KRow>(`select ${K_COLS} from api_keys where tenant_id = ?1 and id = ?2 and revoked_at is null`, c.req.valid("param").id);
     if (!old) throw notFound("API key");
     return c.json(
-      await issueKey(c, { name: old.name, scopes: JSON.parse(old.scopes_json), ...(old.project_id ? { projectId: old.project_id } : {}) }, old.id),
+      await issueKey(
+        c,
+        {
+          name: old.name,
+          scopes: JSON.parse(old.scopes_json),
+          ...(old.project_id ? { projectId: old.project_id } : {}),
+          ...(old.allowed_cidrs_json ? { allowedCidrs: JSON.parse(old.allowed_cidrs_json) as string[] } : {}),
+        },
+        old.id,
+      ),
       201,
     );
   },
@@ -868,6 +905,45 @@ platform.openapi(
     if (!n) throw notFound("API key");
     await db.run("insert into audit_log (tenant_id, id, actor, action, subject) values (?1, ?2, ?3, 'api_key.revoked', ?4)", newId(), actor(c), id);
     return c.json(kOut((await db.first<KRow>(`select ${K_COLS} from api_keys where tenant_id = ?1 and id = ?2`, id))!), 200);
+  },
+);
+
+// ---------------- key policy (A9a) ----------------
+platform.use("/security/key-policy", owner);
+const KeyPolicyIO = z
+  .object({
+    maxExpiryDays: z.number().int().min(1).max(730).nullable(),
+    requireIpAllowlist: z.boolean(),
+  })
+  .openapi("KeyPolicy");
+const policyOut = (p: KeyPolicy | null) => ({ maxExpiryDays: p?.max_expiry_days ?? null, requireIpAllowlist: !!p?.require_ip_allowlist });
+platform.openapi(def({ method: "get", path: "/security/key-policy", tag: "API keys", summary: "Tenant API key policy", response: KeyPolicyIO }), async (c) =>
+  c.json(policyOut(await scope(c).first<KeyPolicy>("select max_expiry_days, require_ip_allowlist from key_policies where tenant_id = ?1")), 200),
+);
+platform.openapi(
+  def({
+    method: "put",
+    path: "/security/key-policy",
+    tag: "API keys",
+    summary: "Set the API key policy (applies to keys created or rotated from now on)",
+    body: KeyPolicyIO,
+    response: KeyPolicyIO,
+  }),
+  async (c) => {
+    if (c.get("principal").apiKey) throw new AppError(403, "forbidden", "API keys cannot change key policy");
+    const db = scope(c);
+    const b = c.req.valid("json");
+    await db.batch([
+      db.stmt(
+        "insert into key_policies (tenant_id, max_expiry_days, require_ip_allowlist, updated_by, updated_at) values (?1, ?2, ?3, ?4, ?5) on conflict(tenant_id) do update set max_expiry_days = excluded.max_expiry_days, require_ip_allowlist = excluded.require_ip_allowlist, updated_by = excluded.updated_by, updated_at = excluded.updated_at",
+        b.maxExpiryDays,
+        b.requireIpAllowlist ? 1 : 0,
+        actor(c),
+        new Date().toISOString(),
+      ),
+      auditStmt(db, actor(c), "security.key_policy.updated", "key_policy", b),
+    ]);
+    return c.json(b, 200);
   },
 );
 

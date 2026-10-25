@@ -2,7 +2,7 @@ import { createRemoteJWKSet, jwtVerify, type JWTVerifyGetKey } from "jose";
 import type { MiddlewareHandler } from "hono";
 import type { AppEnv, Principal, Role } from "../env.js";
 import { AppError, forbidden, unauthenticated } from "./errors.js";
-import { hashApiKey, hasScope, isKeyUsable, parseApiKey, timingSafeEqual, type Scope } from "@xevrion/platform";
+import { hashApiKey, hasScope, ipAllowed, isKeyUsable, parseApiKey, timingSafeEqual, type Scope } from "@xevrion/platform";
 
 const jwksCache = new Map<string, JWTVerifyGetKey>();
 function jwks(team: string): JWTVerifyGetKey {
@@ -96,7 +96,7 @@ async function apiKeyAuth(c: Parameters<MiddlewareHandler<AppEnv>>[0], key: stri
   const parsed = parseApiKey(key);
   if (!parsed) throw unauthenticated("Malformed API key");
   const row = await c.env.DB.prepare(
-    "select id, tenant_id, prefix, key_hash, scopes_json, created_by, expires_at, revoked_at, last_used_at from api_keys where prefix = ?1",
+    "select id, tenant_id, prefix, key_hash, scopes_json, created_by, expires_at, revoked_at, last_used_at, allowed_cidrs_json from api_keys where prefix = ?1",
   )
     .bind(parsed.prefix)
     .first<{
@@ -109,9 +109,13 @@ async function apiKeyAuth(c: Parameters<MiddlewareHandler<AppEnv>>[0], key: stri
       expires_at: string | null;
       revoked_at: string | null;
       last_used_at: string | null;
+      allowed_cidrs_json: string | null;
     }>();
   const now = new Date().toISOString();
   if (!row || !timingSafeEqual(row.key_hash, await hashApiKey(key)) || !isKeyUsable(row, now)) throw unauthenticated("Invalid, expired or revoked API key");
+  // IP allowlist (A9a): fail closed when the edge did not tell us the client address.
+  if (row.allowed_cidrs_json && !ipAllowed(c.req.header("cf-connecting-ip"), JSON.parse(row.allowed_cidrs_json) as string[]))
+    throw new AppError(403, "ip_not_allowed", "This API key cannot be used from this network");
   if (!row.last_used_at || Date.parse(now) - Date.parse(row.last_used_at) > 60_000)
     await c.env.DB.prepare("update api_keys set last_used_at = ?2 where id = ?1").bind(row.id, now).run();
   const p: Principal = {

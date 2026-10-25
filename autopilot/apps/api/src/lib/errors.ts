@@ -1,4 +1,6 @@
 export type ErrorCode =
+  | "ip_not_allowed"
+  | "policy_violation"
   | "no_membership"
   | "plan_required"
   | "bad_request"
