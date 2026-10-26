@@ -39,10 +39,16 @@ const ChannelIn = z
     projectId: z.string().max(64).optional(),
     minRisk: z.enum(["low", "medium", "high", "critical"]).default("low"),
     recipients: z.array(z.string().email().max(254)).max(50).default([]),
+    toRoutedGroup: z
+      .boolean()
+      .default(false)
+      .openapi({ description: "Email only: message the active members of whichever group is deciding (per chain step), instead of a fixed list" }),
   })
   .superRefine((b, ctx) => {
-    if (b.kind === "email" && !b.recipients.length)
-      ctx.addIssue({ code: "custom", path: ["recipients"], message: "email channels need at least one recipient" });
+    if (b.kind === "email" && !b.recipients.length && !b.toRoutedGroup)
+      ctx.addIssue({ code: "custom", path: ["recipients"], message: "email channels need at least one recipient (or toRoutedGroup)" });
+    if (b.toRoutedGroup && (b.kind !== "email" || b.recipients.length))
+      ctx.addIssue({ code: "custom", path: ["toRoutedGroup"], message: "toRoutedGroup is for email channels without fixed recipients" });
     if (b.kind === "email" && !b.secret) ctx.addIssue({ code: "custom", path: ["secret"], message: "email channels need the provider token" });
   })
   .openapi("NotifyChannelIn");
@@ -55,6 +61,7 @@ const ChannelOut = z
     projectId: z.string().nullable(),
     minRisk: z.string(),
     recipients: z.array(z.string()),
+    toRoutedGroup: z.boolean(),
     interactive: z.boolean(),
     active: z.boolean(),
     createdAt: z.string(),
@@ -69,6 +76,7 @@ const out = (r: ChannelRow) => ({
   projectId: r.project_id,
   minRisk: r.min_risk,
   recipients: JSON.parse(r.recipients_json) as string[],
+  toRoutedGroup: r.kind === "email" && r.recipients_json === "[]",
   interactive: r.kind === "slack" ? !!r.signing_secret : r.kind !== "webhook",
   active: !!r.active,
   createdAt: r.created_at,

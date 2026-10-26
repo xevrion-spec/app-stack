@@ -4295,6 +4295,9 @@
               "type": "string"
             }
           },
+          "toRoutedGroup": {
+            "type": "boolean"
+          },
           "interactive": {
             "type": "boolean"
           },
@@ -4317,6 +4320,7 @@
           "projectId",
           "minRisk",
           "recipients",
+          "toRoutedGroup",
           "interactive",
           "active",
           "createdAt"
@@ -4380,6 +4384,11 @@
             },
             "maxItems": 50,
             "default": []
+          },
+          "toRoutedGroup": {
+            "type": "boolean",
+            "default": false,
+            "description": "Email only: message the active members of whichever group is deciding (per chain step), instead of a fixed list"
           }
         },
         "required": [

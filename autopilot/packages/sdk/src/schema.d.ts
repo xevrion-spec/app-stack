@@ -31087,6 +31087,7 @@ export interface components {
             projectId: string | null;
             minRisk: string;
             recipients: string[];
+            toRoutedGroup: boolean;
             interactive: boolean;
             active: boolean;
             createdAt: string;
@@ -31114,6 +31115,11 @@ export interface components {
             minRisk: "low" | "medium" | "high" | "critical";
             /** @default [] */
             recipients: string[];
+            /**
+             * @description Email only: message the active members of whichever group is deciding (per chain step), instead of a fixed list
+             * @default false
+             */
+            toRoutedGroup: boolean;
         };
         NotifyIdentity: {
             externalId: string;

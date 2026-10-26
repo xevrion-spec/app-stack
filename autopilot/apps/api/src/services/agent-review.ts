@@ -397,7 +397,7 @@ export async function createReview(
   ];
   stmts.push(meterStmt(db, "agent_reviews"));
   if (auto) stmts.push(...autoDecision(db, outbox, row, body.payload, policyActor), meterStmt(db, "agent_reviews_auto"));
-  else stmts.push(...(await enqueueStmts(db, { id, project_id: projectId, risk: row.risk }, t)));
+  else stmts.push(...(await enqueueStmts(db, { id, project_id: projectId, risk: row.risk, group: row.review_group }, t)));
   try {
     await db.batch([...stmts, ...outbox.stmts.splice(0)]);
   } catch (e) {
@@ -439,6 +439,14 @@ async function chainSnapshot(db: TenantDb, actor: string, routing: R.Routing, bo
 }
 
 // ---------------- transitions ----------------
+/** R3: when a chain moves to its next step, queue notifications for that step's approvers (delegations applied). */
+async function advanceNotifyStmts(db: TenantDb, r: RequestRow, snap: R.Snapshot, at: string): Promise<D1PreparedStatement[]> {
+  const before = (JSON.parse(r.snapshot_json) as R.Snapshot).stepIndex ?? 0;
+  const step = R.currentStep(snap);
+  if (!step || (snap.stepIndex ?? 0) <= before || R.FINAL.has(snap.status)) return [];
+  return enqueueStmts(db, { id: r.id, project_id: r.project_id, risk: r.risk, group: step.group, step: snap.stepIndex }, at);
+}
+
 const KIND: Record<R.ReviewEvent["type"], R.LedgerKind> = { decide: "decided", expire: "expired", cancel: "cancelled" };
 function ledgerEntry(
   ev: R.ReviewEvent,
@@ -564,6 +572,7 @@ export async function transition(
       },
       opts.actor,
     );
+  stmts.push(...(await advanceNotifyStmts(db, r, snap, t)));
   stmts.push(
     ...outbox.stmts.splice(0),
     auditStmt(db, opts.actor, `review.${ev.type === "decide" ? ev.decision : ev.type}`, r.id, { status: snap.status, payloadVersion: snap.payloadVersion }),
