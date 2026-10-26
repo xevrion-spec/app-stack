@@ -48,6 +48,9 @@ Generated from `openapi/openapi.json` by `npm run docs:api`. Base URL: your API 
 | POST | `/v1/review-delegations` | Delegate your review duties (owners may delegate for anyone) to another reviewer for up to 90 days. Replaces your current delegation. | object | ReviewDelegation |
 | GET | `/v1/review-delegations` | Delegations: owners see all; reviewers see the ones from or to them |  | object |
 | DELETE | `/v1/review-delegations/{id}` | End a delegation now (the delegator or an owner) |  | ReviewDelegation |
+| POST | `/v1/agent-reviews/{id}/attachments` | Attach evidence (raw body; Content-Type one of application/pdf, image/png, image/jpeg, image/gif, image/webp, text/plain, text/csv, application/json; X-Filename; at most 10 MB, 20 per request). Scanned before storage. |  | ReviewAttachment |
+| GET | `/v1/agent-reviews/{id}/attachments` | Attachments on a request, with scan results |  | object |
+| GET | `/v1/agent-reviews/{id}/attachments/{attachmentId}/content` | Download a clean attachment (always as a file; 409 attachment_blocked when infected or rejected) |  |  |
 | GET | `/v1/review-projects/{id}/templates` | Action templates for a project |  | object |
 | PUT | `/v1/review-projects/{id}/templates/{action}` | Create or replace the template for an action. New requests whose payload breaks the schema get 422 payload_invalid. | object | ReviewActionTemplate |
 | DELETE | `/v1/review-projects/{id}/templates/{action}` | Remove an action template |  | object |

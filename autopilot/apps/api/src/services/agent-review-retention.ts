@@ -13,6 +13,16 @@ import { loadReview, type RequestRow } from "./agent-review.js";
 export const REDACTED = '{"redacted":true}';
 const FINAL = ["approved", "rejected", "expired", "cancelled"];
 
+/** Attachment objects of a request, read before redaction so their bytes can be deleted once it commits. */
+export async function attachmentKeys(db: TenantDb, requestId: string): Promise<string[]> {
+  return (
+    await db.all<{ r2_key: string }>("select r2_key from review_attachments where tenant_id = ?1 and request_id = ?2 and r2_key is not null", requestId)
+  ).map((x) => x.r2_key);
+}
+export async function purgeObjects(env: Env, keys: string[]): Promise<void> {
+  for (const k of keys) await env.DOCS.delete(k);
+}
+
 export async function redactStmts(db: TenantDb, r: RequestRow, actor: string, reason: "retention" | "erasure", at = new Date().toISOString()) {
   if (!FINAL.includes(r.status)) throw new AppError(409, "not_final", "Only final requests can be redacted");
   if (r.legal_hold_at) throw new AppError(409, "legal_hold", "Request is under legal hold");
@@ -41,6 +51,7 @@ export async function redactStmts(db: TenantDb, r: RequestRow, actor: string, re
     ),
     db.stmt("update review_callbacks set body_json = ?3 where tenant_id = ?1 and request_id = ?2", r.id, body),
     db.stmt("update events set payload_json = ?3 where tenant_id = ?1 and type like 'review.%' and json_extract(payload_json, '$.requestId') = ?2", r.id, body),
+    db.stmt("update review_attachments set name = '[redacted]', r2_key = null where tenant_id = ?1 and request_id = ?2", r.id),
     auditStmt(db, actor, `agent_review.redacted`, r.id, { reason }),
   ];
 }
@@ -62,7 +73,9 @@ export async function sweepRetention(env: Env, at = new Date(), limit = 500): Pr
   for (const d of due) {
     const db = new TenantDb(env.DB, d.tenant_id);
     try {
+      const keys = await attachmentKeys(db, d.id);
       await db.batch(await redactStmts(db, await loadReview(db, d.id, null), "system:retention", "retention", at.toISOString()));
+      await purgeObjects(env, keys);
       out.redacted++;
     } catch (e) {
       if (!(e instanceof AppError) && !/UNIQUE|NOT NULL/.test(String(e))) throw e;

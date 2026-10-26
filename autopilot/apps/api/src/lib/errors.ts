@@ -5,6 +5,7 @@ export type ErrorCode =
   | "action_used"
   | "unknown_reviewer"
   | "payload_invalid"
+  | "attachment_blocked"
   | "sso_unconfigured"
   | "ip_not_allowed"
   | "legal_hold"

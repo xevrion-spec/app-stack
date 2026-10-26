@@ -155,3 +155,4 @@ Previous branch: feature/value-max (from feature/quality-1000). Roadmap + status
 - Honest R3: later chain steps are not re-notified; delegation does not redirect notifications; quorum fixed at creation
 - [x] R4a structural payload diff (packages/agent-review/diff.ts; property test) exposed as payloadDiff and shown as nested path changes in the inbox detail
 - [x] R4b action templates: safe JSON Schema subset validator (no eval; ReDoS-guarded patterns; depth/size caps; mutation 80.2%, survivors static schema literals/equivalent guards), per-project template API, 422 payload_invalid on create, rendered title + instructions on the request and in the inbox
+- [x] R4c evidence attachments (migration 0029): type/magic-byte + executable checks (real), pluggable malware engine (default STUB: EICAR only, labelled), fail-closed, only clean stored/downloadable with hardened headers, redaction purges bytes+names; inbox Evidence list; E2E

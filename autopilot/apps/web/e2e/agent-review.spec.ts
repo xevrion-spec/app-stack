@@ -330,3 +330,43 @@ test("approval chain: steps shown in order with the current one marked; delegate
   await expect(chain.locator('[aria-current="step"]')).toContainText("owner sign-off");
   await axe(page, "chain detail");
 });
+
+test("evidence: clean attachment downloadable, malware test file blocked and labelled; template title shown; axe clean", async ({ page, request }) => {
+  const stamp = Date.now();
+  const owner = `e2e.ar.evid.${stamp}@example.test`;
+  await signUp(page, owner);
+  const key = await connectAgent(page);
+  const as = { "x-dev-user": owner, "idempotency-key": `t-${stamp}` };
+  const pid = ((await (await request.get(`${API}/v1/review-projects`, { headers: as })).json()) as { items: { id: string }[] }).items[0]!.id;
+  expect(
+    (
+      await request.put(`${API}/v1/review-projects/${pid}/templates/refund.issue`, {
+        headers: as,
+        data: { schema: { type: "object", required: ["amount"] }, title: "Refund £{{amount}}", instructions: "Check the order." },
+      })
+    ).status(),
+  ).toBe(200);
+  const id = ((await (await ask(request, key, { action: "refund.issue", risk: "medium", payload: { amount: 12 } }, `e-${stamp}`)).json()) as { id: string }).id;
+  const up = (body: string, name: string) =>
+    request.post(`${API}/v1/agent-reviews/${id}/attachments`, {
+      headers: { authorization: `Bearer ${key}`, "content-type": "text/plain", "x-filename": name, "idempotency-key": crypto.randomUUID() },
+      data: body,
+    });
+  expect((await up("order shipped", "proof.txt")).status()).toBe(201);
+  expect((await up("X5O!P%@AP[4\\PZX54(P^)7CC)7}$EICAR-STANDARD-ANTIVIRUS-TEST-FILE!$H+H*", "eicar.txt")).status()).toBe(201);
+  await page.goto("/#/agent-reviews");
+  await page
+    .getByRole("list", { name: "pending agent requests" })
+    .getByRole("button", { name: /refund\.issue/ })
+    .click();
+  const detail = page.getByRole("article");
+  await expect(detail.getByText("Refund £12")).toBeVisible();
+  await expect(detail.getByText("Check the order.")).toBeVisible();
+  await expect(detail.getByRole("button", { name: "Download proof.txt" })).toBeVisible();
+  await expect(detail.getByText("blocked: infected, EICAR-Test-File")).toBeVisible();
+  await expect(detail.getByRole("button", { name: "Download eicar.txt" })).toHaveCount(0);
+  const dl = page.waitForEvent("download");
+  await detail.getByRole("button", { name: "Download proof.txt" }).click();
+  expect((await dl).suggestedFilename()).toBe("proof.txt");
+  await axe(page, "evidence");
+});

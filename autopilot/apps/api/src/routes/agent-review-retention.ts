@@ -10,7 +10,7 @@ import { requireRole } from "../lib/auth.js";
 import { auditStmt } from "../lib/audit.js";
 import { AppError, notFound } from "../lib/errors.js";
 import * as S from "../services/agent-review.js";
-import { redactStmts } from "../services/agent-review-retention.js";
+import { redactStmts, attachmentKeys, purgeObjects } from "../services/agent-review-retention.js";
 import { scope, ReviewOut as Review } from "./agent-reviews.js";
 
 export const agentReviewRetention = new OpenAPIHono<AppEnv>({ defaultHook: validationHook });
@@ -112,7 +112,9 @@ agentReviewRetention.openapi(
   async (c) => {
     const db = scope(c);
     const r = await S.loadReview(db, c.req.valid("param").id, null);
+    const keys = await attachmentKeys(db, r.id);
     await guarded(db, "Request changed concurrently; retry", await redactStmts(db, r, actor(c), "erasure"));
+    await purgeObjects(c.env, keys);
     return c.json(S.reviewOut(await S.loadReview(db, r.id, null)), 200);
   },
 );

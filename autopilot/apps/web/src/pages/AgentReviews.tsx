@@ -266,6 +266,7 @@ function ReviewDetail({ id, onDone }: { id: string; onDone: (r: Review, message:
           </div>
         </form>
       ) : null}
+      <Attachments id={review.id} />
       <History review={review} />
     </article>
   );
@@ -316,6 +317,40 @@ function EditChanges({ diff }: { diff: NonNullable<Review["payloadDiff"]> }) {
         </tfoot>
       ) : null}
     </table>
+  );
+}
+
+type Attachment = Schemas["ReviewAttachment"];
+function Attachments({ id }: { id: string }) {
+  const list = useLoad(async () => (await json<{ items: Attachment[] }>(`/v1/agent-reviews/${encodeURIComponent(id)}/attachments`)).items, [id]);
+  if (!list.data?.length) return null;
+  return (
+    <>
+      <h3 className="h4">Evidence</h3>
+      <ul className="attachments">
+        {list.data.map((a) => (
+          <li key={a.id}>
+            {a.downloadable ? (
+              <button
+                type="button"
+                className="link"
+                onClick={() => void download(`/v1/agent-reviews/${encodeURIComponent(id)}/attachments/${a.id}/content`, a.name)}
+              >
+                Download {a.name}
+              </button>
+            ) : (
+              <span>{a.name}</span>
+            )}{" "}
+            <span className="muted small">
+              {Math.max(1, Math.round(a.size / 1024))} KB ·{" "}
+              {a.scan.status === "clean"
+                ? `scanned clean (${a.scan.engine === "stub-eicar" ? "basic checks only" : a.scan.engine})`
+                : `blocked: ${a.scan.status}${a.scan.detail ? `, ${a.scan.detail}` : ""}`}
+            </span>
+          </li>
+        ))}
+      </ul>
+    </>
   );
 }
 

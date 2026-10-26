@@ -98,6 +98,23 @@ rescan; use the stream for exactly-once delivery.
 creation only). Delegation does not redirect notifications. Quorum is fixed at creation, so later group changes do not
 re-resolve it.
 
+## 3e. Templates, edit diffs and evidence (R4)
+
+- **Action templates:** `PUT /v1/review-projects/{id}/templates/{action}` with a JSON Schema subset (`type`,
+  `properties`, `required`, `additionalProperties`, `items`, `enum`, `const`, min/max, lengths, `pattern`, `format`).
+  Agents whose payload breaks it get **422 `payload_invalid`** with every field error. An optional `title` (with
+  `{{field}}` placeholders) and `instructions` appear on the request for reviewers. Schemas are interpreted, never
+  compiled. Patterns prone to catastrophic backtracking are refused, and schemas are capped at depth 8.
+- **Edit diff:** after an edit, `payloadDiff` lists path-level changes (`amount`, `lines[1].sku`) versus the agent's
+  original. The inbox shows them.
+- **Evidence attachments:** `POST /v1/agent-reviews/{id}/attachments` (raw body, `Content-Type` from PDF, PNG, JPEG,
+  GIF, WebP, text, CSV or JSON, plus `X-Filename`; at most 10 MB and 20 per request; open requests only). Every file is
+  checked before storage: the bytes must match the declared type, and executables are refused. Only clean files are
+  stored and downloadable (always as a download, with `nosniff`). Redaction deletes the bytes and the names.
+
+**Honest limits:** the malware engine is a **stub** that recognises only the EICAR test file (`engine: "stub-eicar"`).
+A real AV engine still needs plugging in. Type and executable checks are real.
+
 ## 4. Route with policy instead of asking every time
 
 ```json

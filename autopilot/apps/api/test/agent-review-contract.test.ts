@@ -100,6 +100,12 @@ describe("agent review API contract (OpenAPI)", () => {
     await s.call("PUT", `/v1/review-projects/${p.id}/templates/contract_action`, { user: A, body: { schema: { type: "object" }, title: "T" } });
     await s.call("GET", `/v1/review-projects/${p.id}/templates`, { user: A });
     await s.call("DELETE", `/v1/review-projects/${p.id}/templates/contract_action`, { user: A });
+    await s.call("POST", `/v1/agent-reviews/${c.id}/attachments`, {
+      user: A,
+      headers: { "content-type": "text/plain", "x-filename": "e.txt" },
+      raw: "evidence",
+    });
+    await s.call("GET", `/v1/agent-reviews/${c.id}/attachments`, { user: A });
     const nch = (
       await s.call("POST", "/v1/notify/channels", {
         user: A,
@@ -133,7 +139,7 @@ describe("agent review API contract (OpenAPI)", () => {
         .replace("/templates/contract_action", "/templates/{action}")
         .replace(/review-projects\/\{id\}/, "review-projects/{id}"),
     );
-    const missing = documented.filter((d) => !exercised.includes(d) && !/\/stream$|\/audit\/export$/.test(d));
+    const missing = documented.filter((d) => !exercised.includes(d) && !/\/stream$|\/audit\/export$|\/content$/.test(d));
     expect(missing).toEqual([]);
   });
 
