@@ -19,6 +19,7 @@ import { rateLimit, versioning } from "./lib/ratelimit.js";
 import { requireScopes } from "./lib/auth.js";
 import { inboundHook } from "./routes/inbound.js";
 import { ssoPublic } from "./routes/sso.js";
+import { notifyPublic } from "./routes/notify.js";
 
 // eslint-disable-next-line max-lines-per-function -- known debt (docs/quality.md): split in a follow-up
 export function createApp() {
@@ -162,6 +163,7 @@ export function createApp() {
 
   // SSO login (public: this is how an identity is obtained); admin config lives under /v1.
   app.route("/", ssoPublic);
+  app.route("/", notifyPublic);
 
   // Bootstrap: an authenticated identity with no membership creates its tenant and becomes owner.
   app.use("*", versioning);

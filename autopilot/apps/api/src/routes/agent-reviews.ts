@@ -18,7 +18,8 @@ import * as S from "../services/agent-review.js";
 import { replay } from "../services/agent-review-replay.js";
 import { attemptCallback, CALLBACK_COLS, type CallbackRow } from "../services/agent-review-delivery.js";
 import { randomToken } from "@xevrion/platform";
-import { permissionFor, riskAllowed, roleOfUser, visibleProjects } from "../services/custom-roles.js";
+import { roleOfUser, visibleProjects } from "../services/custom-roles.js";
+import { decideAs } from "../services/agent-review-decide.js";
 
 type C = Context<AppEnv>;
 export const agentReviews = new OpenAPIHono<AppEnv>({ defaultHook: validationHook });
@@ -550,27 +551,8 @@ agentReviews.openapi(
     const b = c.req.valid("json");
     const db = scope(c);
     const r = await S.expireIfDue(c.env, db, await S.loadReview(db, c.req.valid("param").id, await accessScope(c)));
-    const group = S.decidingGroup(r);
     const p = c.get("principal");
-    const role = p.apiKey || p.role === "owner" ? null : await roleOfUser(db, p.userId);
-    if (role && !role.permissions.has(permissionFor(b.decision)))
-      throw new AppError(403, "forbidden_by_role", `Your role does not allow ${b.decision} decisions`);
-    if (role && !riskAllowed(role, r.risk)) throw new AppError(403, "forbidden_by_role", `Your role cannot decide ${r.risk}-risk requests`);
-    if (group && !p.apiKey && p.role !== "owner" && !R.FINAL.has(r.status)) {
-      const member = await db.first(
-        "select 1 from review_group_members where tenant_id = ?1 and group_name = ?2 and email = ?3",
-        group,
-        actor(c).toLowerCase(),
-      );
-      if (!member) throw new AppError(403, "not_in_group", `This request is routed to the ${group} group`);
-    }
-    const next = await S.transition(
-      c.env,
-      db,
-      r,
-      { type: "decide", decision: b.decision, reviewer: actor(c) },
-      { actor: actor(c), reason: b.reason, payload: b.payload },
-    );
+    const next = await decideAs(c.env, db, r, { userId: p.userId, email: actor(c), role: p.role, apiKey: !!p.apiKey }, b);
     return c.json(S.reviewOut(next), 200);
   },
 );

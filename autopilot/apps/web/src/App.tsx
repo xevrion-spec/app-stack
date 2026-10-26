@@ -21,6 +21,7 @@ import { Practice } from "./pages/Practice";
 import { Portal } from "./pages/Portal";
 import { AgentReviews } from "./pages/AgentReviews";
 import { AgentConsole } from "./pages/AgentConsole";
+import { ActConfirm } from "./pages/ActConfirm";
 import { CommandPalette, type Command } from "./CommandPalette";
 import { t, type MessageKey } from "./i18n";
 import { applyTheme, getTheme, nextTheme, type Theme } from "./theme";
@@ -51,6 +52,8 @@ type Route = (typeof ROUTES)[number][0];
 
 /** The client portal has its own auth and never shows the staff navigation. */
 const isPortal = () => location.hash.replace(/^#\/?/, "").startsWith("portal");
+/** One-click notification actions: the signed token is the credential, so no sign-in is needed. */
+const actToken = () => /^#\/act\/([A-Za-z0-9_.-]+)$/.exec(location.hash)?.[1] ?? null;
 
 function readHash(): { route: Route; arg: string | null } {
   const [r, arg] = location.hash.replace(/^#\/?/, "").split("/");
@@ -65,6 +68,7 @@ export function App() {
   const [session, setSession] = useState<Session>({ state: "loading" });
   const [{ route, arg }, setLoc] = useState(readHash);
   const [portal, setPortal] = useState(isPortal);
+  const [act, setAct] = useState(actToken);
   const main = useRef<HTMLElement>(null);
   const [theme, setTheme] = useState<Theme>(getTheme);
   useEffect(() => applyTheme(theme), [theme]);
@@ -84,6 +88,7 @@ export function App() {
     const onHash = () => {
       setLoc(readHash());
       setPortal(isPortal());
+      setAct(actToken());
     };
     addEventListener("hashchange", onHash);
     return () => removeEventListener("hashchange", onHash);
@@ -97,8 +102,10 @@ export function App() {
     location.hash = `#/${r}${a ? `/${a}` : ""}`;
   };
 
+  const staff = session.state === "ready" && !portal && !act;
   let body: React.ReactNode;
   if (portal) body = <Portal />;
+  else if (act) body = <ActConfirm token={act} />;
   else if (session.state === "loading") body = <Loading show />;
   else if (session.state === "signed_out") body = <SignIn onSignedIn={refresh} />;
   else if (session.state === "onboarding") body = <Onboarding onCreated={refresh} />;
@@ -138,7 +145,7 @@ export function App() {
       </a>
       <header className="topbar">
         <span className="brand">Autopilot</span>
-        {session.state === "ready" && !portal ? (
+        {staff ? (
           <nav aria-label="Main">
             <ul>
               {visible.map(([k, key]) => (
@@ -160,7 +167,7 @@ export function App() {
         >
           {theme === "dark" ? "☾" : theme === "light" ? "☀" : "◐"}
         </button>
-        {session.state === "ready" && !portal ? (
+        {staff ? (
           <button
             type="button"
             className="link kbd"
@@ -170,7 +177,7 @@ export function App() {
             Ctrl K
           </button>
         ) : null}
-        {session.state === "ready" && !portal ? (
+        {staff ? (
           <span className="who">
             {session.me.email} · {session.me.role}
             {!isHosted ? (
@@ -192,7 +199,7 @@ export function App() {
         {body}
       </main>
       <footer className="foot muted">{t("footer")}</footer>
-      {session.state === "ready" && !portal ? <CommandPalette commands={commands} /> : null}
+      {staff ? <CommandPalette commands={commands} /> : null}
     </>
   );
 }

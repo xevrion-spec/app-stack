@@ -86,6 +86,18 @@ describe("agent review API contract (OpenAPI)", () => {
     await s.call("POST", `/v1/agent-reviews/${c.id}/redact`, { user: A });
     await s.call("GET", "/v1/agent-review/usage", { user: A });
     await s.call("GET", "/v1/agent-review/analytics/reviewers", { user: A });
+    const nch = (
+      await s.call("POST", "/v1/notify/channels", {
+        user: A,
+        body: { kind: "slack", name: "#c", url: "https://hooks.slack.example.test/x", signingSecret: "slack-signing-c" },
+      })
+    ).json;
+    await s.call("GET", "/v1/notify/channels", { user: A });
+    await s.call("PUT", `/v1/notify/channels/${nch.id}/identities`, { user: A, body: { externalId: "U1", email: A } });
+    await s.call("POST", `/v1/notify/channels/${nch.id}/test`, { user: A });
+    await s.call("GET", `/v1/agent-reviews/${c.id}/notifications`, { user: A });
+    await s.call("POST", "/v1/notify/deliveries/none/retry", { user: A });
+    await s.call("DELETE", `/v1/notify/channels/${nch.id}`, { user: A });
     await s.call("GET", `/v1/review-projects/${p.id}/regulator-pack?from=2020-01-01T00:00:00Z&to=2020-06-01T00:00:00Z`, { user: A });
     await s.call("GET", "/v1/agent-review/analytics/outcomes?hourlyCost=40&minutesPerDecision=2&currency=GBP", { user: A });
     await s.call("GET", `/v1/review-projects/${p.id}/suggestions`, { user: A });

@@ -46,6 +46,21 @@ callback (`callbackUrl` on create). Verify callbacks with `verifyCallback(rawBod
 `verify_callback(...)` (Python): HMAC-SHA256 over `t.body` in the `autopilot-signature` header, 5-minute replay window,
 old + new secrets accepted during rotation. Dedupe on the callback `id`.
 
+## 3b. Notify reviewers where they work (R1)
+
+`POST /v1/notify/channels` (owner) adds a channel: `slack` (incoming-webhook URL plus the app signing secret for
+interactive buttons; link Slack users to reviewers with `PUT /v1/notify/channels/{id}/identities`), `teams`
+(incoming-webhook Adaptive Card with open links), `email` (your provider's HTTP send endpoint and token, plus
+recipients), or `webhook` (signed JSON for your own bot). Filter channels by project and minimum risk. Email links carry
+a signed, single-use token bound to one reviewer that expires at the request deadline (7 days at most). The link opens a
+confirm page; **opening it never decides**. Slack buttons decide as the linked clicking user. Every path goes through
+the same role, risk and group checks as the inbox. Deliveries retry with backoff and dead-letter after 8 attempts.
+See `GET /v1/agent-reviews/{id}/notifications` and `POST /v1/notify/deliveries/{id}/retry`. Set `NOTIFY_ACTION_KEY`
+to enable action links. Without it, messages carry open links only.
+
+**Status:** tested against fake Slack/Teams/email/webhook receivers only. No real Slack app or email provider has been
+connected.
+
 ## 4. Route with policy instead of asking every time
 
 ```json

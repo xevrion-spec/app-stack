@@ -4,6 +4,7 @@
  * every transition updates the request (version-checked), records the decision, emits review.* events through the
  * existing outbox (and from there signed webhooks) and writes the audit log, all in one batch.
  */
+import { enqueueStmts } from "./notify-enqueue.js";
 import * as R from "@xevrion/agent-review";
 import type { Env } from "../env.js";
 import { TenantDb, newId } from "../lib/db.js";
@@ -372,6 +373,7 @@ export async function createReview(
   ];
   stmts.push(meterStmt(db, "agent_reviews"));
   if (auto) stmts.push(...autoDecision(db, outbox, row, body.payload, policyActor), meterStmt(db, "agent_reviews_auto"));
+  else stmts.push(...(await enqueueStmts(db, { id, project_id: projectId, risk: row.risk }, t)));
   try {
     await db.batch([...stmts, ...outbox.stmts.splice(0)]);
   } catch (e) {

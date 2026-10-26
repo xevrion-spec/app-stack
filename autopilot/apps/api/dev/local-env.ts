@@ -1,4 +1,5 @@
 /** Builds a Node-side Env for the Docker-free local run: SQLite-backed D1, filesystem R2, in-process queue. */
+import { sweepNotifications } from "../src/services/notify.js";
 import { sweep } from "../src/services/dispatch.js";
 import { maybeRunDaily } from "../src/services/schedules.js";
 import { mkdirSync, writeFileSync, readFileSync, existsSync, rmSync } from "node:fs";
@@ -54,6 +55,9 @@ export function makeLocalEnv(dataDir: string, over: Partial<Env> = {}) {
       void sweep(env).catch(() => {});
       void maybeRunDaily(env).catch(() => {});
     }, 30_000).unref?.();
+  // Reviewer notifications (R1): fast local sweep; dev-only action key (never used outside local dev).
+  env.NOTIFY_ACTION_KEY ??= "local-dev-notify-key-not-a-secret";
+  if (over.ENVIRONMENT !== "test") setInterval(() => void sweepNotifications(env).catch(() => {}), 2_000).unref?.();
   env.WEBHOOK_DEV_HTTP_HOSTS ??= "127.0.0.1,localhost";
   if (process.env.RATE_LIMIT_PER_MINUTE) env.RATE_LIMIT_PER_MINUTE = process.env.RATE_LIMIT_PER_MINUTE;
   return { env, raw };

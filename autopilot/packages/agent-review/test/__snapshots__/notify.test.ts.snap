@@ -1,0 +1,140 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`notify edges (mutation hardening) > renderer output is stable (snapshots) 1`] = `
+{
+  "blocks": [
+    {
+      "text": {
+        "text": "*Review needed: refund.issue (high risk) in Support &lt;prod&gt;*
+Decide by 2026-10-27T00:00:00.000Z",
+        "type": "mrkdwn",
+      },
+      "type": "section",
+    },
+    {
+      "fields": [
+        {
+          "text": "*amount*
+120",
+          "type": "mrkdwn",
+        },
+        {
+          "text": "*note*
+&lt;script&gt;x&lt;/script&gt; &amp; 'q'",
+          "type": "mrkdwn",
+        },
+      ],
+      "type": "section",
+    },
+    {
+      "block_id": "review:r1",
+      "elements": [
+        {
+          "action_id": "review_approve",
+          "style": "primary",
+          "text": {
+            "text": "Approve",
+            "type": "plain_text",
+          },
+          "type": "button",
+          "value": "TA",
+        },
+        {
+          "action_id": "review_reject",
+          "style": "danger",
+          "text": {
+            "text": "Reject",
+            "type": "plain_text",
+          },
+          "type": "button",
+          "value": "TR",
+        },
+        {
+          "action_id": "review_open",
+          "text": {
+            "text": "Open",
+            "type": "plain_text",
+          },
+          "type": "button",
+          "url": "https://app.example.test/#/agent-reviews?id=r1",
+        },
+      ],
+      "type": "actions",
+    },
+  ],
+  "text": "Review needed: refund.issue (high risk) in Support <prod>",
+}
+`;
+
+exports[`notify edges (mutation hardening) > renderer output is stable (snapshots) 2`] = `
+{
+  "attachments": [
+    {
+      "content": {
+        "actions": [
+          {
+            "title": "Approve",
+            "type": "Action.OpenUrl",
+            "url": "https://app.example.test/#/act?token=a",
+          },
+          {
+            "title": "Reject",
+            "type": "Action.OpenUrl",
+            "url": "https://app.example.test/#/act?token=b",
+          },
+          {
+            "title": "Open",
+            "type": "Action.OpenUrl",
+            "url": "https://app.example.test/#/agent-reviews?id=r1",
+          },
+        ],
+        "body": [
+          {
+            "text": "Review needed: refund.issue (high risk) in Support <prod>",
+            "type": "TextBlock",
+            "weight": "Bolder",
+            "wrap": true,
+          },
+          {
+            "facts": [
+              {
+                "title": "amount",
+                "value": "120",
+              },
+              {
+                "title": "note",
+                "value": "<script>x</script> & 'q'",
+              },
+            ],
+            "type": "FactSet",
+          },
+          {
+            "isSubtle": true,
+            "text": "Decide by 2026-10-27T00:00:00.000Z",
+            "type": "TextBlock",
+            "wrap": true,
+          },
+        ],
+        "type": "AdaptiveCard",
+        "version": "1.4",
+      },
+      "contentType": "application/vnd.microsoft.card.adaptive",
+    },
+  ],
+  "type": "message",
+}
+`;
+
+exports[`notify edges (mutation hardening) > renderer output is stable (snapshots) 3`] = `
+{
+  "html": "<h1>Review needed: refund.issue (high risk) in Support &lt;prod&gt;</h1><table><tr><th align="left">amount</th><td>120</td></tr><tr><th align="left">note</th><td>&lt;script&gt;x&lt;/script&gt; &amp; &#39;q&#39;</td></tr></table><p>Decide by 2026-10-27T00:00:00.000Z</p><p><a href="https://app.example.test/#/act?token=a">Approve</a> · <a href="https://app.example.test/#/act?token=b">Reject</a> · <a href="https://app.example.test/#/agent-reviews?id=r1">Open in inbox</a></p><p>Links ask you to confirm; opening one never decides on its own.</p>",
+  "subject": "Review needed: refund.issue (high risk) in Support <prod>",
+  "text": "Review needed: refund.issue (high risk) in Support <prod>
+amount: 120
+note: <script>x</script> & 'q'
+Decide by 2026-10-27T00:00:00.000Z
+Approve: https://app.example.test/#/act?token=a
+Reject: https://app.example.test/#/act?token=b
+Open: https://app.example.test/#/agent-reviews?id=r1",
+}
+`;

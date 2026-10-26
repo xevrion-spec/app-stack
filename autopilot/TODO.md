@@ -138,3 +138,8 @@ Previous branch: feature/value-max (from feature/quality-1000). Roadmap + status
 - [ ] R10 differentiators: replay UI, review-budget optimiser, anomaly detection, workload balancing, evidence templates
 - [ ] R11 performance: indexes, pagination audit, larger load test
 - [ ] R12 admin: metering export, data export/import, onboarding
+- [x] R1a decideAs: one authorization path (custom role, risk, group) shared by API/inbox and one-click actions
+- [x] R1b notify core (packages/agent-review/notify.ts): HMAC single-use action tokens, Slack v0 signature verify, Slack Block Kit / Teams Adaptive Card / email / webhook renderers on a minimised summary; mutation 94.5%
+- [x] R1c channels + outbox (migration 0025): enqueue in the create batch (risk/project filters, per-recipient email), cron sweep with backoff, dead-letter, retry API, delivery log, test send, Slack identity links
+- [x] R1d public POST /notify/actions (confirm-first, GET never decides) + Slack interactivity endpoint (signature-verified), per-IP rate limit; web confirm page #/act/<token>; E2E with a local fake mail receiver
+- Honest R1: all channels tested against fakes only (no real Slack app/Teams bot/email provider); Teams buttons are open-links (in-card approve needs a Bot Framework app); escalations do not re-notify yet

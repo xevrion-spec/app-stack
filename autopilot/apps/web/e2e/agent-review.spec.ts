@@ -189,3 +189,53 @@ test("legal hold and redaction badges are labelled, shown in list + detail, and 
   await expect(page.getByRole("heading", { name: /crm\.redact/ })).toContainText("redacted");
   await axe(page, "inbox redacted dark");
 });
+
+test("email notification → one-click link → confirm page approves once; opening the link alone decides nothing; axe clean", async ({ page, request }) => {
+  test.setTimeout(90_000);
+  const { createServer } = await import("node:http");
+  const mails: { to: string; text: string }[] = [];
+  const srv = createServer((req, res) => {
+    let b = "";
+    req.on("data", (c) => (b += c));
+    req.on("end", () => {
+      mails.push(JSON.parse(b));
+      res.end("ok");
+    });
+  });
+  await new Promise<void>((r) => srv.listen(0, "127.0.0.1", r));
+  const port = (srv.address() as { port: number }).port;
+  try {
+    const stamp = Date.now();
+    const owner = `e2e.ar.notify.${stamp}@example.test`;
+    await signUp(page, owner);
+    const key = await connectAgent(page);
+    const as = { "x-dev-user": owner };
+    const ch = await request.post(`${API}/v1/notify/channels`, {
+      headers: as,
+      data: { kind: "email", name: "mail", url: `http://127.0.0.1:${port}/send`, secret: "synthetic-provider-token", recipients: [owner] },
+    });
+    expect(ch.status()).toBe(201);
+    const id = ((await (await ask(request, key, { action: "refund.issue", risk: "high", payload: { amount: 42 } }, `n-${stamp}`)).json()) as { id: string }).id;
+    await expect.poll(() => mails.length, { timeout: 15_000 }).toBeGreaterThan(0);
+    const approve = mails[0]!.text
+      .split("\n")
+      .find((l) => l.startsWith("Approve: "))!
+      .slice("Approve: ".length);
+    expect(approve).toContain("/#/act/");
+    await page.goto(approve.replace(/^https?:\/\/[^/]+/, ""));
+    await expect(page.getByRole("heading", { name: "Approve this agent request?" })).toBeVisible();
+    // merely opening the link must not have decided
+    const before = (await (await request.get(`${API}/v1/agent-reviews/${id}`, { headers: as })).json()) as { status: string };
+    expect(before.status).toBe("pending");
+    await axe(page, "act confirm");
+    await page.getByLabel(/Reason/).fill("Looks right");
+    await page.getByRole("button", { name: "Confirm approve" }).click();
+    await expect(page.getByRole("status")).toContainText("now approved");
+    await page.reload();
+    await page.getByRole("button", { name: "Confirm approve" }).click();
+    await expect(page.getByRole("alert")).toContainText("already used");
+    await axe(page, "act used");
+  } finally {
+    srv.close();
+  }
+});
