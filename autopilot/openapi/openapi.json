@@ -2888,6 +2888,63 @@
                 "items": {
                   "type": "string"
                 }
+              },
+              "chain": {
+                "type": [
+                  "object",
+                  "null"
+                ],
+                "properties": {
+                  "currentStep": {
+                    "type": [
+                      "integer",
+                      "null"
+                    ]
+                  },
+                  "steps": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "name": {
+                          "type": "string"
+                        },
+                        "group": {
+                          "type": [
+                            "string",
+                            "null"
+                          ]
+                        },
+                        "required": {
+                          "type": "integer"
+                        },
+                        "approvals": {
+                          "type": "integer"
+                        },
+                        "state": {
+                          "type": "string",
+                          "enum": [
+                            "done",
+                            "current",
+                            "waiting"
+                          ]
+                        }
+                      },
+                      "required": [
+                        "name",
+                        "group",
+                        "required",
+                        "approvals",
+                        "state"
+                      ]
+                    }
+                  }
+                },
+                "required": [
+                  "currentStep",
+                  "steps"
+                ],
+                "description": "Multi-step approval chain progress (null for single-step requests)"
               }
             },
             "required": [
@@ -2896,7 +2953,8 @@
               "ruleId",
               "group",
               "escalateAt",
-              "guardrails"
+              "guardrails",
+              "chain"
             ]
           },
           "version": {
@@ -3033,6 +3091,40 @@
               "null"
             ]
           },
+          "steps": {
+            "type": [
+              "array",
+              "null"
+            ],
+            "items": {
+              "type": "object",
+              "properties": {
+                "name": {
+                  "type": "string"
+                },
+                "group": {
+                  "type": "string"
+                },
+                "approvals": {
+                  "type": "integer"
+                },
+                "quorumPercent": {
+                  "type": "integer"
+                }
+              },
+              "required": [
+                "name"
+              ]
+            },
+            "description": "Approval chain as written in the policy (quorum is resolved against group membership when a request is created)"
+          },
+          "clock": {
+            "type": "string",
+            "enum": [
+              "wall",
+              "business"
+            ]
+          },
           "guardrails": {
             "type": "array",
             "items": {
@@ -3076,6 +3168,8 @@
           "timeoutSeconds",
           "escalateAfterSeconds",
           "escalateToGroup",
+          "steps",
+          "clock",
           "guardrails",
           "trace",
           "policyVersion"
@@ -3901,6 +3995,95 @@
           "version",
           "updatedAt",
           "cursor"
+        ]
+      },
+      "BusinessHours": {
+        "type": [
+          "object",
+          "null"
+        ],
+        "properties": {
+          "timeZone": {
+            "type": "string"
+          },
+          "days": {
+            "type": "array",
+            "items": {
+              "type": "integer"
+            }
+          },
+          "start": {
+            "type": "string"
+          },
+          "end": {
+            "type": "string"
+          },
+          "holidays": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        },
+        "required": [
+          "timeZone",
+          "days",
+          "start",
+          "end",
+          "holidays"
+        ]
+      },
+      "ReviewDelegation": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "fromEmail": {
+            "type": "string"
+          },
+          "toEmail": {
+            "type": "string"
+          },
+          "startsAt": {
+            "type": "string"
+          },
+          "endsAt": {
+            "type": "string"
+          },
+          "reason": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "active": {
+            "type": "boolean"
+          },
+          "revokedAt": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "createdBy": {
+            "type": "string"
+          },
+          "createdAt": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "fromEmail",
+          "toEmail",
+          "startsAt",
+          "endsAt",
+          "reason",
+          "active",
+          "revokedAt",
+          "createdBy",
+          "createdAt"
         ]
       },
       "NotifyChannel": {
@@ -35261,6 +35444,45 @@
                                 "escalateToGroup": {
                                   "type": "string",
                                   "maxLength": 60
+                                },
+                                "steps": {
+                                  "type": "array",
+                                  "items": {
+                                    "type": "object",
+                                    "properties": {
+                                      "name": {
+                                        "type": "string",
+                                        "minLength": 1,
+                                        "maxLength": 60
+                                      },
+                                      "group": {
+                                        "type": "string",
+                                        "maxLength": 60
+                                      },
+                                      "approvals": {
+                                        "type": "integer",
+                                        "minimum": 1,
+                                        "maximum": 10
+                                      },
+                                      "quorumPercent": {
+                                        "type": "integer",
+                                        "minimum": 1,
+                                        "maximum": 100
+                                      }
+                                    },
+                                    "required": [
+                                      "name"
+                                    ]
+                                  },
+                                  "minItems": 1,
+                                  "maxItems": 5
+                                },
+                                "clock": {
+                                  "type": "string",
+                                  "enum": [
+                                    "wall",
+                                    "business"
+                                  ]
                                 }
                               },
                               "required": [
@@ -35309,6 +35531,45 @@
                           "escalateToGroup": {
                             "type": "string",
                             "maxLength": 60
+                          },
+                          "steps": {
+                            "type": "array",
+                            "items": {
+                              "type": "object",
+                              "properties": {
+                                "name": {
+                                  "type": "string",
+                                  "minLength": 1,
+                                  "maxLength": 60
+                                },
+                                "group": {
+                                  "type": "string",
+                                  "maxLength": 60
+                                },
+                                "approvals": {
+                                  "type": "integer",
+                                  "minimum": 1,
+                                  "maximum": 10
+                                },
+                                "quorumPercent": {
+                                  "type": "integer",
+                                  "minimum": 1,
+                                  "maximum": 100
+                                }
+                              },
+                              "required": [
+                                "name"
+                              ]
+                            },
+                            "minItems": 1,
+                            "maxItems": 5
+                          },
+                          "clock": {
+                            "type": "string",
+                            "enum": [
+                              "wall",
+                              "business"
+                            ]
                           }
                         },
                         "default": {
@@ -35719,6 +35980,45 @@
                                 "escalateToGroup": {
                                   "type": "string",
                                   "maxLength": 60
+                                },
+                                "steps": {
+                                  "type": "array",
+                                  "items": {
+                                    "type": "object",
+                                    "properties": {
+                                      "name": {
+                                        "type": "string",
+                                        "minLength": 1,
+                                        "maxLength": 60
+                                      },
+                                      "group": {
+                                        "type": "string",
+                                        "maxLength": 60
+                                      },
+                                      "approvals": {
+                                        "type": "integer",
+                                        "minimum": 1,
+                                        "maximum": 10
+                                      },
+                                      "quorumPercent": {
+                                        "type": "integer",
+                                        "minimum": 1,
+                                        "maximum": 100
+                                      }
+                                    },
+                                    "required": [
+                                      "name"
+                                    ]
+                                  },
+                                  "minItems": 1,
+                                  "maxItems": 5
+                                },
+                                "clock": {
+                                  "type": "string",
+                                  "enum": [
+                                    "wall",
+                                    "business"
+                                  ]
                                 }
                               },
                               "required": [
@@ -35767,6 +36067,45 @@
                           "escalateToGroup": {
                             "type": "string",
                             "maxLength": 60
+                          },
+                          "steps": {
+                            "type": "array",
+                            "items": {
+                              "type": "object",
+                              "properties": {
+                                "name": {
+                                  "type": "string",
+                                  "minLength": 1,
+                                  "maxLength": 60
+                                },
+                                "group": {
+                                  "type": "string",
+                                  "maxLength": 60
+                                },
+                                "approvals": {
+                                  "type": "integer",
+                                  "minimum": 1,
+                                  "maximum": 10
+                                },
+                                "quorumPercent": {
+                                  "type": "integer",
+                                  "minimum": 1,
+                                  "maximum": 100
+                                }
+                              },
+                              "required": [
+                                "name"
+                              ]
+                            },
+                            "minItems": 1,
+                            "maxItems": 5
+                          },
+                          "clock": {
+                            "type": "string",
+                            "enum": [
+                              "wall",
+                              "business"
+                            ]
                           }
                         },
                         "default": {
@@ -36912,6 +37251,45 @@
                                 "escalateToGroup": {
                                   "type": "string",
                                   "maxLength": 60
+                                },
+                                "steps": {
+                                  "type": "array",
+                                  "items": {
+                                    "type": "object",
+                                    "properties": {
+                                      "name": {
+                                        "type": "string",
+                                        "minLength": 1,
+                                        "maxLength": 60
+                                      },
+                                      "group": {
+                                        "type": "string",
+                                        "maxLength": 60
+                                      },
+                                      "approvals": {
+                                        "type": "integer",
+                                        "minimum": 1,
+                                        "maximum": 10
+                                      },
+                                      "quorumPercent": {
+                                        "type": "integer",
+                                        "minimum": 1,
+                                        "maximum": 100
+                                      }
+                                    },
+                                    "required": [
+                                      "name"
+                                    ]
+                                  },
+                                  "minItems": 1,
+                                  "maxItems": 5
+                                },
+                                "clock": {
+                                  "type": "string",
+                                  "enum": [
+                                    "wall",
+                                    "business"
+                                  ]
                                 }
                               },
                               "required": [
@@ -36960,6 +37338,45 @@
                           "escalateToGroup": {
                             "type": "string",
                             "maxLength": 60
+                          },
+                          "steps": {
+                            "type": "array",
+                            "items": {
+                              "type": "object",
+                              "properties": {
+                                "name": {
+                                  "type": "string",
+                                  "minLength": 1,
+                                  "maxLength": 60
+                                },
+                                "group": {
+                                  "type": "string",
+                                  "maxLength": 60
+                                },
+                                "approvals": {
+                                  "type": "integer",
+                                  "minimum": 1,
+                                  "maximum": 10
+                                },
+                                "quorumPercent": {
+                                  "type": "integer",
+                                  "minimum": 1,
+                                  "maximum": 100
+                                }
+                              },
+                              "required": [
+                                "name"
+                              ]
+                            },
+                            "minItems": 1,
+                            "maxItems": 5
+                          },
+                          "clock": {
+                            "type": "string",
+                            "enum": [
+                              "wall",
+                              "business"
+                            ]
                           }
                         },
                         "default": {
@@ -39734,6 +40151,641 @@
               "text/event-stream": {
                 "schema": {
                   "type": "string"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthenticated",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "412": {
+            "description": "Precondition failed (stale ETag)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Rate limited or quota exceeded",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/review-projects/{id}/business-hours": {
+      "get": {
+        "tags": [
+          "Agent review"
+        ],
+        "summary": "The project's business-hours calendar (null = none; business-clock rules then fall back to wall time, flagged)",
+        "security": [
+          {
+            "accessJwt": []
+          }
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 64
+            },
+            "required": true,
+            "name": "id",
+            "in": "path"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "businessHours": {
+                      "$ref": "#/components/schemas/BusinessHours"
+                    }
+                  },
+                  "required": [
+                    "businessHours"
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthenticated",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "412": {
+            "description": "Precondition failed (stale ETag)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Rate limited or quota exceeded",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "Agent review"
+        ],
+        "summary": "Set or clear (null) the business-hours calendar. Applies to requests created afterwards.",
+        "security": [
+          {
+            "accessJwt": []
+          }
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 64
+            },
+            "required": true,
+            "name": "id",
+            "in": "path"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "businessHours": {
+                    "type": [
+                      "object",
+                      "null"
+                    ],
+                    "properties": {
+                      "timeZone": {
+                        "type": "string",
+                        "example": "Europe/London"
+                      },
+                      "days": {
+                        "type": "array",
+                        "items": {
+                          "type": "integer",
+                          "minimum": 1,
+                          "maximum": 7
+                        },
+                        "description": "ISO weekdays, 1 = Monday",
+                        "example": [
+                          1,
+                          2,
+                          3,
+                          4,
+                          5
+                        ]
+                      },
+                      "start": {
+                        "type": "string",
+                        "example": "09:00"
+                      },
+                      "end": {
+                        "type": "string",
+                        "example": "17:30"
+                      },
+                      "holidays": {
+                        "type": "array",
+                        "items": {
+                          "type": "string"
+                        },
+                        "maxItems": 366
+                      }
+                    },
+                    "required": [
+                      "timeZone",
+                      "days",
+                      "start",
+                      "end"
+                    ]
+                  }
+                },
+                "required": [
+                  "businessHours"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "businessHours": {
+                      "$ref": "#/components/schemas/BusinessHours"
+                    }
+                  },
+                  "required": [
+                    "businessHours"
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthenticated",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "412": {
+            "description": "Precondition failed (stale ETag)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Rate limited or quota exceeded",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/review-delegations": {
+      "post": {
+        "tags": [
+          "Agent review"
+        ],
+        "summary": "Delegate your review duties (owners may delegate for anyone) to another reviewer for up to 90 days. Replaces your current delegation.",
+        "security": [
+          {
+            "accessJwt": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "toEmail": {
+                    "type": "string",
+                    "format": "email"
+                  },
+                  "fromEmail": {
+                    "type": "string",
+                    "format": "email",
+                    "description": "Owners only: delegate on behalf of this reviewer"
+                  },
+                  "startsAt": {
+                    "type": "string",
+                    "format": "date-time"
+                  },
+                  "endsAt": {
+                    "type": "string",
+                    "format": "date-time"
+                  },
+                  "reason": {
+                    "type": "string",
+                    "maxLength": 200
+                  }
+                },
+                "required": [
+                  "toEmail",
+                  "endsAt"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReviewDelegation"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthenticated",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "412": {
+            "description": "Precondition failed (stale ETag)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Rate limited or quota exceeded",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      },
+      "get": {
+        "tags": [
+          "Agent review"
+        ],
+        "summary": "Delegations: owners see all; reviewers see the ones from or to them",
+        "security": [
+          {
+            "accessJwt": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "items": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/ReviewDelegation"
+                      }
+                    }
+                  },
+                  "required": [
+                    "items"
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthenticated",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "412": {
+            "description": "Precondition failed (stale ETag)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Rate limited or quota exceeded",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/review-delegations/{id}": {
+      "delete": {
+        "tags": [
+          "Agent review"
+        ],
+        "summary": "End a delegation now (the delegator or an owner)",
+        "security": [
+          {
+            "accessJwt": []
+          }
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 64
+            },
+            "required": true,
+            "name": "id",
+            "in": "path"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReviewDelegation"
                 }
               }
             }

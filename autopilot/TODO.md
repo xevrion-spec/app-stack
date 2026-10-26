@@ -147,3 +147,9 @@ Previous branch: feature/value-max (from feature/quality-1000). Roadmap + status
 - [x] R2b /wait and /stream wake on commit (poll is the fallback only); tenant change feed GET /v1/agent-review/events (+ index 0026), SSE /events/stream with Last-Event-ID resume and a late-commit rescan window
 - [x] R2c console live inbox (streamed fetch, backoff reconnect, Live badge, "updated elsewhere" notice that keeps the reviewer's draft); E2E desktop+mobile, light+dark axe
 - Honest R2: no Durable Object fan-out, so cross-isolate latency equals the poll interval; JSON feed page has no late-commit rescan
+- [x] R3a chains in the pure state machine (ordered steps, per-step groups, separation of duties, edit restarts chain); property tests
+- [x] R3b policy `then.steps` with approvals or quorumPercent (resolved against active group members), `clock: business`; guardrails quorum_empty_group / quorum_capped / critical four-eyes on chain totals
+- [x] R3c business-hours calendar (IANA tz, weekdays, holidays; DST-correct add/between; migration 0027) + project API; deadlines and escalations on the business clock
+- [x] R3d delegation API (one hop, ≤90 days, owner-for-reviewer, revocable, audited review.delegated_decision); chain progress in inbox list + detail; E2E with axe
+- Mutation R3: state.ts 95.6%, policy.ts 87.6% (survivors are mostly pre-existing static zod-schema literals), calendar.ts 73.8% (all logic survivors are equivalent; static schema literals are not exercised by the vitest runner)
+- Honest R3: later chain steps are not re-notified; delegation does not redirect notifications; quorum fixed at creation

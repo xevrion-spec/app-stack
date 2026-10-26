@@ -96,6 +96,7 @@ export function AgentReviews({ role, selected, onSelect }: { role: string; selec
                 </span>
                 <span className="muted small">
                   {r.approvals}/{r.requiredApprovals} approvals · {r.status === "pending" || r.status === "escalated" ? timeLeft(r.deadlineAt) : r.status}
+                  {r.routing.chain && r.routing.chain.currentStep !== null ? ` · step ${r.routing.chain.currentStep + 1}/${r.routing.chain.steps.length}` : ""}
                   {r.routing.group ? ` · ${r.routing.group}` : ""}
                 </span>
               </button>
@@ -269,6 +270,20 @@ function ReviewDetail({ id, onDone }: { id: string; onDone: (r: Review, message:
   );
 }
 
+const STEP_LABEL = { done: "done", current: "now deciding", waiting: "waiting" } as const;
+function ChainSteps({ chain }: { chain: NonNullable<Review["routing"]["chain"]> }) {
+  return (
+    <ol className="chain" aria-label="Approval chain">
+      {chain.steps.map((st) => (
+        <li key={st.name} className={`chain-${st.state}`} aria-current={st.state === "current" ? "step" : undefined}>
+          <strong>{st.name}</strong>
+          {st.group ? ` (${st.group})` : ""}: {st.approvals}/{st.required} · {STEP_LABEL[st.state]}
+        </li>
+      ))}
+    </ol>
+  );
+}
+
 function Facts({ review, open, audit }: { review: Review; open: boolean; audit: Integrity | null }) {
   return (
     <dl className="kv">
@@ -280,6 +295,7 @@ function Facts({ review, open, audit }: { review: Review; open: boolean; audit: 
       <dt>Approvals</dt>
       <dd>
         {review.approvals} of {review.requiredApprovals} on version {review.payloadVersion}
+        {review.routing.chain ? <ChainSteps chain={review.routing.chain} /> : null}
       </dd>
       <dt>Routed by</dt>
       <dd>

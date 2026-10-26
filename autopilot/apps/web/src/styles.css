@@ -723,3 +723,17 @@ table.diff code {
 .code {
   max-width: 100%;
 }
+
+.chain {
+  margin: 0.4rem 0 0;
+  padding-left: 1.2rem;
+}
+.chain li {
+  margin: 0.1rem 0;
+}
+.chain-done {
+  color: var(--ok);
+}
+.chain-current {
+  font-weight: 600;
+}

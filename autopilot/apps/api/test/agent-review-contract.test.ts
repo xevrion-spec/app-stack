@@ -88,6 +88,15 @@ describe("agent review API contract (OpenAPI)", () => {
     await s.call("GET", "/v1/agent-review/analytics/reviewers", { user: A });
     const feedHead = (await s.call("GET", "/v1/agent-review/events", { user: A })).json.cursor;
     await s.call("GET", `/v1/agent-review/events?cursor=${feedHead}`, { user: A });
+    await s.call("PUT", `/v1/review-projects/${p.id}/business-hours`, {
+      user: A,
+      body: { businessHours: { timeZone: "UTC", days: [1, 2, 3, 4, 5], start: "09:00", end: "17:00" } },
+    });
+    await s.call("GET", `/v1/review-projects/${p.id}/business-hours`, { user: A });
+    const del = (await s.call("POST", "/v1/review-delegations", { user: A, body: { toEmail: RV, endsAt: new Date(Date.now() + 86_400_000).toISOString() } }))
+      .json;
+    await s.call("GET", "/v1/review-delegations", { user: A });
+    await s.call("DELETE", `/v1/review-delegations/${del.id}`, { user: A });
     const nch = (
       await s.call("POST", "/v1/notify/channels", {
         user: A,

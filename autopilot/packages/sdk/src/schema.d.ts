@@ -23527,6 +23527,14 @@ export interface paths {
                                     timeoutSeconds?: number;
                                     escalateAfterSeconds?: number;
                                     escalateToGroup?: string;
+                                    steps?: {
+                                        name: string;
+                                        group?: string;
+                                        approvals?: number;
+                                        quorumPercent?: number;
+                                    }[];
+                                    /** @enum {string} */
+                                    clock?: "wall" | "business";
                                 };
                             }[];
                             /**
@@ -23544,6 +23552,14 @@ export interface paths {
                                 timeoutSeconds?: number;
                                 escalateAfterSeconds?: number;
                                 escalateToGroup?: string;
+                                steps?: {
+                                    name: string;
+                                    group?: string;
+                                    approvals?: number;
+                                    quorumPercent?: number;
+                                }[];
+                                /** @enum {string} */
+                                clock?: "wall" | "business";
                             };
                         };
                         description?: string;
@@ -23680,6 +23696,14 @@ export interface paths {
                                     timeoutSeconds?: number;
                                     escalateAfterSeconds?: number;
                                     escalateToGroup?: string;
+                                    steps?: {
+                                        name: string;
+                                        group?: string;
+                                        approvals?: number;
+                                        quorumPercent?: number;
+                                    }[];
+                                    /** @enum {string} */
+                                    clock?: "wall" | "business";
                                 };
                             }[];
                             /**
@@ -23697,6 +23721,14 @@ export interface paths {
                                 timeoutSeconds?: number;
                                 escalateAfterSeconds?: number;
                                 escalateToGroup?: string;
+                                steps?: {
+                                    name: string;
+                                    group?: string;
+                                    approvals?: number;
+                                    quorumPercent?: number;
+                                }[];
+                                /** @enum {string} */
+                                clock?: "wall" | "business";
                             };
                         };
                         version?: number;
@@ -24408,6 +24440,14 @@ export interface paths {
                                     timeoutSeconds?: number;
                                     escalateAfterSeconds?: number;
                                     escalateToGroup?: string;
+                                    steps?: {
+                                        name: string;
+                                        group?: string;
+                                        approvals?: number;
+                                        quorumPercent?: number;
+                                    }[];
+                                    /** @enum {string} */
+                                    clock?: "wall" | "business";
                                 };
                             }[];
                             /**
@@ -24425,6 +24465,14 @@ export interface paths {
                                 timeoutSeconds?: number;
                                 escalateAfterSeconds?: number;
                                 escalateToGroup?: string;
+                                steps?: {
+                                    name: string;
+                                    group?: string;
+                                    approvals?: number;
+                                    quorumPercent?: number;
+                                }[];
+                                /** @enum {string} */
+                                clock?: "wall" | "business";
                             };
                         };
                     };
@@ -26865,6 +26913,523 @@ export interface paths {
         put?: never;
         post?: never;
         delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/review-projects/{id}/business-hours": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** The project's business-hours calendar (null = none; business-clock rules then fall back to wall time, flagged) */
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            businessHours: components["schemas"]["BusinessHours"];
+                        };
+                    };
+                };
+                /** @description Bad request */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Error"];
+                    };
+                };
+                /** @description Unauthenticated */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Error"];
+                    };
+                };
+                /** @description Forbidden */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Error"];
+                    };
+                };
+                /** @description Not found */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Error"];
+                    };
+                };
+                /** @description Conflict */
+                409: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Error"];
+                    };
+                };
+                /** @description Precondition failed (stale ETag) */
+                412: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Error"];
+                    };
+                };
+                /** @description Rate limited or quota exceeded */
+                429: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Error"];
+                    };
+                };
+            };
+        };
+        /** Set or clear (null) the business-hours calendar. Applies to requests created afterwards. */
+        put: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json": {
+                        businessHours: {
+                            /** @example Europe/London */
+                            timeZone: string;
+                            /**
+                             * @description ISO weekdays, 1 = Monday
+                             * @example [
+                             *       1,
+                             *       2,
+                             *       3,
+                             *       4,
+                             *       5
+                             *     ]
+                             */
+                            days: number[];
+                            /** @example 09:00 */
+                            start: string;
+                            /** @example 17:30 */
+                            end: string;
+                            holidays?: string[];
+                        } | null;
+                    };
+                };
+            };
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            businessHours: components["schemas"]["BusinessHours"];
+                        };
+                    };
+                };
+                /** @description Bad request */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Error"];
+                    };
+                };
+                /** @description Unauthenticated */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Error"];
+                    };
+                };
+                /** @description Forbidden */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Error"];
+                    };
+                };
+                /** @description Not found */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Error"];
+                    };
+                };
+                /** @description Conflict */
+                409: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Error"];
+                    };
+                };
+                /** @description Precondition failed (stale ETag) */
+                412: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Error"];
+                    };
+                };
+                /** @description Rate limited or quota exceeded */
+                429: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Error"];
+                    };
+                };
+            };
+        };
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/review-delegations": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Delegations: owners see all; reviewers see the ones from or to them */
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            items: components["schemas"]["ReviewDelegation"][];
+                        };
+                    };
+                };
+                /** @description Bad request */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Error"];
+                    };
+                };
+                /** @description Unauthenticated */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Error"];
+                    };
+                };
+                /** @description Forbidden */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Error"];
+                    };
+                };
+                /** @description Not found */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Error"];
+                    };
+                };
+                /** @description Conflict */
+                409: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Error"];
+                    };
+                };
+                /** @description Precondition failed (stale ETag) */
+                412: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Error"];
+                    };
+                };
+                /** @description Rate limited or quota exceeded */
+                429: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Error"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        /** Delegate your review duties (owners may delegate for anyone) to another reviewer for up to 90 days. Replaces your current delegation. */
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json": {
+                        /** Format: email */
+                        toEmail: string;
+                        /**
+                         * Format: email
+                         * @description Owners only: delegate on behalf of this reviewer
+                         */
+                        fromEmail?: string;
+                        /** Format: date-time */
+                        startsAt?: string;
+                        /** Format: date-time */
+                        endsAt: string;
+                        reason?: string;
+                    };
+                };
+            };
+            responses: {
+                /** @description OK */
+                201: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ReviewDelegation"];
+                    };
+                };
+                /** @description Bad request */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Error"];
+                    };
+                };
+                /** @description Unauthenticated */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Error"];
+                    };
+                };
+                /** @description Forbidden */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Error"];
+                    };
+                };
+                /** @description Not found */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Error"];
+                    };
+                };
+                /** @description Conflict */
+                409: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Error"];
+                    };
+                };
+                /** @description Precondition failed (stale ETag) */
+                412: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Error"];
+                    };
+                };
+                /** @description Rate limited or quota exceeded */
+                429: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Error"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/review-delegations/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        /** End a delegation now (the delegator or an owner) */
+        delete: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ReviewDelegation"];
+                    };
+                };
+                /** @description Bad request */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Error"];
+                    };
+                };
+                /** @description Unauthenticated */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Error"];
+                    };
+                };
+                /** @description Forbidden */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Error"];
+                    };
+                };
+                /** @description Not found */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Error"];
+                    };
+                };
+                /** @description Conflict */
+                409: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Error"];
+                    };
+                };
+                /** @description Precondition failed (stale ETag) */
+                412: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Error"];
+                    };
+                };
+                /** @description Rate limited or quota exceeded */
+                429: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Error"];
+                    };
+                };
+            };
+        };
         options?: never;
         head?: never;
         patch?: never;
@@ -29594,6 +30159,18 @@ export interface components {
                 group: string | null;
                 escalateAt: string | null;
                 guardrails: string[];
+                /** @description Multi-step approval chain progress (null for single-step requests) */
+                chain: {
+                    currentStep: number | null;
+                    steps: {
+                        name: string;
+                        group: string | null;
+                        required: number;
+                        approvals: number;
+                        /** @enum {string} */
+                        state: "done" | "current" | "waiting";
+                    }[];
+                } | null;
             };
             version: number;
             createdAt: string;
@@ -29621,6 +30198,15 @@ export interface components {
             timeoutSeconds: number | null;
             escalateAfterSeconds: number | null;
             escalateToGroup: string | null;
+            /** @description Approval chain as written in the policy (quorum is resolved against group membership when a request is created) */
+            steps: {
+                name: string;
+                group?: string;
+                approvals?: number;
+                quorumPercent?: number;
+            }[] | null;
+            /** @enum {string} */
+            clock: "wall" | "business";
             guardrails: string[];
             trace: {
                 ruleId: string;
@@ -29834,6 +30420,25 @@ export interface components {
             updatedAt: string;
             /** @description Opaque; pass as `cursor` (or Last-Event-ID) to resume after this change */
             cursor: string;
+        };
+        BusinessHours: {
+            timeZone: string;
+            days: number[];
+            start: string;
+            end: string;
+            holidays: string[];
+        } | null;
+        ReviewDelegation: {
+            id: string;
+            fromEmail: string;
+            toEmail: string;
+            startsAt: string;
+            endsAt: string;
+            reason: string | null;
+            active: boolean;
+            revokedAt: string | null;
+            createdBy: string;
+            createdAt: string;
         };
         NotifyChannel: {
             id: string;

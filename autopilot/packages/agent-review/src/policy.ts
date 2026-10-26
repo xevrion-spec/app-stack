@@ -29,6 +29,17 @@ const When = z
     payload: z.array(Cond).max(20).optional(),
   })
   .default({});
+/** One chain step (R3). Give `approvals`, or `quorumPercent` of the step group's active members (resolved at request time). */
+const StepSpec = z
+  .object({
+    name: z.string().min(1).max(60),
+    group: z.string().max(60).optional(),
+    approvals: z.number().int().min(1).max(10).optional(),
+    quorumPercent: z.number().int().min(1).max(100).optional(),
+  })
+  .refine((st) => (st.approvals === undefined) !== (st.quorumPercent === undefined), "give exactly one of approvals or quorumPercent")
+  .refine((st) => st.quorumPercent === undefined || !!st.group, "quorumPercent needs a group");
+export type StepSpec = z.infer<typeof StepSpec>;
 const Then = z.object({
   outcome: z.enum(["auto_approve", "human", "reject"]),
   approvals: z.number().int().min(1).max(5).default(1),
@@ -46,10 +57,15 @@ const Then = z.object({
     .max(30 * 86400)
     .optional(),
   escalateToGroup: z.string().max(60).optional(),
+  /** Ordered approval chain, e.g. team lead then finance. Replaces approvals/group when present. */
+  steps: z.array(StepSpec).min(1).max(5).optional(),
+  /** "business": timeout and escalation count only the project's business hours. */
+  clock: z.enum(["wall", "business"]).optional(),
 });
 export const PolicyRule = z
   .object({ id: z.string().min(1).max(60), description: z.string().max(300).optional(), when: When, then: Then })
   .superRefine((r, ctx) => {
+    if (r.then.steps && r.then.outcome !== "human") ctx.addIssue({ code: "custom", path: ["then", "steps"], message: "approval chains need outcome human" });
     if (r.then.outcome !== "auto_approve") return;
     if (r.when.minConfidence === undefined || r.when.minConfidence < 0.5)
       ctx.addIssue({ code: "custom", path: ["when", "minConfidence"], message: "auto_approve rules must require minConfidence >= 0.5" });
@@ -89,6 +105,8 @@ export interface Routing {
   timeoutSeconds: number | null;
   escalateAfterSeconds: number | null;
   escalateToGroup: string | null;
+  steps: StepSpec[] | null;
+  clock: "wall" | "business";
   /** Guardrails that changed the policy's answer (empty when the policy was followed as written). */
   guardrails: string[];
   trace: { ruleId: string; matched: boolean; failed: string[] }[];
@@ -186,6 +204,8 @@ export function evaluate(policy: PolicyDocument, input: EvalInput): Routing {
     timeoutSeconds: t.timeoutSeconds ?? null,
     escalateAfterSeconds: t.escalateAfterSeconds ?? null,
     escalateToGroup: t.escalateToGroup ?? null,
+    steps: outcome === "human" && t.steps ? t.steps : null,
+    clock: t.clock ?? "wall",
     guardrails,
     trace,
   };
@@ -202,4 +222,30 @@ export function bucket(id: string): number {
     h = Math.imul(h, 16777619);
   }
   return (h >>> 0) % 100;
+}
+
+/**
+ * Turns chain step specs into concrete steps: quorum percentages become a count of the group's active members
+ * (at least 1, at most 10), then the same hard guardrails as single-step routing apply to the chain total
+ * (critical needs two people; callers may raise but never lower the count). Extra approvals go to the last step.
+ */
+export function resolveSteps(specs: StepSpec[], groupSize: (group: string) => number, input: Pick<EvalInput, "risk" | "minApprovals">) {
+  const guardrails: string[] = [];
+  const steps = specs.map((st) => {
+    if (st.approvals !== undefined) return { name: st.name, group: st.group ?? null, approvals: st.approvals };
+    const members = groupSize(st.group!);
+    const raw = Math.ceil((st.quorumPercent! * members) / 100);
+    const need = Math.min(10, Math.max(1, raw));
+    if (raw > 10) guardrails.push(`quorum_capped:${st.name}`);
+    if (members === 0) guardrails.push(`quorum_empty_group:${st.name}`);
+    return { name: st.name, group: st.group!, approvals: need };
+  });
+  const total = () => steps.reduce((n, st) => n + st.approvals, 0);
+  const last = steps[steps.length - 1]!;
+  if (input.risk === "critical" && total() < 2) {
+    last.approvals += 2 - total();
+    guardrails.push("critical_four_eyes");
+  }
+  if (input.minApprovals && input.minApprovals > total()) last.approvals = Math.min(10, last.approvals + input.minApprovals - total());
+  return { steps, guardrails };
 }

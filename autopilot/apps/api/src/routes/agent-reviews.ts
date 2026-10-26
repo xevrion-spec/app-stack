@@ -398,6 +398,21 @@ export const ReviewOut = z
       group: z.string().nullable(),
       escalateAt: z.string().nullable(),
       guardrails: z.array(z.string()),
+      chain: z
+        .object({
+          currentStep: z.number().int().nullable(),
+          steps: z.array(
+            z.object({
+              name: z.string(),
+              group: z.string().nullable(),
+              required: z.number().int(),
+              approvals: z.number().int(),
+              state: z.enum(["done", "current", "waiting"]),
+            }),
+          ),
+        })
+        .nullable()
+        .openapi({ description: "Multi-step approval chain progress (null for single-step requests)" }),
     }),
     version: z.number(),
     createdAt: z.string(),
@@ -416,6 +431,11 @@ const RoutingOut = z
     timeoutSeconds: z.number().nullable(),
     escalateAfterSeconds: z.number().nullable(),
     escalateToGroup: z.string().nullable(),
+    steps: z
+      .array(z.object({ name: z.string(), group: z.string().optional(), approvals: z.number().int().optional(), quorumPercent: z.number().int().optional() }))
+      .nullable()
+      .openapi({ description: "Approval chain as written in the policy (quorum is resolved against group membership when a request is created)" }),
+    clock: z.enum(["wall", "business"]),
     guardrails: z.array(z.string()),
     trace: z.array(z.object({ ruleId: z.string(), matched: z.boolean(), failed: z.array(z.string()) })),
     policyVersion: z.number(),

@@ -9,3 +9,4 @@ export * from "./outcomes.js";
 export * from "./attestation.js";
 export * from "./notify.js";
 export * from "./bus.js";
+export * from "./calendar.js";

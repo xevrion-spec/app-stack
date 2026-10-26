@@ -277,3 +277,56 @@ test("live inbox: new requests appear without reload; a request changed elsewher
   await expect(page.locator("html")).toHaveAttribute("data-theme", "dark");
   await axe(page, "live inbox dark");
 });
+
+test("approval chain: steps shown in order with the current one marked; delegate decides for a lead; axe clean", async ({ page, request }) => {
+  const stamp = Date.now();
+  const owner = `e2e.ar.chain.${stamp}@example.test`;
+  const lead = `e2e.lead.${stamp}@example.test`;
+  const cover = `e2e.cover.${stamp}@example.test`;
+  await signUp(page, owner);
+  const key = await connectAgent(page);
+  const as = (u: string) => ({ "x-dev-user": u, "idempotency-key": crypto.randomUUID() });
+  for (const u of [lead, cover])
+    expect((await request.post(`${API}/v1/users`, { headers: as(owner), data: { email: u, role: "reviewer" } })).status()).toBeLessThan(300);
+  await request.put(`${API}/v1/review-groups/leads`, { headers: as(owner), data: { members: [lead] } });
+  const projects = (await (await request.get(`${API}/v1/review-projects`, { headers: as(owner) })).json()) as { items: { id: string }[] };
+  const pid = projects.items[0]!.id;
+  const doc = {
+    rules: [
+      {
+        id: "chain",
+        when: {},
+        then: {
+          outcome: "human",
+          steps: [
+            { name: "lead", group: "leads", approvals: 1 },
+            { name: "owner sign-off", approvals: 1 },
+          ],
+        },
+      },
+    ],
+  };
+  const v = (
+    (await (await request.post(`${API}/v1/review-projects/${pid}/policies`, { headers: as(owner), data: { document: doc } })).json()) as { version: number }
+  ).version;
+  await request.post(`${API}/v1/review-projects/${pid}/policies/${v}/activate`, { headers: as(owner), data: {} });
+  const id = ((await (await ask(request, key, { action: "vendor.pay", risk: "high", payload: { amount: 900 } }, `ch-${stamp}`)).json()) as { id: string }).id;
+  // the lead is away: they delegate to cover, who decides the lead step
+  expect(
+    (
+      await request.post(`${API}/v1/review-delegations`, {
+        headers: as(lead),
+        data: { toEmail: cover, endsAt: new Date(Date.now() + 86_400_000).toISOString() },
+      })
+    ).status(),
+  ).toBe(201);
+  expect((await request.post(`${API}/v1/agent-reviews/${id}/decisions`, { headers: as(cover), data: { decision: "approve" } })).status()).toBe(200);
+  await page.goto("/#/agent-reviews");
+  const inbox = page.getByRole("list", { name: "pending agent requests" });
+  await expect(inbox.getByRole("button", { name: /vendor\.pay/ })).toContainText("step 2/2");
+  await inbox.getByRole("button", { name: /vendor\.pay/ }).click();
+  const chain = page.getByRole("list", { name: "Approval chain" });
+  await expect(chain.getByRole("listitem")).toHaveText([/lead \(leads\): 1\/1 · done/, /owner sign-off: 0\/1 · now deciding/]);
+  await expect(chain.locator('[aria-current="step"]')).toContainText("owner sign-off");
+  await axe(page, "chain detail");
+});

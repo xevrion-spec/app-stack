@@ -43,6 +43,11 @@ Generated from `openapi/openapi.json` by `npm run docs:api`. Base URL: your API 
 | GET | `/v1/review-projects/{id}/regulator-pack` | Regulator-style evidence pack for a period: control statements, policies, outcomes, reviewers, verified trails; signed |  | RegulatorEvidencePack |
 | GET | `/v1/agent-review/events` | Change feed of review requests visible to the caller, oldest first after `cursor` (omit it to get the head cursor only). No payloads. |  | object |
 | GET | `/v1/agent-review/events/stream` | Server-sent events: `change` per request change (id = resume cursor; honours Last-Event-ID or `cursor`), then `end` after maxSeconds (1..55, default 55). Reconnect to continue. |  |  |
+| GET | `/v1/review-projects/{id}/business-hours` | The project's business-hours calendar (null = none; business-clock rules then fall back to wall time, flagged) |  | object |
+| PUT | `/v1/review-projects/{id}/business-hours` | Set or clear (null) the business-hours calendar. Applies to requests created afterwards. | object | object |
+| POST | `/v1/review-delegations` | Delegate your review duties (owners may delegate for anyone) to another reviewer for up to 90 days. Replaces your current delegation. | object | ReviewDelegation |
+| GET | `/v1/review-delegations` | Delegations: owners see all; reviewers see the ones from or to them |  | object |
+| DELETE | `/v1/review-delegations/{id}` | End a delegation now (the delegator or an owner) |  | ReviewDelegation |
 | POST | `/v1/notify/channels` | Add a reviewer notification channel (Slack, Teams, email or webhook) | NotifyChannelIn | NotifyChannel |
 | GET | `/v1/notify/channels` | List notification channels (secrets are never returned) |  | object |
 | DELETE | `/v1/notify/channels/{id}` | Delete a channel (pending deliveries are skipped) |  | object |

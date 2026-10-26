@@ -76,6 +76,28 @@ connected.
 production deployment the latency is the poll interval (500 ms), not instant. The JSON page endpoint has no late-commit
 rescan; use the stream for exactly-once delivery.
 
+## 3d. Approval chains, quorum, delegation and business hours (R3)
+
+- **Chains:** a rule's `then.steps` (1–5) must clear in order, for example `[{ "name": "lead", "group": "leads",
+  "approvals": 1 }, { "name": "finance", "group": "finance", "quorumPercent": 60 }]`. Only the current step's group may
+  decide (owners can always decide). A person counts in one step only. Reject vetoes the whole chain. An edit restarts
+  the chain so every step approves exactly what will run. Progress is returned in `routing.chain` and shown in the
+  inbox.
+- **Quorum:** `quorumPercent` resolves to a count of the group's *active* reviewers when the request is created (at
+  least 1, at most 10). Guardrails `quorum_empty_group:<step>` and `quorum_capped:<step>` say when that happened.
+  Critical requests still need two people in total.
+- **Delegation:** `POST /v1/review-delegations` (`toEmail`, `endsAt` at most 90 days away, optional `startsAt` and
+  `reason`). It is one hop and time-boxed. The delegate decides as themselves, with their own role limits, on requests
+  routed to the delegator's groups. Every such decision is audited as `review.delegated_decision` with `onBehalfOf`.
+  Owners can delegate for a reviewer. A deactivated delegator's delegation stops working.
+- **Business hours:** `PUT /v1/review-projects/{id}/business-hours` (IANA time zone, ISO weekdays, `start`/`end`,
+  holidays). Rules with `clock: "business"` count their timeout and escalation in business time only (DST-correct).
+  Without a calendar they fall back to wall time with the `business_clock_without_calendar` guardrail.
+
+**Honest limits:** reviewers of later chain steps are not re-notified when a step clears (notifications fire at
+creation only). Delegation does not redirect notifications. Quorum is fixed at creation, so later group changes do not
+re-resolve it.
+
 ## 4. Route with policy instead of asking every time
 
 ```json

@@ -6,6 +6,7 @@
  */
 import { enqueueStmts } from "./notify-enqueue.js";
 import { wake } from "./review-feed.js";
+import { clockFor, groupSizes, projectCalendar } from "./review-workflow.js";
 import * as R from "@xevrion/agent-review";
 import type { Env } from "../env.js";
 import { TenantDb, newId } from "../lib/db.js";
@@ -21,7 +22,6 @@ import { enforceQuota, meterStmt } from "./usage.js";
 
 const DEFAULT_TIMEOUT_S = 24 * 3600;
 const now = () => new Date().toISOString();
-const plus = (s: number) => new Date(Date.now() + s * 1000).toISOString();
 
 export type RequestRow = {
   id: string;
@@ -63,7 +63,26 @@ export const COLS =
 export type DecisionRow = { id: string; reviewer: string; decision: R.Decision; reason: string | null; payload_version: number; created_at: string };
 
 /** The group that may decide right now: the escalation group once escalated, else the routed group (null = anyone with the role). */
-export const decidingGroup = (r: RequestRow) => (r.status === "escalated" && r.escalate_to_group ? r.escalate_to_group : r.review_group);
+export const decidingGroup = (r: RequestRow) => {
+  if (r.status === "escalated" && r.escalate_to_group) return r.escalate_to_group;
+  const step = R.currentStep(JSON.parse(r.snapshot_json) as R.Snapshot);
+  return step ? step.group : r.review_group;
+};
+/** Chain progress for API output (null for single-step requests). */
+function chainOut(snap: R.Snapshot) {
+  if (!snap.steps) return null;
+  const at = snap.stepIndex ?? 0;
+  return {
+    currentStep: at < snap.steps.length ? at : null,
+    steps: snap.steps.map((st, i) => ({
+      name: st.name,
+      group: st.group,
+      required: st.approvals,
+      approvals: new Set(snap.approvals.filter((a) => a.version === snap.payloadVersion && a.step === i).map((a) => a.reviewer)).size,
+      state: i < at ? ("done" as const) : i === at ? ("current" as const) : ("waiting" as const),
+    })),
+  };
+}
 
 export function reviewOut(r: RequestRow, decisions?: DecisionRow[]) {
   const snap = JSON.parse(r.snapshot_json) as R.Snapshot;
@@ -92,6 +111,7 @@ export function reviewOut(r: RequestRow, decisions?: DecisionRow[]) {
       group: decidingGroup(r),
       escalateAt: r.escalate_at,
       guardrails: r.guardrails_json ? (JSON.parse(r.guardrails_json) as string[]) : [],
+      chain: chainOut(snap),
     },
     version: r.version,
     createdAt: r.created_at,
@@ -157,8 +177,9 @@ interface RowInput {
   sha: string;
   t: string;
   auto: boolean;
+  at: (seconds: number) => string;
 }
-function buildRow({ id, projectId, actor, body, snap, routing, policyVersion, deadline, sha, t, auto }: RowInput): RequestRow {
+function buildRow({ id, projectId, actor, body, snap, routing, policyVersion, deadline, sha, t, auto, at }: RowInput): RequestRow {
   return {
     id,
     project_id: projectId,
@@ -183,8 +204,8 @@ function buildRow({ id, projectId, actor, body, snap, routing, policyVersion, de
     policy_version: policyVersion,
     policy_rule_id: routing.ruleId,
     route_outcome: routing.outcome,
-    review_group: routing.group,
-    escalate_at: !auto && routing.escalateAfterSeconds ? plus(routing.escalateAfterSeconds) : null,
+    review_group: R.currentStep(snap)?.group ?? routing.group,
+    escalate_at: !auto && routing.escalateAfterSeconds ? at(routing.escalateAfterSeconds) : null,
     escalate_to_group: routing.escalateToGroup,
     min_approvals: body.minApprovals ?? null,
     guardrails_json: JSON.stringify(routing.guardrails),
@@ -299,13 +320,12 @@ export async function createReview(
     payload: body.payload,
     ...(body.minApprovals ? { minApprovals: body.minApprovals } : {}),
   });
-  const deadline = body.deadlineAt ? new Date(body.deadlineAt).toISOString() : plus(body.timeoutSeconds ?? routing.timeoutSeconds ?? DEFAULT_TIMEOUT_S);
-  if (deadline <= t) throw badRequest("deadlineAt must be in the future");
+  const { clock, deadline } = await timing(db, projectId, routing, body, t);
   const auto = routing.outcome !== "human";
-  let snap = R.initial(actor, auto ? 1 : routing.approvals);
+  let snap = auto || !routing.steps ? R.initial(actor, auto ? 1 : routing.approvals) : await chainSnapshot(db, actor, routing, body);
   const policyActor = `policy:v${policy.version}:${routing.ruleId ?? "default"}`;
   if (auto) snap = R.apply(snap, { type: "decide", decision: routing.outcome === "auto_approve" ? "approve" : "reject", reviewer: policyActor });
-  const row = buildRow({ id, projectId, actor, body, snap, routing, policyVersion: policy.version, deadline, sha, t, auto });
+  const row = buildRow({ id, projectId, actor, body, snap, routing, policyVersion: policy.version, deadline, sha, t, auto, at: clock.at });
   const entries = await creationEntries(row, actor, policy.version, routing, snap.status);
   const chain = await appendStmts(db, id, { seq: 0, head: null }, entries);
   row.chain_seq = chain.seq;
@@ -389,6 +409,30 @@ export async function createReview(
   wake(db.tenantId, row.id);
   await outbox.publish(env);
   return { row, created: true };
+}
+
+/** Deadline on the routing's clock (business hours when the rule asks and the project has a calendar). */
+async function timing(
+  db: TenantDb,
+  projectId: string,
+  routing: R.Routing,
+  body: { deadlineAt?: string | undefined; timeoutSeconds?: number | undefined },
+  t: string,
+) {
+  const clock = clockFor(routing.clock === "business" ? await projectCalendar(db, projectId) : null, routing.clock);
+  if (clock.guardrail) routing.guardrails.push(clock.guardrail);
+  const deadline = body.deadlineAt ? new Date(body.deadlineAt).toISOString() : clock.at(body.timeoutSeconds ?? routing.timeoutSeconds ?? DEFAULT_TIMEOUT_S);
+  if (deadline <= t) throw badRequest("deadlineAt must be in the future");
+  return { clock, deadline };
+}
+
+/** Resolves a routed chain against live group sizes (quorum) and records any guardrails it applied. */
+async function chainSnapshot(db: TenantDb, actor: string, routing: R.Routing, body: { risk: R.RiskLevel; minApprovals?: number | undefined }) {
+  const groups = [...new Set(routing.steps!.flatMap((st) => (st.group ? [st.group] : [])))];
+  const sizes = await groupSizes(db, groups);
+  const res = R.resolveSteps(routing.steps!, (g) => sizes.get(g) ?? 0, { risk: body.risk, ...(body.minApprovals ? { minApprovals: body.minApprovals } : {}) });
+  routing.guardrails.push(...res.guardrails.filter((g) => !routing.guardrails.includes(g)));
+  return R.initialChain(actor, res.steps);
 }
 
 // ---------------- transitions ----------------
