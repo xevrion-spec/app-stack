@@ -156,3 +156,4 @@ Previous branch: feature/value-max (from feature/quality-1000). Roadmap + status
 - [x] R4a structural payload diff (packages/agent-review/diff.ts; property test) exposed as payloadDiff and shown as nested path changes in the inbox detail
 - [x] R4b action templates: safe JSON Schema subset validator (no eval; ReDoS-guarded patterns; depth/size caps; mutation 80.2%, survivors static schema literals/equivalent guards), per-project template API, 422 payload_invalid on create, rendered title + instructions on the request and in the inbox
 - [x] R4c evidence attachments (migration 0029): type/magic-byte + executable checks (real), pluggable malware engine (default STUB: EICAR only, labelled), fail-closed, only clean stored/downloadable with hardened headers, redaction purges bytes+names; inbox Evidence list; E2E
+- [x] Interim benchmark after R1–R4: capability 6.4 → 6.7, market-ready 2.0 (unchanged; new channels mock-tested only)

@@ -4,6 +4,21 @@ Re-score of the table in [agent-review-market.md](../agent-review-market.md). **
 from the 2026-10-25 research (their public docs) and were not re-verified today.** Ours are judged against what the
 code on `feature/agent-review-layer` does in tests. Mocked integrations count as missing.
 
+## Interim re-score after Round 2 R1–R4 (2026-10-26)
+
+| Axis        | Was | Now | Why (code, tested)                                                                                                         | Still missing (counts against)                                                   |
+| ----------- | --- | --- | -------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------- |
+| Policy      | 9   | 9   | + multi-step chains, quorum %, business-hours clock                                                                        | visual rule builder                                                              |
+| Delivery    | 7   | 8   | + Slack/Teams/email/webhook notifications with signed one-click actions; commit-driven push for wait/SSE; tenant SSE feed  | channels tested only against fakes; no Durable Object fan-out (cross-isolate 500 ms) |
+| Audit       | 9   | 9   | + delegated-decision and attachment audit events; redaction purges attachments                                             | PDF pack, external timestamping                                                  |
+| Dev exp.    | 6   | 6   | + action templates with schema validation (422 with field errors)                                                          | SDKs unpublished, no sandbox                                                     |
+| Reviewer UI | 6   | 7   | + live inbox, chain progress, nested edit diff, evidence, one-click confirm page                                           | bulk actions, claiming, mobile app                                               |
+| Enterprise  | 6   | 6   | + delegation (time-boxed, audited), business calendars                                                                     | SAML, KMS/BYOK, SOC 2 (R7 next)                                                  |
+| Self-serve  | 2   | 2   | no change                                                                                                                  | live deployment, billing                                                         |
+
+Capability **6.7** (was 6.4). Market-ready stays **2.0**: every new channel is mock-tested (no real Slack app, Teams
+bot, email provider or antivirus engine connected), and nothing is deployed.
+
 ## Two scores, kept separate
 
 - **Capability (code):** what the software can do, proven by automated tests (2,783 unit/integration, property and
