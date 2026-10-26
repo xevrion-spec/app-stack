@@ -26558,6 +26558,111 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/v1/review-projects/{id}/regulator-pack": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Regulator-style evidence pack for a period: control statements, policies, outcomes, reviewers, verified trails; signed */
+        get: {
+            parameters: {
+                query: {
+                    from: string;
+                    to: string;
+                    pseudonymise?: "true" | "false";
+                };
+                header?: never;
+                path: {
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["RegulatorEvidencePack"];
+                    };
+                };
+                /** @description Bad request */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Error"];
+                    };
+                };
+                /** @description Unauthenticated */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Error"];
+                    };
+                };
+                /** @description Forbidden */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Error"];
+                    };
+                };
+                /** @description Not found */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Error"];
+                    };
+                };
+                /** @description Conflict */
+                409: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Error"];
+                    };
+                };
+                /** @description Precondition failed (stale ETag) */
+                412: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Error"];
+                    };
+                };
+                /** @description Rate limited or quota exceeded */
+                429: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Error"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/v1/agent-review/audit-sink": {
         parameters: {
             query?: never;
@@ -28755,6 +28860,57 @@ export interface components {
             estimatedHumanCost: number | null;
             estimatedCostAvoided: number | null;
         } | null;
+        RegulatorEvidencePack: {
+            /** @description Signed content; verify over canonicalJson(pack) */
+            pack: {
+                /** @enum {string} */
+                format: "xevrion.regulator-evidence/1";
+                scope: {
+                    [key: string]: unknown;
+                };
+                generatedAt: string;
+                disclaimer: string;
+                controls: {
+                    id: string;
+                    refs: string[];
+                    statement: string;
+                    /** @enum {string} */
+                    status: "evidenced" | "gap" | "not_applicable";
+                    detail: string;
+                }[];
+                facts: {
+                    [key: string]: unknown;
+                };
+                policies: {
+                    [key: string]: unknown;
+                }[];
+                outcomes: {
+                    [key: string]: unknown;
+                } | null;
+                reviewers: {
+                    [key: string]: unknown;
+                }[];
+                integrity: {
+                    checked: number;
+                    failedRequestIds: string[];
+                    truncated: boolean;
+                };
+                requests: {
+                    [key: string]: unknown;
+                }[];
+                pseudonymised: boolean;
+            };
+            manifestSha256: string;
+            signature: {
+                /** @enum {string} */
+                alg: "Ed25519";
+                kid: string;
+                value: string;
+            } | null;
+            publicKeys: {
+                [key: string]: unknown;
+            }[];
+        };
         AuditSink: {
             url: string;
             /** @enum {string} */

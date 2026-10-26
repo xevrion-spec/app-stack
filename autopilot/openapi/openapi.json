@@ -3686,6 +3686,183 @@
           "estimatedCostAvoided"
         ]
       },
+      "RegulatorEvidencePack": {
+        "type": "object",
+        "properties": {
+          "pack": {
+            "type": "object",
+            "properties": {
+              "format": {
+                "type": "string",
+                "enum": [
+                  "xevrion.regulator-evidence/1"
+                ]
+              },
+              "scope": {
+                "type": "object",
+                "additionalProperties": {}
+              },
+              "generatedAt": {
+                "type": "string"
+              },
+              "disclaimer": {
+                "type": "string"
+              },
+              "controls": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "id": {
+                      "type": "string"
+                    },
+                    "refs": {
+                      "type": "array",
+                      "items": {
+                        "type": "string"
+                      }
+                    },
+                    "statement": {
+                      "type": "string"
+                    },
+                    "status": {
+                      "type": "string",
+                      "enum": [
+                        "evidenced",
+                        "gap",
+                        "not_applicable"
+                      ]
+                    },
+                    "detail": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "id",
+                    "refs",
+                    "statement",
+                    "status",
+                    "detail"
+                  ]
+                }
+              },
+              "facts": {
+                "type": "object",
+                "additionalProperties": {}
+              },
+              "policies": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "additionalProperties": {}
+                }
+              },
+              "outcomes": {
+                "type": [
+                  "object",
+                  "null"
+                ],
+                "additionalProperties": {}
+              },
+              "reviewers": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "additionalProperties": {}
+                }
+              },
+              "integrity": {
+                "type": "object",
+                "properties": {
+                  "checked": {
+                    "type": "integer"
+                  },
+                  "failedRequestIds": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    }
+                  },
+                  "truncated": {
+                    "type": "boolean"
+                  }
+                },
+                "required": [
+                  "checked",
+                  "failedRequestIds",
+                  "truncated"
+                ]
+              },
+              "requests": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "additionalProperties": {}
+                }
+              },
+              "pseudonymised": {
+                "type": "boolean"
+              }
+            },
+            "required": [
+              "format",
+              "scope",
+              "generatedAt",
+              "disclaimer",
+              "controls",
+              "facts",
+              "policies",
+              "outcomes",
+              "reviewers",
+              "integrity",
+              "requests",
+              "pseudonymised"
+            ],
+            "description": "Signed content; verify over canonicalJson(pack)"
+          },
+          "manifestSha256": {
+            "type": "string"
+          },
+          "signature": {
+            "type": [
+              "object",
+              "null"
+            ],
+            "properties": {
+              "alg": {
+                "type": "string",
+                "enum": [
+                  "Ed25519"
+                ]
+              },
+              "kid": {
+                "type": "string"
+              },
+              "value": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "alg",
+              "kid",
+              "value"
+            ]
+          },
+          "publicKeys": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "additionalProperties": {}
+            }
+          }
+        },
+        "required": [
+          "pack",
+          "manifestSha256",
+          "signature",
+          "publicKeys"
+        ]
+      },
       "AuditSink": {
         "type": "object",
         "properties": {
@@ -38926,6 +39103,144 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/AgentReviewOutcomes"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthenticated",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "412": {
+            "description": "Precondition failed (stale ETag)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Rate limited or quota exceeded",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/review-projects/{id}/regulator-pack": {
+      "get": {
+        "tags": [
+          "Agent review"
+        ],
+        "summary": "Regulator-style evidence pack for a period: control statements, policies, outcomes, reviewers, verified trails; signed",
+        "security": [
+          {
+            "accessJwt": []
+          }
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 64
+            },
+            "required": true,
+            "name": "id",
+            "in": "path"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "format": "date-time"
+            },
+            "required": true,
+            "name": "from",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "format": "date-time"
+            },
+            "required": true,
+            "name": "to",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "enum": [
+                "true",
+                "false"
+              ],
+              "default": "true"
+            },
+            "required": false,
+            "name": "pseudonymise",
+            "in": "query"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RegulatorEvidencePack"
                 }
               }
             }

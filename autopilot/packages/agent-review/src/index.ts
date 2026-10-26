@@ -6,3 +6,4 @@ export * from "./ledger.js";
 export * from "./receipt.js";
 export * from "./analytics.js";
 export * from "./outcomes.js";
+export * from "./attestation.js";

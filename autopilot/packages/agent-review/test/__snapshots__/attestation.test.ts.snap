@@ -1,0 +1,136 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`control wording is stable (auditors diff packs) > snapshots every control in healthy, gap and empty states 1`] = `
+[
+  {
+    "detail": "10 trails verified",
+    "id": "record-keeping",
+    "refs": [
+      "EU AI Act Art. 12",
+      "EU AI Act Art. 19",
+      "NIST AI RMF MEASURE",
+    ],
+    "statement": "Every request has a tamper-evident, hash-chained event log",
+    "status": "evidenced",
+  },
+  {
+    "detail": "7 of 10 routed to people (8 decisions); 3 decided by policy",
+    "id": "human-oversight",
+    "refs": [
+      "EU AI Act Art. 14",
+      "NIST AI RMF MANAGE",
+    ],
+    "statement": "Agent actions are routed to people by versioned policy; critical risk is never auto-approved",
+    "status": "evidenced",
+  },
+  {
+    "detail": "retention 365 days; 1 on legal hold; 2 redacted",
+    "id": "log-retention",
+    "refs": [
+      "EU AI Act Art. 26(6)",
+      "UK GDPR Art. 5(1)(e)",
+    ],
+    "statement": "Logs are kept at least 183 days and then minimised",
+    "status": "evidenced",
+  },
+  {
+    "detail": "2 policy versions in force during the period",
+    "id": "policy-governance",
+    "refs": [
+      "NIST AI RMF GOVERN",
+    ],
+    "statement": "Routing rules are immutable, versioned and hashed; every request records the version that routed it",
+    "status": "evidenced",
+  },
+]
+`;
+
+exports[`control wording is stable (auditors diff packs) > snapshots every control in healthy, gap and empty states 2`] = `
+[
+  {
+    "detail": "only the first 10 trails were verified; narrow the period",
+    "id": "record-keeping",
+    "refs": [
+      "EU AI Act Art. 12",
+      "EU AI Act Art. 19",
+      "NIST AI RMF MEASURE",
+    ],
+    "statement": "Every request has a tamper-evident, hash-chained event log",
+    "status": "gap",
+  },
+  {
+    "detail": "2 critical requests were auto-approved",
+    "id": "human-oversight",
+    "refs": [
+      "EU AI Act Art. 14",
+      "NIST AI RMF MANAGE",
+    ],
+    "statement": "Agent actions are routed to people by versioned policy; critical risk is never auto-approved",
+    "status": "gap",
+  },
+  {
+    "detail": "no retention period set (kept indefinitely: storage limitation not evidenced)",
+    "id": "log-retention",
+    "refs": [
+      "EU AI Act Art. 26(6)",
+      "UK GDPR Art. 5(1)(e)",
+    ],
+    "statement": "Logs are kept at least 183 days and then minimised",
+    "status": "gap",
+  },
+  {
+    "detail": "2 policy versions in force during the period",
+    "id": "policy-governance",
+    "refs": [
+      "NIST AI RMF GOVERN",
+    ],
+    "statement": "Routing rules are immutable, versioned and hashed; every request records the version that routed it",
+    "status": "evidenced",
+  },
+]
+`;
+
+exports[`control wording is stable (auditors diff packs) > snapshots every control in healthy, gap and empty states 3`] = `
+[
+  {
+    "detail": "no requests in period",
+    "id": "record-keeping",
+    "refs": [
+      "EU AI Act Art. 12",
+      "EU AI Act Art. 19",
+      "NIST AI RMF MEASURE",
+    ],
+    "statement": "Every request has a tamper-evident, hash-chained event log",
+    "status": "not_applicable",
+  },
+  {
+    "detail": "no requests in period",
+    "id": "human-oversight",
+    "refs": [
+      "EU AI Act Art. 14",
+      "NIST AI RMF MANAGE",
+    ],
+    "statement": "Agent actions are routed to people by versioned policy; critical risk is never auto-approved",
+    "status": "not_applicable",
+  },
+  {
+    "detail": "retention 365 days; 1 on legal hold; 2 redacted",
+    "id": "log-retention",
+    "refs": [
+      "EU AI Act Art. 26(6)",
+      "UK GDPR Art. 5(1)(e)",
+    ],
+    "statement": "Logs are kept at least 183 days and then minimised",
+    "status": "evidenced",
+  },
+  {
+    "detail": "built-in default policy (every request to a human)",
+    "id": "policy-governance",
+    "refs": [
+      "NIST AI RMF GOVERN",
+    ],
+    "statement": "Routing rules are immutable, versioned and hashed; every request records the version that routed it",
+    "status": "evidenced",
+  },
+]
+`;

@@ -8,7 +8,7 @@ import { reviewOut, type DecisionRow, type RequestRow } from "./agent-review.js"
 
 type Key = Awaited<ReturnType<typeof R.loadSigningKey>>;
 let cached: { src: string; key: Promise<Key> } | null = null;
-async function signingKey(env: Env): Promise<Key> {
+export async function signingKey(env: Env): Promise<Key> {
   const src = env.RECEIPT_SIGNING_JWK;
   if (!src) throw new AppError(503, "receipts_unconfigured", "Decision receipts are not configured (RECEIPT_SIGNING_JWK)");
   if (cached?.src !== src) cached = { src, key: R.loadSigningKey(src) };

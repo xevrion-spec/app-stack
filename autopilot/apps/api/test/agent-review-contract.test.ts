@@ -86,6 +86,7 @@ describe("agent review API contract (OpenAPI)", () => {
     await s.call("POST", `/v1/agent-reviews/${c.id}/redact`, { user: A });
     await s.call("GET", "/v1/agent-review/usage", { user: A });
     await s.call("GET", "/v1/agent-review/analytics/reviewers", { user: A });
+    await s.call("GET", `/v1/review-projects/${p.id}/regulator-pack?from=2020-01-01T00:00:00Z&to=2020-06-01T00:00:00Z`, { user: A });
     await s.call("GET", "/v1/agent-review/analytics/outcomes?hourlyCost=40&minutesPerDecision=2&currency=GBP", { user: A });
     await s.call("GET", `/v1/review-projects/${p.id}/suggestions`, { user: A });
     await s.call("PUT", "/v1/agent-review/audit-sink", { user: A, body: { url: "https://siem.example.test/in" } });
