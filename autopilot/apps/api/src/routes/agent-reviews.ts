@@ -5,6 +5,7 @@
  * to one project.
  */
 import { bus, requestKey } from "../services/review-feed.js";
+import { renderTitle } from "../services/review-templates.js";
 import { OpenAPIHono, z } from "@hono/zod-openapi";
 import type { Context } from "hono";
 import * as R from "@xevrion/agent-review";
@@ -427,6 +428,11 @@ export const ReviewOut = z
     legalHold: z.boolean().openapi({ description: "Under legal hold: retention will not redact it" }),
     redactedAt: z.string().nullable().openapi({ description: "When retention or erasure removed payload/context (hashes stay in the audit chain)" }),
     decisions: z.array(Decision).optional(),
+    template: z
+      .object({ title: z.string().nullable(), instructions: z.string().nullable() })
+      .nullable()
+      .optional()
+      .openapi({ description: "The project's template for this action (single-request reads only)" }),
   })
   .openapi("ReviewRequest");
 const RoutingOut = z
@@ -559,7 +565,13 @@ agentReviews.openapi(
       "select id, reviewer, decision, reason, payload_version, created_at from review_decisions where tenant_id = ?1 and request_id = ?2 order by created_at, id",
       r.id,
     );
-    return c.json(S.reviewOut(r, ds), 200);
+    const t = await db.first<{ title: string | null; instructions: string | null }>(
+      "select title, instructions from review_action_templates where tenant_id = ?1 and project_id = ?2 and action = ?3",
+      r.project_id,
+      r.action,
+    );
+    const template = t ? { title: renderTitle(t.title, JSON.parse(r.current_payload_json) as Record<string, unknown>), instructions: t.instructions } : null;
+    return c.json({ ...S.reviewOut(r, ds), template }, 200);
   },
 );
 

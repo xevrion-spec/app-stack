@@ -6,6 +6,7 @@
  */
 import { enqueueStmts } from "./notify-enqueue.js";
 import { wake } from "./review-feed.js";
+import { checkTemplate } from "./review-templates.js";
 import { clockFor, groupSizes, projectCalendar } from "./review-workflow.js";
 import * as R from "@xevrion/agent-review";
 import type { Env } from "../env.js";
@@ -309,6 +310,7 @@ export async function createReview(
   }
   assertCallbackUrl(env, body.callbackUrl);
   // metering (A10a): idempotent replays above are free; a new request counts against the monthly plan quota
+  await checkTemplate(db, projectId, body.action, body.payload);
   await enforceQuota(db, "agent_reviews", 1);
   const t = now();
   const id = newId();

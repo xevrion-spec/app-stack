@@ -48,6 +48,9 @@ Generated from `openapi/openapi.json` by `npm run docs:api`. Base URL: your API 
 | POST | `/v1/review-delegations` | Delegate your review duties (owners may delegate for anyone) to another reviewer for up to 90 days. Replaces your current delegation. | object | ReviewDelegation |
 | GET | `/v1/review-delegations` | Delegations: owners see all; reviewers see the ones from or to them |  | object |
 | DELETE | `/v1/review-delegations/{id}` | End a delegation now (the delegator or an owner) |  | ReviewDelegation |
+| GET | `/v1/review-projects/{id}/templates` | Action templates for a project |  | object |
+| PUT | `/v1/review-projects/{id}/templates/{action}` | Create or replace the template for an action. New requests whose payload breaks the schema get 422 payload_invalid. | object | ReviewActionTemplate |
+| DELETE | `/v1/review-projects/{id}/templates/{action}` | Remove an action template |  | object |
 | POST | `/v1/notify/channels` | Add a reviewer notification channel (Slack, Teams, email or webhook) | NotifyChannelIn | NotifyChannel |
 | GET | `/v1/notify/channels` | List notification channels (secrets are never returned) |  | object |
 | DELETE | `/v1/notify/channels/{id}` | Delete a channel (pending deliveries are skipped) |  | object |

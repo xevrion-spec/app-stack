@@ -4,6 +4,7 @@ export type ErrorCode =
   | "action_expired"
   | "action_used"
   | "unknown_reviewer"
+  | "payload_invalid"
   | "sso_unconfigured"
   | "ip_not_allowed"
   | "legal_hold"

@@ -97,6 +97,9 @@ describe("agent review API contract (OpenAPI)", () => {
       .json;
     await s.call("GET", "/v1/review-delegations", { user: A });
     await s.call("DELETE", `/v1/review-delegations/${del.id}`, { user: A });
+    await s.call("PUT", `/v1/review-projects/${p.id}/templates/contract_action`, { user: A, body: { schema: { type: "object" }, title: "T" } });
+    await s.call("GET", `/v1/review-projects/${p.id}/templates`, { user: A });
+    await s.call("DELETE", `/v1/review-projects/${p.id}/templates/contract_action`, { user: A });
     const nch = (
       await s.call("POST", "/v1/notify/channels", {
         user: A,
@@ -127,6 +130,7 @@ describe("agent review API contract (OpenAPI)", () => {
         .replace(/\/[0-9a-f-]{36}/g, "/{id}")
         .replace(/policies\/1\//, "policies/{version}/")
         .replace("/review-groups/finance", "/review-groups/{name}")
+        .replace("/templates/contract_action", "/templates/{action}")
         .replace(/review-projects\/\{id\}/, "review-projects/{id}"),
     );
     const missing = documented.filter((d) => !exercised.includes(d) && !/\/stream$|\/audit\/export$/.test(d));

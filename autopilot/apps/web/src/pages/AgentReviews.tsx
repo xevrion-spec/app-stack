@@ -201,6 +201,7 @@ function ReviewDetail({ id, onDone }: { id: string; onDone: (r: Review, message:
           </pre>
         </>
       ) : null}
+      <TemplateNote template={review.template} />
       <PayloadDiff review={review} />
       <ErrorNote error={error} />
       {open ? (
@@ -315,6 +316,16 @@ function EditChanges({ diff }: { diff: NonNullable<Review["payloadDiff"]> }) {
         </tfoot>
       ) : null}
     </table>
+  );
+}
+
+function TemplateNote({ template }: { template: Review["template"] }) {
+  if (!template?.title && !template?.instructions) return null;
+  return (
+    <div className="note">
+      {template.title ? <p className="h4">{template.title}</p> : null}
+      {template.instructions ? <p>{template.instructions}</p> : null}
+    </div>
   );
 }
 

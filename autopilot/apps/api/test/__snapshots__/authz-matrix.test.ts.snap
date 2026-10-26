@@ -119,6 +119,7 @@ exports[`authz matrix over every OpenAPI operation > role outcomes are stable (s
   "GET /v1/review-projects/{id}/policies": "reviewer=404 accountant=404",
   "GET /v1/review-projects/{id}/regulator-pack": "reviewer=403 accountant=403",
   "GET /v1/review-projects/{id}/suggestions": "reviewer=403 accountant=403",
+  "GET /v1/review-projects/{id}/templates": "reviewer=404 accountant=404",
   "GET /v1/roles": "reviewer=403 accountant=403",
   "GET /v1/rules": "reviewer=200 accountant=200",
   "GET /v1/sa/summary": "reviewer=200 accountant=200",
