@@ -60,7 +60,10 @@ export function AgentReviews({ role, selected, onSelect }: { role: string; selec
               <button type="button" className="link block" aria-current={r.id === selected ? "true" : undefined} onClick={() => onSelect(r.id)}>
                 <span className="row between">
                   <strong>{r.action}</strong>
-                  <Badge value={r.risk} />
+                  <span className="row gap-xs">
+                    <RetentionBadges review={r} />
+                    <Badge value={r.risk} />
+                  </span>
                 </span>
                 <span className="muted small">
                   {r.approvals}/{r.requiredApprovals} approvals · {r.status === "pending" || r.status === "escalated" ? timeLeft(r.deadlineAt) : r.status}
@@ -156,8 +159,9 @@ function ReviewDetail({ id, onDone }: { id: string; onDone: (r: Review, message:
   return (
     <article className="card detail" aria-labelledby="review-title">
       <h2 id="review-title" className="h3">
-        {review.action} <Badge value={review.status} />
+        {review.action} <Badge value={review.status} /> <RetentionBadges review={review} />
       </h2>
+      <RedactedNote at={review.redactedAt} />
       <Facts review={review} open={!!open} audit={audit.data} />
       {review.context ? (
         <>
@@ -336,5 +340,32 @@ function History({ review }: { review: Review }) {
         ))}
       </ol>
     </>
+  );
+}
+
+/** Legal hold / redaction markers: text labels (not colour alone) so they work for screen readers and in dark mode. */
+function RetentionBadges({ review }: { review: { legalHold?: boolean; redactedAt?: string | null } }) {
+  return (
+    <>
+      {review.legalHold ? (
+        <span className="badge b-hold" title="On legal hold: retention will not delete or redact this request">
+          legal hold
+        </span>
+      ) : null}
+      {review.redactedAt ? (
+        <span className="badge b-redacted" title={`Redacted ${review.redactedAt}`}>
+          redacted
+        </span>
+      ) : null}
+    </>
+  );
+}
+
+function RedactedNote({ at }: { at?: string | null }) {
+  if (!at) return null;
+  return (
+    <p className="note" role="note">
+      Payload and context were redacted on {new Date(at).toLocaleString()}. Decisions and the hash-chained trail are kept.
+    </p>
   );
 }

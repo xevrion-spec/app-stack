@@ -151,3 +151,41 @@ test("keyboard: A approves without the mouse; dark mode passes axe", async ({ pa
   await page.goto("/#/agents");
   await axe(page, "console dark");
 });
+
+test("legal hold and redaction badges are labelled, shown in list + detail, and pass axe (light + dark)", async ({ page, request }) => {
+  test.setTimeout(90_000);
+  const stamp = Date.now();
+  const owner = `e2e.ar.hold.${stamp}@example.test`;
+  await signUp(page, owner);
+  const key = await connectAgent(page);
+  const mk = async (action: string, n: number) =>
+    ((await (await ask(request, key, { action, risk: "low", payload: { n } }, `h-${stamp}-${n}`)).json()) as { id: string }).id;
+  const held = await mk("crm.hold", 1);
+  const red = await mk("crm.redact", 2);
+  const as = { "x-dev-user": owner };
+  expect((await request.post(`${API}/v1/agent-reviews/${held}/legal-hold`, { headers: as, data: { reason: "synthetic litigation hold" } })).status()).toBe(200);
+  expect((await request.post(`${API}/v1/agent-reviews/${red}/decisions`, { headers: as, data: { decision: "approve" } })).status()).toBe(200);
+  expect((await request.post(`${API}/v1/agent-reviews/${red}/redact`, { headers: as, data: {} })).status()).toBe(200);
+  await page.goto("/#/agent-reviews");
+  await page.reload();
+  const pending = page.getByRole("list", { name: "pending agent requests" });
+  await expect(pending.getByRole("button", { name: /crm\.hold/ })).toContainText("legal hold");
+  await pending.getByRole("button", { name: /crm\.hold/ }).click();
+  await expect(page.getByRole("heading", { name: /crm\.hold/ })).toContainText("legal hold");
+  await axe(page, "inbox legal hold");
+  await page.getByLabel("Status").selectOption("approved");
+  const approved = page.getByRole("list", { name: "approved agent requests" });
+  await approved.getByRole("button", { name: /crm\.redact/ }).click();
+  await expect(page.getByRole("heading", { name: /crm\.redact/ })).toContainText("redacted");
+  await expect(page.getByRole("note").filter({ hasText: "were redacted on" })).toBeVisible();
+  await axe(page, "inbox redacted");
+  await page.evaluate(() => localStorage.setItem("autopilot.theme", "dark"));
+  await page.reload();
+  await page.getByLabel("Status").selectOption("approved");
+  await page
+    .getByRole("list", { name: "approved agent requests" })
+    .getByRole("button", { name: /crm\.redact/ })
+    .click();
+  await expect(page.getByRole("heading", { name: /crm\.redact/ })).toContainText("redacted");
+  await axe(page, "inbox redacted dark");
+});

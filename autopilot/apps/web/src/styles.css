@@ -588,6 +588,17 @@ button.danger {
   background: #fee2e2;
   color: #991b1b;
 }
+.b-hold {
+  background: #e0e7ff;
+  color: #3730a3;
+}
+.b-redacted {
+  background: #e5e7eb;
+  color: #1f2937;
+}
+.gap-xs {
+  gap: 0.25rem;
+}
 .card.selected {
   border-color: var(--accent);
   box-shadow: 0 0 0 1px var(--accent);
