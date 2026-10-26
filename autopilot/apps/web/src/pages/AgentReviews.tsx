@@ -284,6 +284,40 @@ function ChainSteps({ chain }: { chain: NonNullable<Review["routing"]["chain"]> 
   );
 }
 
+const fmt = (v: unknown) => (v === undefined ? "" : typeof v === "string" ? v : JSON.stringify(v));
+function EditChanges({ diff }: { diff: NonNullable<Review["payloadDiff"]> }) {
+  return (
+    <table className="diff">
+      <caption>Changes from the agent's original</caption>
+      <thead>
+        <tr>
+          <th scope="col">Field</th>
+          <th scope="col">Was</th>
+          <th scope="col">Now</th>
+        </tr>
+      </thead>
+      <tbody>
+        {diff.changes.map((c) => (
+          <tr key={c.path} className={`diff-${c.op}`}>
+            <th scope="row">
+              <code>{c.path}</code> <span className="muted small">({c.op === "add" ? "added" : c.op === "remove" ? "removed" : "changed"})</span>
+            </th>
+            <td>{c.op === "add" ? "—" : <del>{fmt(c.from)}</del>}</td>
+            <td>{c.op === "remove" ? "—" : <ins>{fmt(c.to)}</ins>}</td>
+          </tr>
+        ))}
+      </tbody>
+      {diff.truncated ? (
+        <tfoot>
+          <tr>
+            <td colSpan={3}>More changes not shown.</td>
+          </tr>
+        </tfoot>
+      ) : null}
+    </table>
+  );
+}
+
 function Facts({ review, open, audit }: { review: Review; open: boolean; audit: Integrity | null }) {
   return (
     <dl className="kv">
@@ -297,6 +331,14 @@ function Facts({ review, open, audit }: { review: Review; open: boolean; audit: 
         {review.approvals} of {review.requiredApprovals} on version {review.payloadVersion}
         {review.routing.chain ? <ChainSteps chain={review.routing.chain} /> : null}
       </dd>
+      {review.payloadDiff && review.payloadDiff.changes.length ? (
+        <>
+          <dt>Edits</dt>
+          <dd>
+            <EditChanges diff={review.payloadDiff} />
+          </dd>
+        </>
+      ) : null}
       <dt>Routed by</dt>
       <dd>
         policy v{review.routing.policyVersion}

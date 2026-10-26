@@ -10,3 +10,4 @@ export * from "./attestation.js";
 export * from "./notify.js";
 export * from "./bus.js";
 export * from "./calendar.js";
+export * from "./diff.js";

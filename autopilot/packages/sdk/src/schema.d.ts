@@ -30141,6 +30141,17 @@ export interface components {
                 [key: string]: unknown;
             };
             payloadVersion: number;
+            /** @description What edits changed versus the agent's original payload (null until edited, or after redaction) */
+            payloadDiff: {
+                changes: {
+                    path: string;
+                    /** @enum {string} */
+                    op: "add" | "remove" | "change";
+                    from?: unknown;
+                    to?: unknown;
+                }[];
+                truncated: boolean;
+            } | null;
             context: {
                 [key: string]: unknown;
             } | null;

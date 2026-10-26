@@ -2814,6 +2814,47 @@
           "payloadVersion": {
             "type": "number"
           },
+          "payloadDiff": {
+            "type": [
+              "object",
+              "null"
+            ],
+            "properties": {
+              "changes": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "path": {
+                      "type": "string"
+                    },
+                    "op": {
+                      "type": "string",
+                      "enum": [
+                        "add",
+                        "remove",
+                        "change"
+                      ]
+                    },
+                    "from": {},
+                    "to": {}
+                  },
+                  "required": [
+                    "path",
+                    "op"
+                  ]
+                }
+              },
+              "truncated": {
+                "type": "boolean"
+              }
+            },
+            "required": [
+              "changes",
+              "truncated"
+            ],
+            "description": "What edits changed versus the agent's original payload (null until edited, or after redaction)"
+          },
           "context": {
             "type": [
               "object",
@@ -3031,6 +3072,7 @@
           "payload",
           "originalPayload",
           "payloadVersion",
+          "payloadDiff",
           "context",
           "requiredApprovals",
           "approvals",

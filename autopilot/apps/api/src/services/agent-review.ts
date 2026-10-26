@@ -96,6 +96,7 @@ export function reviewOut(r: RequestRow, decisions?: DecisionRow[]) {
     payload: JSON.parse(r.current_payload_json) as Record<string, unknown>,
     originalPayload: JSON.parse(r.payload_json) as Record<string, unknown>,
     payloadVersion: snap.payloadVersion,
+    payloadDiff: snap.payloadVersion > 1 && !r.redacted_at ? R.diffPayload(JSON.parse(r.payload_json), JSON.parse(r.current_payload_json)) : null,
     context: r.context_json ? (JSON.parse(r.context_json) as Record<string, unknown>) : null,
     requiredApprovals: r.required_approvals,
     approvals: R.currentApprovals(snap),

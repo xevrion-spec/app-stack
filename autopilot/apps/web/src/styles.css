@@ -737,3 +737,20 @@ table.diff code {
 .chain-current {
   font-weight: 600;
 }
+
+.diff {
+  border-collapse: collapse;
+  font-size: 0.9em;
+}
+.diff th,
+.diff td {
+  text-align: left;
+  padding: 0.2rem 0.5rem;
+  border-bottom: 1px solid var(--border, #ddd);
+  vertical-align: top;
+  overflow-wrap: anywhere;
+}
+.diff caption {
+  text-align: left;
+  font-weight: 600;
+}

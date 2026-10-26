@@ -153,3 +153,4 @@ Previous branch: feature/value-max (from feature/quality-1000). Roadmap + status
 - [x] R3d delegation API (one hop, ≤90 days, owner-for-reviewer, revocable, audited review.delegated_decision); chain progress in inbox list + detail; E2E with axe
 - Mutation R3: state.ts 95.6%, policy.ts 87.6% (survivors are mostly pre-existing static zod-schema literals), calendar.ts 73.8% (all logic survivors are equivalent; static schema literals are not exercised by the vitest runner)
 - Honest R3: later chain steps are not re-notified; delegation does not redirect notifications; quorum fixed at creation
+- [x] R4a structural payload diff (packages/agent-review/diff.ts; property test) exposed as payloadDiff and shown as nested path changes in the inbox detail

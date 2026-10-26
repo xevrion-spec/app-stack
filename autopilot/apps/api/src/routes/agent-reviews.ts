@@ -383,6 +383,13 @@ export const ReviewOut = z
     payload: z.record(z.string(), z.unknown()).openapi({ description: "Current payload (after any edits): what runs if approved" }),
     originalPayload: z.record(z.string(), z.unknown()),
     payloadVersion: z.number(),
+    payloadDiff: z
+      .object({
+        changes: z.array(z.object({ path: z.string(), op: z.enum(["add", "remove", "change"]), from: z.unknown().optional(), to: z.unknown().optional() })),
+        truncated: z.boolean(),
+      })
+      .nullable()
+      .openapi({ description: "What edits changed versus the agent's original payload (null until edited, or after redaction)" }),
     context: z.record(z.string(), z.unknown()).nullable(),
     requiredApprovals: z.number(),
     approvals: z.number(),

@@ -57,6 +57,7 @@ describe("agent review API (A1)", () => {
     expect([dup.status, dup.json.error?.code]).toEqual([409, "duplicate_decision"]);
     d = await s.call("POST", `/v1/agent-reviews/${r.id}/decisions`, { user: R2, body: { decision: "edit", payload: { orderId: "SYN-1", amount: 60 } } });
     expect(d.json).toMatchObject({ status: "pending", approvals: 1, payloadVersion: 2, payload: { amount: 60 }, originalPayload: { amount: 120 } });
+    expect(d.json.payloadDiff).toEqual({ changes: [{ path: "amount", op: "change", from: 120, to: 60 }], truncated: false });
     d = await s.call("POST", `/v1/agent-reviews/${r.id}/decisions`, { user: R1, body: { decision: "approve" } });
     expect(d.json).toMatchObject({ status: "approved", approvals: 2, payload: { amount: 60 } });
     const completed = (await s.call("GET", "/v1/events?limit=50", { user: A })).json.items.find((e: { type: string }) => e.type === "review.completed");
