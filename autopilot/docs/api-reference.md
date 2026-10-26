@@ -260,6 +260,15 @@ Practice endpoints (`/v1/practice*`): same staff identity; `x-practice-id` selec
 | GET | `/v1/review-projects/{id}/suggestions` | Learn when to stop asking: guarded auto-approve rule suggestions with a shadow replay (draft only) | Agent review |
 | GET | `/v1/agent-review/analytics/outcomes` | Cost, latency and outcome analytics per action (cost only from your own reviewer-cost inputs) | Agent review |
 | GET | `/v1/review-projects/{id}/regulator-pack` | Regulator-style evidence pack for a period: control statements, policies, outcomes, reviewers, verified trails; signed | Agent review |
+| GET | `/v1/agent-review/events` | Change feed of review requests visible to the caller, oldest first after `cursor` (omit it to get the head cursor only). No payloads. | Agent review |
+| GET | `/v1/agent-review/events/stream` | Server-sent events: `change` per request change (id = resume cursor; honours Last-Event-ID or `cursor`), then `end` after maxSeconds (1..55, default 55). Reconnect to continue. | Agent review |
+| POST | `/v1/notify/channels` | Add a reviewer notification channel (Slack, Teams, email or webhook) | Agent review |
+| GET | `/v1/notify/channels` | List notification channels (secrets are never returned) | Agent review |
+| DELETE | `/v1/notify/channels/{id}` | Delete a channel (pending deliveries are skipped) | Agent review |
+| POST | `/v1/notify/channels/{id}/test` | Send a synthetic test message now | Agent review |
+| PUT | `/v1/notify/channels/{id}/identities` | Link a Slack user id to a reviewer, so their button clicks decide as them | Agent review |
+| POST | `/v1/notify/deliveries/{id}/retry` | Re-queue a dead delivery | Agent review |
+| GET | `/v1/agent-reviews/{id}/notifications` | Notification delivery log for a request | Agent review |
 | PUT | `/v1/agent-review/audit-sink` | Create or replace the tenant's audit sink (signed push of ledger entries, NDJSON or CEF) | Agent review |
 | GET | `/v1/agent-review/audit-sink` | Audit sink status and cursor | Agent review |
 | DELETE | `/v1/agent-review/audit-sink` | Remove the audit sink | Agent review |

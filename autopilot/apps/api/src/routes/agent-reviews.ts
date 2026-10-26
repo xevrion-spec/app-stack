@@ -4,6 +4,7 @@
  * @xevrion/agent-review. Built into the existing tenancy: a tenant (organisation) owns projects; API keys may be bound
  * to one project.
  */
+import { bus, requestKey } from "../services/review-feed.js";
 import { OpenAPIHono, z } from "@hono/zod-openapi";
 import type { Context } from "hono";
 import * as R from "@xevrion/agent-review";
@@ -576,10 +577,10 @@ agentReviews.openapi(
 // ---------------- delivery: callbacks, long-poll wait, server-sent events ----------------
 let pollMs = 500;
 /** Test hook: shortens the wait/stream polling interval. */
+export const pollInterval = () => pollMs;
 export const __setAgentReviewPollMs = (ms: number | null) => {
   pollMs = ms ?? 500;
 };
-const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 const CallbackOut = z
   .object({
     id: z.string(),
@@ -670,7 +671,7 @@ agentReviews.openapi(
     const until = Date.now() + c.req.valid("query").timeoutSeconds * 1000;
     let r = await S.expireIfDue(c.env, db, await S.loadReview(db, id, bound));
     while (!R.FINAL.has(r.status) && Date.now() < until) {
-      await sleep(Math.min(pollMs, Math.max(0, until - Date.now())));
+      await bus.wait(requestKey(db.tenantId, id), Math.min(pollMs, Math.max(0, until - Date.now())));
       r = await S.expireIfDue(c.env, db, await S.loadReview(db, id, bound));
     }
     c.header("x-review-final", String(R.FINAL.has(r.status)));
@@ -720,7 +721,7 @@ agentReviews.get("/agent-reviews/:id/stream", async (c) => {
             send("end", { reason: "timeout", status: r.status });
             break;
           }
-          await sleep(pollMs);
+          await bus.wait(requestKey(db.tenantId, id), Math.min(pollMs, Math.max(0, until - Date.now())));
         }
       } finally {
         ctl.close();

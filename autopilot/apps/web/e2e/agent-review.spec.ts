@@ -4,7 +4,14 @@ import AxeBuilder from "@axe-core/playwright";
 /** Agent review layer end to end: developer console → agent request over the API → reviewer decides in the inbox. Synthetic data only. */
 const API = "http://127.0.0.1:8787";
 const axe = async (page: Page, where: string) => {
-  await page.waitForLoadState("networkidle");
+  // The live inbox keeps an event stream open, so "networkidle" never fires there: settle on the Live badge instead.
+  await Promise.race([
+    page.waitForLoadState("networkidle"),
+    page
+      .getByText("Live", { exact: true })
+      .waitFor()
+      .then(() => page.waitForTimeout(500)),
+  ]);
   const res = await new AxeBuilder({ page }).withTags(["wcag2a", "wcag2aa", "wcag21aa"]).analyze();
   expect(res.violations.filter((v) => v.impact === "serious" || v.impact === "critical").map((v) => `${where}: ${v.id} (${v.nodes.length})`)).toEqual([]);
 };
@@ -238,4 +245,35 @@ test("email notification → one-click link → confirm page approves once; open
   } finally {
     srv.close();
   }
+});
+
+test("live inbox: new requests appear without reload; a request changed elsewhere is flagged, not overwritten; axe clean", async ({ page, request }) => {
+  const stamp = Date.now();
+  const owner = `e2e.ar.live.${stamp}@example.test`;
+  await signUp(page, owner);
+  const key = await connectAgent(page);
+  await page.goto("/#/agent-reviews");
+  await expect(page.getByText("Live", { exact: true })).toBeVisible();
+  const inbox = page.getByRole("list", { name: "pending agent requests" });
+  await expect(inbox.getByRole("listitem")).toHaveCount(0);
+  const first = (
+    (await (await ask(request, key, { action: "crm.update", risk: "medium", payload: { field: "tier" } }, `l1-${stamp}`)).json()) as { id: string }
+  ).id;
+  await expect(inbox.getByRole("listitem")).toHaveCount(1, { timeout: 5000 });
+  await inbox.getByRole("button", { name: /crm\.update/ }).click();
+  await expect(page.getByRole("article")).toBeVisible();
+  // someone else (an API key can cancel its own request) changes it while it is open
+  expect(
+    (
+      await request.post(`${API}/v1/agent-reviews/${first}/cancel`, { headers: { authorization: `Bearer ${key}`, "idempotency-key": `c-${stamp}` }, data: {} })
+    ).status(),
+  ).toBeLessThan(300);
+  await expect(page.getByRole("alert")).toContainText("updated elsewhere", { timeout: 5000 });
+  await page.getByRole("button", { name: "Show the latest" }).click();
+  await expect(page.getByRole("alert")).toHaveCount(0);
+  await axe(page, "live stale notice");
+  await page.evaluate(() => localStorage.setItem("autopilot.theme", "dark"));
+  await page.reload();
+  await expect(page.locator("html")).toHaveAttribute("data-theme", "dark");
+  await axe(page, "live inbox dark");
 });

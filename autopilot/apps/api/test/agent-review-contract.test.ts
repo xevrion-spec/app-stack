@@ -86,6 +86,8 @@ describe("agent review API contract (OpenAPI)", () => {
     await s.call("POST", `/v1/agent-reviews/${c.id}/redact`, { user: A });
     await s.call("GET", "/v1/agent-review/usage", { user: A });
     await s.call("GET", "/v1/agent-review/analytics/reviewers", { user: A });
+    const feedHead = (await s.call("GET", "/v1/agent-review/events", { user: A })).json.cursor;
+    await s.call("GET", `/v1/agent-review/events?cursor=${feedHead}`, { user: A });
     const nch = (
       await s.call("POST", "/v1/notify/channels", {
         user: A,

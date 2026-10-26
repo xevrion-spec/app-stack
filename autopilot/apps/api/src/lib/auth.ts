@@ -164,6 +164,7 @@ const SCOPE_RULES: [RegExp, "GET" | "WRITE" | "*", Scope][] = [
   [/^\/v1\/agent-review\/audit\/export$/, "GET", "reviews:audit"],
   [/^\/v1\/scim\/v2\//, "*", "scim:write"],
   [/^\/v1\/agent-review\/receipt-keys$/, "GET", "reviews:read"],
+  [/^\/v1\/agent-review\/events(\/stream)?$/, "GET", "reviews:read"],
   [/^\/v1\/agent-reviews\/simulate$/, "WRITE", "reviews:read"],
   [/^\/v1\/agent-reviews\/[^/]+\/decisions$/, "WRITE", "reviews:decide"],
   [/^\/v1\/agent-reviews(\/|$)/, "GET", "reviews:read"],

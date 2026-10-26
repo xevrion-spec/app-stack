@@ -61,6 +61,21 @@ to enable action links. Without it, messages carry open links only.
 **Status:** tested against fake Slack/Teams/email/webhook receivers only. No real Slack app or email provider has been
 connected.
 
+## 3c. Live updates (R2)
+
+- `GET /v1/agent-reviews/{id}/wait` and `/stream` now wake on the decision itself (in-process push). The poll interval
+  is only a fallback for writes that land on another Workers isolate.
+- `GET /v1/agent-review/events` is a tenant change feed (id, project, action, risk, status, version; never payloads)
+  after an opaque `cursor`. Call it without a cursor to get the head.
+- `GET /v1/agent-review/events/stream` streams the same feed as server-sent events. Each event `id` is a resume cursor,
+  so reconnecting with `Last-Event-ID` (or `?cursor=`) continues without gaps. A 2-second rescan delivers commits that
+  land out of timestamp order exactly once per stream. The console inbox uses it: new requests appear without a reload,
+  and an open request changed by someone else is flagged instead of overwritten.
+
+**Honest limits:** cross-isolate wake-ups are not built (they would need a Durable Object fan-out), so on a busy
+production deployment the latency is the poll interval (500 ms), not instant. The JSON page endpoint has no late-commit
+rescan; use the stream for exactly-once delivery.
+
 ## 4. Route with policy instead of asking every time
 
 ```json

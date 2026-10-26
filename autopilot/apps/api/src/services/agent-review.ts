@@ -5,6 +5,7 @@
  * existing outbox (and from there signed webhooks) and writes the audit log, all in one batch.
  */
 import { enqueueStmts } from "./notify-enqueue.js";
+import { wake } from "./review-feed.js";
 import * as R from "@xevrion/agent-review";
 import type { Env } from "../env.js";
 import { TenantDb, newId } from "../lib/db.js";
@@ -385,6 +386,7 @@ export async function createReview(
     }
     throw e;
   }
+  wake(db.tenantId, row.id);
   await outbox.publish(env);
   return { row, created: true };
 }
@@ -525,6 +527,7 @@ export async function transition(
     throw e;
   });
   if (!res[0]) throw new AppError(409, "version_conflict", "The request changed concurrently; reload and retry");
+  wake(db.tenantId, r.id);
   await outbox.publish(env);
   return next;
 }

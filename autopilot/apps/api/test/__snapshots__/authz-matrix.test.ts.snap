@@ -9,6 +9,8 @@ exports[`authz matrix over every OpenAPI operation > role outcomes are stable (s
   "GET /v1/agent-review/analytics/reviewers": "reviewer=403 accountant=403",
   "GET /v1/agent-review/audit-sink": "reviewer=403 accountant=403",
   "GET /v1/agent-review/audit/export": "reviewer=403 accountant=403",
+  "GET /v1/agent-review/events": "reviewer=200 accountant=200",
+  "GET /v1/agent-review/events/stream": "reviewer=200 accountant=200",
   "GET /v1/agent-review/receipt-keys": "reviewer=200 accountant=200",
   "GET /v1/agent-review/usage": "reviewer=403 accountant=403",
   "GET /v1/agent-reviews": "reviewer=200 accountant=200",

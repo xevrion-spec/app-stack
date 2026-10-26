@@ -52,7 +52,7 @@ beforeAll(async () => {
 });
 function concrete(path: string) {
   const seg = path.split("/")[2] ?? "";
-  return path.replace(/\{deliveryId\}/g, "nope").replace(/\{id\}/g, ids[seg] ?? "nonexistent-id");
+  return path.replace(/\{deliveryId\}/g, "nope").replace(/\{id\}/g, ids[seg] ?? "nonexistent-id") + (path.endsWith("/stream") ? "?maxSeconds=1" : ""); // streams stay open up to 55 s otherwise
 }
 const send = (method: string, path: string, user?: string) =>
   call(method, concrete(path), { ...(user ? { user } : {}), ...(method === "GET" || method === "DELETE" ? {} : { body: {} }) });

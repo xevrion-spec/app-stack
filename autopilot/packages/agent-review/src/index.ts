@@ -8,3 +8,4 @@ export * from "./analytics.js";
 export * from "./outcomes.js";
 export * from "./attestation.js";
 export * from "./notify.js";
+export * from "./bus.js";

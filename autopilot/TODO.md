@@ -143,3 +143,7 @@ Previous branch: feature/value-max (from feature/quality-1000). Roadmap + status
 - [x] R1c channels + outbox (migration 0025): enqueue in the create batch (risk/project filters, per-recipient email), cron sweep with backoff, dead-letter, retry API, delivery log, test send, Slack identity links
 - [x] R1d public POST /notify/actions (confirm-first, GET never decides) + Slack interactivity endpoint (signature-verified), per-IP rate limit; web confirm page #/act/<token>; E2E with a local fake mail receiver
 - Honest R1: all channels tested against fakes only (no real Slack app/Teams bot/email provider); Teams buttons are open-links (in-card approve needs a Bot Framework app); escalations do not re-notify yet
+- [x] R2a wake bus + resume cursors (packages/agent-review/bus.ts; property tests; mutation 96.5%)
+- [x] R2b /wait and /stream wake on commit (poll is the fallback only); tenant change feed GET /v1/agent-review/events (+ index 0026), SSE /events/stream with Last-Event-ID resume and a late-commit rescan window
+- [x] R2c console live inbox (streamed fetch, backoff reconnect, Live badge, "updated elsewhere" notice that keeps the reviewer's draft); E2E desktop+mobile, light+dark axe
+- Honest R2: no Durable Object fan-out, so cross-isolate latency equals the poll interval; JSON feed page has no late-commit rescan

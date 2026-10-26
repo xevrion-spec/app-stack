@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
+import { useLiveFeed } from "../live";
 import { download, json, sdk, unwrap, type Schemas } from "../api";
 import { useLoad } from "../hooks";
 import { Badge, Empty, ErrorNote, Loading, Page } from "../ui";
@@ -30,6 +31,16 @@ export function AgentReviews({ role, selected, onSelect }: { role: string; selec
   const list = useLoad(async () => unwrap(await sdk().GET("/v1/agent-reviews", { params: { query: { status, limit: 50 } as never } })), [status]);
   const items = list.data?.items ?? [];
   const [flash, setFlash] = useState("");
+  const [stale, setStale] = useState<string | null>(null);
+  const [rev, setRev] = useState(0);
+  const live = useLiveFeed((ch) => {
+    // Silent refresh (no spinner); a reviewer looking at a request someone else just changed gets told, not overwritten.
+    void sdk()
+      .GET("/v1/agent-reviews", { params: { query: { status, limit: 50 } as never } })
+      .then((res) => res.data && list.setData(res.data))
+      .catch(() => {});
+    if (ch.id === selected) setStale(ch.id);
+  });
   return (
     <Page
       title="Agent reviews"
@@ -46,7 +57,25 @@ export function AgentReviews({ role, selected, onSelect }: { role: string; selec
         </label>
       }
     >
-      <p className="muted">Actions your AI agents want to take that policy sent to a person. Nothing runs until it is approved. Signed in as {role}.</p>
+      <p className="muted">
+        Actions your AI agents want to take that policy sent to a person. Nothing runs until it is approved. Signed in as {role}.{" "}
+        <span className={live ? "badge b-live" : "badge"}>{live ? "Live" : "Not live: refresh to update"}</span>
+      </p>
+      {stale && stale === selected ? (
+        <p role="alert" className="note">
+          This request was just updated elsewhere.{" "}
+          <button
+            type="button"
+            className="link"
+            onClick={() => {
+              setStale(null);
+              setRev((n) => n + 1);
+            }}
+          >
+            Show the latest
+          </button>
+        </p>
+      ) : null}
       <p role="status" aria-live="polite" className="sr-live">
         {flash}
       </p>
@@ -75,7 +104,7 @@ export function AgentReviews({ role, selected, onSelect }: { role: string; selec
         </ul>
         {selected ? (
           <ReviewDetail
-            key={selected}
+            key={`${selected}:${rev}`}
             id={selected}
             onDone={(r, msg) => {
               setFlash(msg);

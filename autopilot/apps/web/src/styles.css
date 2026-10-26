@@ -588,6 +588,10 @@ button.danger {
   background: #fee2e2;
   color: #991b1b;
 }
+.b-live {
+  color: var(--ok, #166534);
+  border-color: currentColor;
+}
 .b-hold {
   background: #e0e7ff;
   color: #3730a3;
