@@ -8,6 +8,8 @@ Practice endpoints (`/v1/practice*`): same staff identity; `x-practice-id` selec
 
 | Method | Path | Summary | Tag |
 |---|---|---|---|
+| GET | `/sso/oidc/start` | Begin OIDC login: returns the IdP authorization URL (PKCE S256, state, nonce) | Account |
+| POST | `/sso/oidc/callback` | Finish OIDC login: exchanges the code, verifies the ID token, returns a session token (Bearer ses_...) | Account |
 | POST | `/v1/tenants` | Create a tenant (caller becomes owner) with default chart of accounts | Account |
 | POST | `/v1/practices` | Create an accountancy practice (caller becomes partner); seeds default close templates | Practice |
 | GET | `/v1/practice` | The signed-in staff member's practice, role and plan quota | Practice |
@@ -148,6 +150,8 @@ Practice endpoints (`/v1/practice*`): same staff identity; `x-practice-id` selec
 | GET | `/v1/api-keys` | List keys (never returns secrets) | API keys |
 | POST | `/v1/api-keys/{id}/rotate` | Rotate: new key now, old key valid 24h | API keys |
 | DELETE | `/v1/api-keys/{id}` | Revoke immediately | API keys |
+| GET | `/v1/security/key-policy` | Tenant API key policy | API keys |
+| PUT | `/v1/security/key-policy` | Set the API key policy (applies to keys created or rotated from now on) | API keys |
 | POST | `/v1/triggers` | Create an inbound webhook trigger (secret shown once) | Automations |
 | GET | `/v1/triggers` | List inbound triggers | Automations |
 | DELETE | `/v1/triggers/{id}` | Revoke trigger | Automations |
@@ -223,3 +227,50 @@ Practice endpoints (`/v1/practice*`): same staff identity; `x-practice-id` selec
 | DELETE | `/v1/bank-feeds/connections/{id}` | Disconnect (keeps imported transactions) | Bank feeds |
 | GET | `/v1/ops/summary` | Operational health for this business | Ops |
 | GET | `/v1/admin/overview` | Operator-only cross-tenant aggregates (no PII); requires ADMIN_EMAILS | Ops |
+| POST | `/v1/review-projects` | Create a review project in one environment (owner only; API keys cannot create projects) | Agent review |
+| GET | `/v1/review-projects` | List review projects | Agent review |
+| POST | `/v1/review-projects/{id}/rotate-callback-secret` | Replace the project's callback signing secret (owner only; shown once). Callbacks sent after this use the new secret. | Agent review |
+| POST | `/v1/review-projects/{id}/policies` | Save a new immutable policy version (draft). Unsafe rules (auto-approve without confidence, critical auto-approve) are refused. | Agent review |
+| GET | `/v1/review-projects/{id}/policies` | List policy versions (newest first) | Agent review |
+| POST | `/v1/review-projects/{id}/policies/replay` | Time-travel replay: re-run past requests against a candidate policy (a document or a saved version) and diff the outcomes | Agent review |
+| POST | `/v1/review-projects/{id}/policies/{version}/activate` | Activate a version for all traffic, or as a canary for canaryPercent of new requests. Refused (409 unsafe_policy) if replaying recent history shows it would auto-approve anything a human rejected or edited, unless force is set. | Agent review |
+| PUT | `/v1/review-groups/{name}` | Set the members of a reviewer group (owner only). Requests routed to a group can only be decided by its members or an owner. | Agent review |
+| GET | `/v1/review-groups` | List reviewer groups and members | Agent review |
+| POST | `/v1/agent-reviews` | Ask for a human decision. The project's policy routes it (auto-approve, human, four-eyes or reject). Send Idempotency-Key: a retry with the same key and body returns the original request (200); the same key with a different body is 409. | Agent review |
+| GET | `/v1/agent-reviews` | List review requests (newest first), filterable by project, status, risk, group and externalId | Agent review |
+| POST | `/v1/agent-reviews/simulate` | Dry run: how would this request be routed by the live policy (or a draft document)? Nothing is stored. | Agent review |
+| GET | `/v1/agent-reviews/{id}` | Get a review request with its decisions | Agent review |
+| POST | `/v1/agent-reviews/{id}/decisions` | Record a decision: approve, reject (veto), edit (replaces the payload; earlier approvals stop counting) or escalate. Routed requests need a member of the group (or an owner). | Agent review |
+| POST | `/v1/agent-reviews/{id}/cancel` | Cancel a pending request (requester only) | Agent review |
+| GET | `/v1/agent-reviews/{id}/callbacks` | Callback delivery log for a request | Agent review |
+| POST | `/v1/agent-reviews/{id}/callbacks/redeliver` | Redeliver the request's callbacks now (including dead or already-succeeded ones). Receivers dedupe by callback id. | Agent review |
+| GET | `/v1/agent-reviews/{id}/wait` | Long-poll: returns as soon as the request is final, or after timeoutSeconds with its current state (check status; call again to keep waiting). | Agent review |
+| GET | `/v1/agent-reviews/{id}/stream` | Server-sent events: `review` on every state change, then `end` (reason final | timeout). maxSeconds 1..55 (default 55); reconnect to continue. | Agent review |
+| GET | `/v1/agent-reviews/{id}/audit` | Hash-chained audit trail for a request, with a full integrity check | Agent review |
+| GET | `/v1/agent-reviews/{id}/receipt` | Ed25519-signed decision receipt (final requests with a verified trail only); verifiable offline | Agent review |
+| GET | `/v1/agent-reviews/{id}/evidence` | Self-contained evidence pack: request, decisions, ledger, integrity, policy document, callbacks, receipt, public keys | Agent review |
+| GET | `/v1/agent-review/receipt-keys` | Public keys for verifying decision receipts (current first, then retired) | Agent review |
+| GET | `/v1/agent-review/audit/export` | Ledger entries after `since` as NDJSON (SIEM ingestion). Content-free: payloads appear only as hashes. Page with the last line's `at`. | Agent review |
+| PUT | `/v1/review-projects/{id}/retention` | Set how long final requests keep their content (null = forever). Held requests are never redacted. | Agent review |
+| POST | `/v1/agent-reviews/{id}/legal-hold` | Place a legal hold | Agent review |
+| DELETE | `/v1/agent-reviews/{id}/legal-hold` | Release a legal hold | Agent review |
+| POST | `/v1/agent-reviews/{id}/redact` | Erase a final request's content now (e.g. an erasure request). Refused under legal hold. The hash chain is kept. | Agent review |
+| GET | `/v1/agent-review/usage` | This month's agent review usage vs plan quota | Agent review |
+| GET | `/v1/agent-review/analytics/reviewers` | Reviewer quality: latency, approve rates, co-reviewer disagreement and rubber-stamp signals | Agent review |
+| GET | `/v1/review-projects/{id}/suggestions` | Learn when to stop asking: guarded auto-approve rule suggestions with a shadow replay (draft only) | Agent review |
+| GET | `/v1/agent-review/analytics/outcomes` | Cost, latency and outcome analytics per action (cost only from your own reviewer-cost inputs) | Agent review |
+| GET | `/v1/review-projects/{id}/regulator-pack` | Regulator-style evidence pack for a period: control statements, policies, outcomes, reviewers, verified trails; signed | Agent review |
+| PUT | `/v1/agent-review/audit-sink` | Create or replace the tenant's audit sink (signed push of ledger entries, NDJSON or CEF) | Agent review |
+| GET | `/v1/agent-review/audit-sink` | Audit sink status and cursor | Agent review |
+| DELETE | `/v1/agent-review/audit-sink` | Remove the audit sink | Agent review |
+| POST | `/v1/agent-review/audit-sink/resume` | Resume a paused sink from its cursor (nothing is skipped) | Agent review |
+| POST | `/v1/agent-review/audit-sink/rotate-secret` | Rotate the signing secret (returned once) | Agent review |
+| PUT | `/v1/sso/oidc` | Configure OIDC single sign-on (JIT provisioning, never as owner) | Account |
+| GET | `/v1/sso/oidc` | OIDC connection (client secret is never returned) | Account |
+| DELETE | `/v1/sso/oidc` | Remove SSO and revoke every SSO session | Account |
+| POST | `/v1/sso/logout` | Revoke all of the caller's SSO sessions | Account |
+| GET | `/v1/roles` | List custom roles | Account |
+| POST | `/v1/roles` | Create a custom role (permissions + project/environment/risk conditions) | Account |
+| PUT | `/v1/roles/{id}` | Replace a custom role (takes effect on the next request) | Account |
+| DELETE | `/v1/roles/{id}` | Delete an unassigned custom role | Account |
+| PUT | `/v1/users/{id}/custom-role` | Assign (or clear with null) a user's custom role. Owners cannot be narrowed. | Account |

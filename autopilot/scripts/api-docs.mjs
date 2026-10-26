@@ -16,3 +16,23 @@ const out = [
 for (const [p, ops] of Object.entries(d.paths))
   for (const [m, o] of Object.entries(ops)) out.push(`| ${m.toUpperCase()} | \`${p}\` | ${o.summary ?? ""} | ${(o.tags ?? []).join(", ")} |`);
 writeFileSync(new URL("../docs/api-reference.md", import.meta.url), out.join("\n") + "\n");
+
+// Agent review subset: grouped, with request/response schema names, so integrators get one focused page.
+const ar = [
+  "# Agent review API reference",
+  "",
+  "Generated from `openapi/openapi.json` by `npm run docs:api`. Base URL: your API host. Agents authenticate with `Authorization: Bearer ap_…` (scopes `reviews:write` / `reviews:read`); people use Cloudflare Access or an SSO session (`Bearer ses_…`). SCIM (`/v1/scim/v2/*`, scope `scim:write`) is plain JSON and not in this spec yet.",
+  "",
+  "| Method | Path | Summary | Request | Response |",
+  "|---|---|---|---|---|",
+];
+const ref = (s) => (s?.$ref ? s.$ref.split("/").pop() : s?.type ?? "");
+for (const [p, ops] of Object.entries(d.paths))
+  for (const [m, o] of Object.entries(ops)) {
+    const tags = o.tags ?? [];
+    if (!tags.includes("Agent review") && !/\/(sso|roles|users\/\{id\}\/custom-role|security\/key-policy)/.test(p)) continue;
+    const req = ref(o.requestBody?.content?.["application/json"]?.schema);
+    const ok = o.responses?.["200"] ?? o.responses?.["201"];
+    ar.push(`| ${m.toUpperCase()} | \`${p}\` | ${o.summary ?? ""} | ${req} | ${ref(ok?.content?.["application/json"]?.schema)} |`);
+  }
+writeFileSync(new URL("../docs/agent-review/api-reference.md", import.meta.url), ar.join("\n") + "\n");
